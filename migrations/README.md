@@ -18,7 +18,7 @@ npm run db:create -- mono-finance-development
 npm run db:create -- mono-finance-production
 ```
 
-Apply and inspect migrations against the local D1 binding in `wrangler.jsonc`. Its state persists in the root `.wrangler` directory shared by `npm run dev`; the binding has no remote `database_id` and must not be used to deploy the Worker:
+Apply and inspect migrations against the local D1 binding in `wrangler.jsonc`. Its state persists in `.wrangler/state`, the exact directory shared by `npm run dev`; the binding has no remote `database_id` and must not be used to deploy the Worker:
 
 ```sh
 npm run db:migrate:local

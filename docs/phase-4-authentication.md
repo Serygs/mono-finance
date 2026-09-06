@@ -31,6 +31,8 @@ Copy-Item .dev.vars.example .dev.vars
 npm run dev
 ```
 
+The migration command intentionally targets `.wrangler/state`, the same local D1 persistence directory used by Vite. Do not substitute a different `--persist-to` path or the running Worker will see a separate empty database.
+
 Use a cryptographically random value for each local secret. `SETUP_TOKEN` is supplied only to the one-time setup request, for example with an API client; it must never be embedded in the React application.
 
 ## Production prerequisite
