@@ -12,20 +12,41 @@
   },
   "observability": {
     "enabled": true,
+    "traces": {
+      "enabled": true,
+    },
   },
   "upload_source_maps": true,
   "vars": {
     "APP_ENV": "development",
+  },
+  // Local-only binding used by `npm run dev`; production must configure its
+  // own real DB binding once the database ID is provisioned.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mono-finance-local",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "secrets": {
+    "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
   },
   "env": {
     "development": {
       "vars": {
         "APP_ENV": "development",
       },
+      "secrets": {
+        "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+      },
     },
     "production": {
       "vars": {
         "APP_ENV": "production",
+      },
+      "secrets": {
+        "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
       },
     },
   },

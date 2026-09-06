@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useNavigate } from 'react-router'
+
+import { useAuth } from '../features/auth/auth-context'
 
 const navigationItems = [
   { label: 'Overview', to: '/' },
@@ -6,6 +8,14 @@ const navigationItems = [
 ] as const
 
 export function AppShell() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -21,6 +31,13 @@ export function AppShell() {
             ))}
           </ul>
         </nav>
+        <button
+          className="sign-out-button"
+          onClick={() => void handleLogout()}
+          type="button"
+        >
+          Sign out
+        </button>
       </header>
       <main className="page-content">
         <Outlet />

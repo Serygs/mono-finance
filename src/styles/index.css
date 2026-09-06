@@ -58,6 +58,93 @@ a {
   padding-block: 5rem;
 }
 
+.sign-out-button,
+.login-form button {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: #0071e3;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding-inline: 1rem;
+}
+
+.sign-out-button:focus-visible,
+.login-form input:focus-visible,
+.login-form button:focus-visible {
+  outline: 3px solid #0071e3;
+  outline-offset: 3px;
+}
+
+.login-page,
+.session-loading {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.login-card {
+  width: min(100%, 28rem);
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 1.75rem;
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 1.25rem 3.75rem rgb(29 29 31 / 12%);
+  padding: clamp(1.75rem, 7vw, 3rem);
+}
+
+.login-brand {
+  margin: 0 0 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.login-card h1 {
+  font-size: clamp(2.4rem, 10vw, 3.5rem);
+}
+
+.login-copy {
+  color: #515154;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 2rem;
+}
+
+.login-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.login-form input {
+  min-height: 3rem;
+  border: 1px solid #d2d2d7;
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 88%);
+  color: inherit;
+  font: inherit;
+  padding-inline: 0.9rem;
+}
+
+.login-form button {
+  margin-top: 1rem;
+}
+
+.login-form button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.form-error {
+  color: #b42318;
+  margin: 0.5rem 0 0;
+}
+
 .eyebrow {
   margin: 0 0 0.75rem;
   color: #6e6e73;
@@ -90,7 +177,19 @@ h1 {
   }
 
   .eyebrow,
-  .page-description {
+  .page-description,
+  .login-copy {
     color: #a1a1a6;
+  }
+
+  .login-card {
+    border-color: rgb(255 255 255 / 12%);
+    background: rgb(42 42 45 / 72%);
+    box-shadow: 0 1.25rem 3.75rem rgb(0 0 0 / 28%);
+  }
+
+  .login-form input {
+    border-color: #424245;
+    background: rgb(29 29 31 / 88%);
   }
 }

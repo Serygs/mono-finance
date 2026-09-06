@@ -14,14 +14,14 @@ describe('GET /api/health', () => {
     })
   })
 
-  it('returns the shared error contract for an unknown endpoint', async () => {
+  it('requires authentication before revealing an unknown private endpoint', async () => {
     const response = await app.request('/api/unknown')
 
-    expect(response.status).toBe(404)
+    expect(response.status).toBe(401)
     await expect(response.json()).resolves.toEqual({
       error: {
-        code: 'not_found',
-        message: 'Resource not found.',
+        code: 'unauthenticated',
+        message: 'Authentication is required.',
       },
     })
   })

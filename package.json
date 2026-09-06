@@ -16,10 +16,10 @@
     "deploy": "npm run build && wrangler deploy --env production",
     "cf-typegen": "wrangler types",
     "db:create": "wrangler d1 create",
-    "db:migrations:local": "wrangler d1 migrations list mono-finance-local --local --config migrations/wrangler.local.jsonc",
-    "db:migrate:local": "wrangler d1 migrations apply mono-finance-local --local --config migrations/wrangler.local.jsonc",
+    "db:migrations:local": "wrangler d1 migrations list DB --local --persist-to .wrangler",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local --persist-to .wrangler",
     "db:migrate:remote": "wrangler d1 migrations apply",
-    "db:execute:local": "wrangler d1 execute mono-finance-local --local --config migrations/wrangler.local.jsonc"
+    "db:execute:local": "wrangler d1 execute DB --local --persist-to .wrangler"
   },
   "dependencies": {
     "hono": "^4.13.7",

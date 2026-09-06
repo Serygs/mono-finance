@@ -27,7 +27,7 @@ All successful API responses use `{ "data": ... }`. Errors use `{ "error": { "co
 
 ## Environment policy
 
-`wrangler.jsonc` defines `development` and `production` application modes. D1 is represented by the `FutureDataEnvironment` type but is not configured until a real database is provisioned in Phase 3; fake database IDs are prohibited.
+`wrangler.jsonc` defines `development` and `production` application modes. A local-only D1 binding was added in Phase 4 so authentication can run locally; production still requires an intentionally configured real database ID. Fake database IDs are prohibited.
 
 ## Verification
 
