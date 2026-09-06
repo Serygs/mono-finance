@@ -27,4 +27,5 @@
 - Before changing a feature, load the applicable skill from `.agents/skills` and inspect the affected frontend and Worker boundaries.
 - Add a focused test for each behavioral change. Test Worker routes through exported Hono apps before adding broader runtime tests.
 - Run `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before handoff when the change affects application code.
+- After every completed implementation, include exactly one concise, one-sentence commit message in the handoff.
 - Do not add Monobank synchronization, D1 schema, authentication, analytics, or offline persistence ahead of their dedicated phases in `prompts.md`.

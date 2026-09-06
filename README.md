@@ -1,6 +1,6 @@
 # Mono Finance
 
-Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase establishes the application skeleton only; it does not yet authenticate users, persist data, or call Monobank.
+Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase establishes the D1 schema and migration foundation; it does not yet authenticate users, call Monobank, or synchronize financial data.
 
 ## Development
 
@@ -11,6 +11,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run db:migrate:local
 ```
 
 The local application is available at `http://localhost:5173`. Its public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
@@ -19,10 +20,10 @@ The local application is available at `http://localhost:5173`. Its public health
 
 - `src/` contains the React application, organized by feature.
 - `worker/` contains the Hono API and server-only integration boundaries.
-- `migrations/` will contain ordered D1 migrations beginning in Phase 3.
+- `migrations/` contains ordered D1 migrations; see [migrations/README.md](migrations/README.md) for local and remote workflows.
 - `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
 
-`wrangler.jsonc` separates development and production application modes. A D1 binding is intentionally not configured until a real database is provisioned; do not add a placeholder database ID.
+`wrangler.jsonc` separates development and production application modes. A D1 binding is intentionally not configured until real development and production databases are provisioned; do not add placeholder database IDs.
 
 ## Codex project skills
 
@@ -36,8 +37,13 @@ Repository-scoped Codex skills live in [`.agents/skills`](.agents/skills). Codex
 | `frontend-design`                                                                                             | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design)                                   | Production frontend and dashboard UI work.            |
 | `data-visualization`                                                                                          | [openai/plugins](https://github.com/openai/plugins/tree/main/plugins/build-web-data-visualization/skills/data-visualization) | Financial analytics and chart design.                 |
 | `yafa-ui-dashboard`                                                                                           | [rejourneyco/yafa-ui-dashboard](https://github.com/rejourneyco/yafa-ui-dashboard)                                            | Responsive, accessible analytics dashboard UX.        |
+| `mono-finance-dev`                                                                                            | This repository                                                                                                              | Mandatory Mono Finance domain and architecture rules. |
 
 The skills were installed as source snapshots with the Codex skill installer; they are documentation/workflow assets only and add no runtime or build dependencies.
+
+### Mono Finance project skill
+
+Use `$mono-finance-dev` in every future prompt that changes Mono Finance application code, schema, API, analytics, integrations, offline behavior, or customer-facing UI. It is located at [`.agents/skills/mono-finance-dev/SKILL.md`](.agents/skills/mono-finance-dev/SKILL.md), is automatically discoverable from this repository, and routes each task to the relevant domain reference. It adds no runtime dependency and does not authorize work outside the prompt's stated phase.
 
 ### Sources not installed
 
