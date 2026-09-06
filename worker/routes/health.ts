@@ -1,8 +1,8 @@
 import type { Context } from 'hono'
 
 import { success } from '../common/api-response'
-import type { AppEnvironment } from '../common/environment'
+import type { AuthEnvironment } from '../common/environment'
 
-export function healthHandler(context: Context<{ Bindings: AppEnvironment }>) {
+export function healthHandler(context: Context<{ Bindings: AuthEnvironment }>) {
   return context.json(success({ status: 'ok' as const }))
 }

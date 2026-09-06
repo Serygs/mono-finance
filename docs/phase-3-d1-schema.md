@@ -2,7 +2,7 @@
 
 ## Scope
 
-This phase introduces the initial D1 schema and Wrangler migration commands. It does not add a real D1 binding, authentication endpoints, Monobank requests, synchronization, repositories, or analytics endpoints.
+This phase introduced the initial D1 schema and Wrangler migration commands. A subsequent authentication phase added a local-only D1 binding and `0002_authentication.sql`; production D1 configuration still requires real per-environment IDs.
 
 ## Schema decisions
 
@@ -17,7 +17,7 @@ This phase introduces the initial D1 schema and Wrangler migration commands. It 
 
 ## Local verification
 
-Use a disposable local D1 database name. The first command creates the schema and the second confirms that migration application is idempotent.
+Use the local D1 binding shared with the development Worker. The first command creates the schema and the second confirms that migration application is idempotent.
 
 ```sh
 npm run db:migrate:local

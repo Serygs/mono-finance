@@ -3,9 +3,11 @@ export interface AppEnvironment extends Env {
 }
 
 /**
- * The D1 binding is intentionally typed before it is provisioned. Phase 3 must
- * add the matching binding to each Wrangler environment; do not add a fake ID.
+ * Authentication cannot run until real D1 and secret bindings are provisioned
+ * for an environment. Keep these values server-side; do not expose them to Vite.
  */
-export interface FutureDataEnvironment extends AppEnvironment {
+export interface AuthEnvironment extends AppEnvironment {
   DB: D1Database
+  SESSION_TOKEN_PEPPER: string
+  SETUP_TOKEN: string
 }

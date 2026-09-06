@@ -1,6 +1,6 @@
 # Mono Finance
 
-Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase establishes the D1 schema and migration foundation; it does not yet authenticate users, call Monobank, or synchronize financial data.
+Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase adds single-owner password authentication, durable sessions, and frontend/API route protection; it does not yet call Monobank or synchronize financial data.
 
 ## Development
 
@@ -14,7 +14,7 @@ npm run build
 npm run db:migrate:local
 ```
 
-The local application is available at `http://localhost:5173`. Its public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
+Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local secrets, then run `npm run db:migrate:local` before starting the app. The local application is available at `http://localhost:5173`; use the one-time setup endpoint documented in [Phase 4 authentication](docs/phase-4-authentication.md) before signing in. Its public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ The local application is available at `http://localhost:5173`. Its public health
 - `migrations/` contains ordered D1 migrations; see [migrations/README.md](migrations/README.md) for local and remote workflows.
 - `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
 
-`wrangler.jsonc` separates development and production application modes. A D1 binding is intentionally not configured until real development and production databases are provisioned; do not add placeholder database IDs.
+`wrangler.jsonc` provides a local-only D1 binding for development and requires Worker-only session/setup secrets. Production remains deliberately unconfigured until a real D1 ID is provisioned; do not add placeholder database IDs. See [Phase 4 authentication](docs/phase-4-authentication.md) before deploying.
 
 ## Codex project skills
 

@@ -1,6 +1,6 @@
 # D1 migrations
 
-`0001_initial_schema.sql` establishes the D1 data model. It is deliberately plain SQL: no ORM is used, and repository code will bind all dynamic query values with D1 prepared statements.
+`0001_initial_schema.sql` establishes the financial data model and `0002_authentication.sql` adds durable login-rate-limit state. The migrations are deliberately plain SQL: no ORM is used, and repository code binds all dynamic query values with D1 prepared statements.
 
 ## Timestamp and money conventions
 
@@ -18,7 +18,7 @@ npm run db:create -- mono-finance-development
 npm run db:create -- mono-finance-production
 ```
 
-Apply and inspect migrations against the isolated local D1 database configured in `wrangler.local.jsonc`. This config has no remote `database_id` and must not be used to deploy the Worker:
+Apply and inspect migrations against the local D1 binding in `wrangler.jsonc`. Its state persists in the root `.wrangler` directory shared by `npm run dev`; the binding has no remote `database_id` and must not be used to deploy the Worker:
 
 ```sh
 npm run db:migrate:local
