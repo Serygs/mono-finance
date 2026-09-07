@@ -10,9 +10,16 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { AccountSourceRecord } from '../worker/monobank/internal-dtos'
 import { D1AccountsRepository } from '../worker/repositories/accounts-repository'
+import { D1TransactionSyncRepository } from '../worker/repositories/transaction-sync-repository'
 
 const initialMigration = readFileSync(
   fileURLToPath(new NodeUrl('./0001_initial_schema.sql', import.meta.url)),
+  'utf8',
+)
+const transactionSyncMigration = readFileSync(
+  fileURLToPath(
+    new NodeUrl('./0004_transaction_sync_state.sql', import.meta.url),
+  ),
   'utf8',
 )
 
@@ -24,6 +31,7 @@ describe('D1AccountsRepository', () => {
     sqlite = new DatabaseSync(':memory:')
     sqlite.exec('PRAGMA foreign_keys = ON')
     sqlite.exec(initialMigration)
+    sqlite.exec(transactionSyncMigration)
     sqlite
       .prepare(
         `INSERT INTO users (id, email, password_hash)
@@ -164,6 +172,80 @@ describe('D1AccountsRepository', () => {
   })
 })
 
+describe('D1TransactionSyncRepository', () => {
+  let sqlite: DatabaseSync
+  let accounts: D1AccountsRepository
+  let repository: D1TransactionSyncRepository
+
+  beforeEach(async () => {
+    sqlite = new DatabaseSync(':memory:')
+    sqlite.exec('PRAGMA foreign_keys = ON')
+    sqlite.exec(initialMigration)
+    sqlite.exec(transactionSyncMigration)
+    sqlite
+      .prepare(`INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)`)
+      .run('owner-1', 'owner@example.com', 'not-a-real-hash')
+    accounts = new D1AccountsRepository(asD1Database(sqlite))
+    await accounts.synchronize('owner-1', [account({})])
+    repository = new D1TransactionSyncRepository(asD1Database(sqlite))
+  })
+
+  it('imports each immutable provider transaction once and records duplicate skips', async () => {
+    const claimed = await repository.claimNext('owner-1', 3_000_000, 1_000)
+    expect(claimed).not.toBeNull()
+
+    const first = await repository.importTransactions({
+      accountId: claimed!.accountId,
+      currencyCode: claimed!.currencyCode,
+      transactions: [statementTransaction()],
+      userId: 'owner-1',
+    })
+    const second = await repository.importTransactions({
+      accountId: claimed!.accountId,
+      currencyCode: claimed!.currencyCode,
+      transactions: [statementTransaction()],
+      userId: 'owner-1',
+    })
+    await repository.completeWindow({
+      accountId: claimed!.accountId,
+      backfillCursorAt: 1_000,
+      lastSyncedTransactionAt: 2_000,
+      nowEpochSeconds: 3_000_000,
+    })
+
+    expect(first).toEqual({ importedCount: 1, skippedDuplicateCount: 0 })
+    expect(second).toEqual({ importedCount: 0, skippedDuplicateCount: 1 })
+    expect(
+      sqlite
+        .prepare(
+          `SELECT original_amount_minor, original_currency_code, original_description,
+             original_mcc, original_timestamp, monobank_transaction_id
+           FROM transactions`,
+        )
+        .get(),
+    ).toEqual({
+      monobank_transaction_id: 'mono-transaction-1',
+      original_amount_minor: -500,
+      original_currency_code: 'UAH',
+      original_description: 'Coffee',
+      original_mcc: 5812,
+      original_timestamp: 2_000,
+    })
+    expect(
+      sqlite
+        .prepare(
+          `SELECT status, last_successful_sync_at, last_synced_transaction_at
+           FROM sync_state`,
+        )
+        .get(),
+    ).toEqual({
+      last_successful_sync_at: 3_000_000,
+      last_synced_transaction_at: 2_000,
+      status: 'idle',
+    })
+  })
+})
+
 function account(overrides: Partial<AccountSourceRecord>): AccountSourceRecord {
   return {
     accountType: 'black',
@@ -221,6 +303,14 @@ class SqliteD1Statement {
     } as D1Result<T>
   }
 
+  async first<T>() {
+    return (this.statement.get(...this.values) as T | undefined) ?? null
+  }
+
+  run() {
+    return this.executeRun()
+  }
+
   async executeRun() {
     const result = this.statement.run(...this.values)
     return {
@@ -228,5 +318,23 @@ class SqliteD1Statement {
       results: [],
       success: true,
     } as unknown as D1Result<unknown>
+  }
+}
+
+function statementTransaction(): import('../worker/monobank/internal-dtos').TransactionSourceRecord {
+  return {
+    accountAmountMinor: -500,
+    balanceAfterMinor: 2_500,
+    cashbackMinor: 0,
+    commissionMinor: 0,
+    description: 'Coffee',
+    direction: 'expense',
+    isHold: false,
+    mcc: 5812,
+    occurredAtEpochSeconds: 2_000,
+    operationAmountMinor: -500,
+    operationCurrencyNumericCode: '980',
+    originalMcc: 5812,
+    providerTransactionId: 'mono-transaction-1',
   }
 }
