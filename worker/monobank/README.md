@@ -7,4 +7,4 @@ This directory contains the server-only Monobank Personal API boundary:
 - `internal-dtos.ts` and `mappers.ts` convert provider data before it reaches persistence or application services.
 - `rate-limit.ts` coordinates requests through a persistent gate; its D1 adapter lives in `worker/repositories/`.
 
-No module in `src/` may import this directory. The `MONOBANK_TOKEN` binding is read only by `factory.ts` and must never appear in browser responses or logs. The Phase 6 account service consumes the internal client-info snapshot; provider DTOs remain isolated here, and historical transaction synchronization is still out of scope.
+No module in `src/` may import this directory. The `MONOBANK_TOKEN` binding is read only by `factory.ts` and must never appear in browser responses or logs. Account and transaction synchronization consume only its mapped internal DTOs; provider DTOs remain isolated here.

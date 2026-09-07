@@ -60,7 +60,8 @@ a {
 
 .sign-out-button,
 .login-form button,
-.sync-accounts-button {
+.sync-accounts-button,
+.sync-transactions-button {
   min-height: 2.75rem;
   border: 0;
   border-radius: 999px;
@@ -76,6 +77,7 @@ a {
 .login-form input:focus-visible,
 .login-form button:focus-visible,
 .sync-accounts-button:focus-visible,
+.sync-transactions-button:focus-visible,
 .all-accounts-button:focus-visible,
 .account-tile:focus-visible {
   outline: 3px solid #0071e3;
@@ -187,6 +189,26 @@ h1 {
   opacity: 0.62;
 }
 
+.sync-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: end;
+  margin-bottom: 0.25rem;
+}
+
+.sync-transactions-button {
+  border: 1px solid #d2d2d7;
+  background: rgb(255 255 255 / 72%);
+  color: inherit;
+}
+
+.sync-transactions-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .accounts-loading,
 .accounts-error,
 .accounts-empty {
@@ -218,6 +240,65 @@ h1 {
 
 .account-filter {
   margin-top: clamp(3rem, 8vw, 5.5rem);
+}
+
+.transaction-sync-status {
+  display: grid;
+  gap: 1rem;
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 1.5rem;
+  background: rgb(255 255 255 / 62%);
+  box-shadow: 0 0.75rem 2rem rgb(29 29 31 / 5%);
+  padding: 1.35rem;
+}
+
+.transaction-sync-status h2,
+.transaction-sync-status p {
+  margin: 0;
+}
+
+.transaction-sync-status h2 {
+  font-size: 1.2rem;
+}
+
+.transaction-sync-status p {
+  color: #6e6e73;
+  line-height: 1.45;
+}
+
+.sync-status-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sync-status-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid rgb(0 0 0 / 7%);
+  padding-top: 0.7rem;
+  color: #515154;
+  font-size: 0.9rem;
+}
+
+.sync-state {
+  color: #515154;
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-align: right;
+}
+
+.sync-state-running {
+  color: #0071e3;
+}
+
+.sync-state-failed {
+  color: #b42318;
 }
 
 .account-filter-heading {
@@ -362,6 +443,7 @@ h1 {
   }
 
   .sync-accounts-button,
+  .sync-transactions-button,
   .all-accounts-button {
     justify-content: center;
     width: 100%;
@@ -374,6 +456,20 @@ h1 {
     overflow-x: auto;
     padding: 0.15rem 1rem 1.1rem 0.15rem;
     scroll-snap-type: x mandatory;
+  }
+
+  .sync-actions {
+    display: grid;
+  }
+
+  .sync-status-list li {
+    align-items: start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .sync-state {
+    text-align: left;
   }
 
   .account-tile {
@@ -415,7 +511,9 @@ h1 {
   .accounts-loading,
   .accounts-empty,
   .all-accounts-button,
-  .account-tile {
+  .account-tile,
+  .sync-transactions-button,
+  .transaction-sync-status {
     border-color: rgb(255 255 255 / 12%);
     background: rgb(42 42 45 / 72%);
   }

@@ -16,6 +16,9 @@
       "enabled": true,
     },
   },
+  "triggers": {
+    "crons": ["*/5 * * * *"],
+  },
   "upload_source_maps": true,
   "vars": {
     "APP_ENV": "development",

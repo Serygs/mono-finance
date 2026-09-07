@@ -12,6 +12,8 @@ import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
+import type { TransactionSyncService } from './services/transaction-sync-service'
+import { createTransactionSyncService } from './services/transaction-sync-service-factory'
 import {
   listAccountsHandler,
   synchronizeAccountsHandler,
@@ -23,6 +25,10 @@ import {
   setupHandler,
 } from './routes/auth'
 import { healthHandler } from './routes/health'
+import {
+  getTransactionSyncStatusHandler,
+  synchronizeTransactionsHandler,
+} from './routes/transactions'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -39,6 +45,9 @@ export function createApp(
   accountServiceFactory: (
     environment: MonobankEnvironment,
   ) => AccountService = createAccountService,
+  transactionSyncServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => TransactionSyncService = createTransactionSyncService,
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
@@ -102,6 +111,18 @@ export function createApp(
   )
   app.post('/api/sync/accounts', (context) =>
     synchronizeAccountsHandler(context, accountServiceFactory(context.env)),
+  )
+  app.get('/api/sync/transactions/status', (context) =>
+    getTransactionSyncStatusHandler(
+      context,
+      transactionSyncServiceFactory(context.env),
+    ),
+  )
+  app.post('/api/sync/transactions', (context) =>
+    synchronizeTransactionsHandler(
+      context,
+      transactionSyncServiceFactory(context.env),
+    ),
   )
 
   app.notFound((context) =>
