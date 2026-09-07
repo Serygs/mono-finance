@@ -1,0 +1,17 @@
+{
+  "name": "Mono Finance",
+  "short_name": "Mono Finance",
+  "description": "Private personal finance dashboard with encrypted offline snapshots.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f5f5f7",
+  "icons": [
+    {
+      "src": "/icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

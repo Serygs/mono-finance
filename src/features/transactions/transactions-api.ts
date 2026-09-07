@@ -1,4 +1,5 @@
 import type { ApiResponse } from '../../types/api'
+import { getOfflineApiData } from '../offline/offline-api'
 
 import type {
   TransactionListFilters,
@@ -26,22 +27,22 @@ export async function getTransactions(
   appendParameter(parameters, 'cursor', cursor)
   appendParameter(parameters, 'limit', limit)
   const search = parameters.toString()
-  const response = await fetch(
-    `/api/transactions${search ? `?${search}` : ''}`,
-    {
+  const path = `/api/transactions${search ? `?${search}` : ''}`
+  return getOfflineApiData(path, async () => {
+    const response = await fetch(path, {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
-    },
-  )
-  const payload = (await response.json()) as ApiResponse<TransactionPage>
-  if (!response.ok || !('data' in payload)) {
-    throw new Error(
-      'error' in payload
-        ? payload.error.message
-        : 'Transactions could not be loaded. Try again later.',
-    )
-  }
-  return payload.data
+    })
+    const payload = (await response.json()) as ApiResponse<TransactionPage>
+    if (!response.ok || !('data' in payload)) {
+      throw new Error(
+        'error' in payload
+          ? payload.error.message
+          : 'Transactions could not be loaded. Try again later.',
+      )
+    }
+    return payload.data
+  })
 }
 
 export async function getCompensationDetails(

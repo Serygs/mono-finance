@@ -33,6 +33,23 @@ a {
   border-bottom: 1px solid #d2d2d7;
 }
 
+.offline-status {
+  position: fixed;
+  z-index: 10;
+  right: 1rem;
+  bottom: 1rem;
+  max-width: min(26rem, calc(100vw - 2rem));
+  margin: 0;
+  border: 1px solid #e7c36a;
+  border-radius: 0.9rem;
+  background: #fff9e8;
+  box-shadow: 0 0.75rem 2rem rgb(29 29 31 / 14%);
+  color: #765400;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 0.7rem 0.85rem;
+}
+
 .brand {
   font-weight: 700;
   text-decoration: none;

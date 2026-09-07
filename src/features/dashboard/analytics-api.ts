@@ -1,4 +1,5 @@
 import type { ApiResponse } from '../../types/api'
+import { getOfflineApiData } from '../offline/offline-api'
 
 export interface CurrencyAmount {
   amountMinor: number
@@ -127,17 +128,20 @@ async function requestAnalytics<T>(
   if (filters.baseCurrencyCode !== undefined) {
     parameters.set('baseCurrency', filters.baseCurrencyCode)
   }
-  const response = await fetch(`${path}?${parameters.toString()}`, {
-    credentials: 'same-origin',
-    headers: { Accept: 'application/json' },
+  const resource = `${path}?${parameters.toString()}`
+  return getOfflineApiData(resource, async () => {
+    const response = await fetch(resource, {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+    const payload = (await response.json()) as ApiResponse<T>
+    if (!response.ok || !('data' in payload)) {
+      throw new Error(
+        'error' in payload
+          ? payload.error.message
+          : 'Analytics could not be loaded. Try again later.',
+      )
+    }
+    return payload.data
   })
-  const payload = (await response.json()) as ApiResponse<T>
-  if (!response.ok || !('data' in payload)) {
-    throw new Error(
-      'error' in payload
-        ? payload.error.message
-        : 'Analytics could not be loaded. Try again later.',
-    )
-  }
-  return payload.data
 }
