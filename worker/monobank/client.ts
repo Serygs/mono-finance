@@ -97,7 +97,7 @@ export class HttpMonobankClient implements MonobankClient {
   private readonly now: () => number
 
   constructor(options: HttpMonobankClientOptions) {
-    this.token = options.token
+    this.token = options.token.trim()
     this.requestGate = options.requestGate
     this.fetcher = options.fetcher ?? fetch
     this.timeoutMilliseconds =
