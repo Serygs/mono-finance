@@ -6,7 +6,7 @@ const viteEntrypoint = fileURLToPath(
 )
 const result = spawnSync(
   process.execPath,
-  [viteEntrypoint, '--mode', 'development'],
+  [viteEntrypoint, '--mode', 'development', ...process.argv.slice(2)],
   {
     env: { ...process.env, CLOUDFLARE_ENV: 'development' },
     stdio: 'inherit',

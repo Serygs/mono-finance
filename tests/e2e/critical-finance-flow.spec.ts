@@ -60,6 +60,7 @@ test('an owner can complete the critical private-finance workflow', async ({
     'Ivan reimbursement',
   )
 
+  await page.getByRole('button', { name: 'Close' }).click()
   await page.getByRole('link', { name: 'Overview' }).first().click()
   await expect(page.getByText('Recent adjusted transactions')).toBeVisible()
   await expect(page.getByText('Recent compensations')).toBeVisible()
