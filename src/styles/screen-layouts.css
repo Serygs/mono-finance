@@ -1,0 +1,612 @@
+/* Existing screens consume the shared primitives while retaining domain layout. */
+
+.dashboard-page,
+.transactions-page,
+.settings-page {
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.dashboard-filters,
+.transaction-filters,
+.category-form,
+.category-list li,
+.account-tile {
+  border-color: var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  align-items: start;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+
+.dashboard-filters .ui-field {
+  flex: initial;
+}
+
+.transaction-filters {
+  align-items: start;
+  margin-top: 0;
+  padding: 1rem;
+}
+
+.transaction-search,
+.filter-field,
+.custom-date-fields .ui-field {
+  color: var(--color-text-secondary);
+}
+
+.transaction-search input,
+.filter-field .ui-select,
+.dashboard-filters .ui-select,
+.dashboard-filters .ui-field input,
+.custom-date-fields input {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.login-form .ui-button {
+  border-radius: var(--radius-control);
+}
+
+.transaction-filters .ui-segmented-control {
+  grid-column: span 4;
+  align-self: end;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(6, minmax(10.5rem, 1fr));
+  overflow-x: auto;
+  padding: 0.15rem 0.1rem 0.5rem;
+  scroll-snap-type: x proximity;
+}
+
+.ui-kpi {
+  scroll-snap-align: start;
+}
+
+.metric-values strong {
+  color: var(--color-text);
+  font-size: clamp(1.18rem, 2vw, 1.55rem);
+  font-weight: 680;
+}
+
+.dashboard-chart-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+  gap: 1rem;
+}
+
+.dashboard-chart-primary {
+  grid-column: span 2;
+}
+
+.dashboard-evidence-grid {
+  gap: 1rem;
+}
+
+.donut-legend > li > span {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.donut-legend-marker {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--donut-color);
+}
+
+.donut-segment-0 {
+  --donut-color: var(--accent-cyan);
+  stroke: var(--accent-cyan);
+}
+
+.donut-segment-1 {
+  --donut-color: var(--accent-green);
+  stroke: var(--accent-green);
+}
+
+.donut-segment-2 {
+  --donut-color: var(--accent-pink);
+  stroke: var(--accent-pink);
+}
+
+.donut-segment-3 {
+  --donut-color: var(--accent-violet);
+  stroke: var(--accent-violet);
+}
+
+.donut-segment-4 {
+  --donut-color: var(--accent-blue);
+  stroke: var(--accent-blue);
+}
+
+.line-chart-grid {
+  stroke: var(--color-border);
+}
+
+.line-chart-path,
+.line-chart circle {
+  stroke: var(--color-action);
+}
+
+.line-chart circle {
+  fill: var(--color-surface);
+}
+
+.income-bar {
+  background: var(--color-income);
+}
+
+.expense-bar,
+.bar-chart i {
+  background: var(--color-action);
+}
+
+.bar-chart li > div {
+  background: var(--color-surface-soft);
+}
+
+.transaction-layout {
+  display: block;
+  margin-top: 0;
+}
+
+.transaction-list {
+  gap: 0.45rem;
+}
+
+.transaction-row {
+  min-height: 4.75rem;
+  border-color: var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface-raised);
+  box-shadow: none;
+}
+
+.transaction-row:hover,
+.transaction-row[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--color-action), transparent 55%);
+  background: var(--color-action-soft);
+}
+
+.transaction-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-amount.expense {
+  color: var(--color-expense);
+}
+
+.transaction-amount.income {
+  color: var(--color-income);
+}
+
+.transaction-indicators span {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+
+.transaction-details {
+  position: static;
+  gap: 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.transaction-details-heading {
+  display: none;
+}
+
+.transaction-details-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-correction-form,
+.transaction-exclusion {
+  border-color: var(--color-border);
+}
+
+.transaction-detail-note {
+  background: var(--color-action-soft);
+  color: var(--color-action-hover);
+}
+
+.transaction-detail-excluded {
+  background: var(--color-danger-soft);
+  color: var(--color-expense);
+}
+
+.load-more-button {
+  margin-top: 1.25rem;
+}
+
+.account-filter {
+  margin-top: clamp(1.25rem, 4vw, 3.5rem);
+}
+
+.account-tile {
+  color: var(--color-text);
+}
+
+.account-tile:hover {
+  border-color: var(--color-border-strong);
+}
+
+.account-tile[aria-pressed='true'] {
+  border-color: var(--color-action);
+  background: var(--color-action-soft);
+  box-shadow: var(--focus-ring);
+}
+
+.currency-badge,
+.inactive-badge {
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+}
+
+.transaction-sync-status {
+  display: block;
+  gap: 0;
+  margin-top: clamp(1.25rem, 4vw, 3rem);
+  padding: 0;
+}
+
+.transaction-sync-status > .ui-card__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.transaction-sync-status .ui-empty-state {
+  border: 0;
+  background: var(--color-surface-soft);
+  box-shadow: none;
+}
+
+.transaction-sync-status p {
+  color: var(--color-text-tertiary);
+}
+
+.sync-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-secondary);
+}
+
+.sync-state::before {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  content: '';
+}
+
+.sync-state-running::before {
+  background: var(--color-action);
+}
+
+.sync-state-failed::before {
+  background: var(--color-expense);
+}
+
+.settings-page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-page > .ui-page-header {
+  grid-column: 1 / -1;
+}
+
+.category-management {
+  align-content: start;
+  gap: 1rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  letter-spacing: -0.035em;
+}
+
+.section-heading p {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.category-form {
+  padding: 1.15rem;
+}
+
+.category-list li {
+  grid-template-columns: minmax(0, auto) minmax(4rem, 1fr) auto;
+}
+
+.login-page,
+.session-loading {
+  min-height: 100dvh;
+  padding: max(1.25rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1.25rem, env(safe-area-inset-left));
+}
+
+.login-card {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-overlay);
+}
+
+.login-card h1 {
+  color: var(--color-text);
+  font-weight: 720;
+  text-wrap: balance;
+}
+
+.login-form {
+  gap: 0.85rem;
+}
+
+.offline-status {
+  z-index: 40;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  border-color: color-mix(in srgb, var(--color-warning), transparent 55%);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-soft);
+  box-shadow: var(--shadow-card);
+  color: var(--color-warning);
+}
+
+@media (max-width: 75rem) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
+    overflow: visible;
+  }
+
+  .settings-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 48rem) {
+  .app-header {
+    min-height: 3.75rem;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    padding: max(0.55rem, env(safe-area-inset-top))
+      max(0.75rem, env(safe-area-inset-right)) 0.55rem
+      max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .desktop-navigation {
+    display: none;
+  }
+
+  .mobile-navigation {
+    position: fixed;
+    z-index: 30;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-glass);
+    backdrop-filter: saturate(150%) blur(18px);
+    padding: 0.4rem max(0.5rem, env(safe-area-inset-right))
+      max(0.4rem, env(safe-area-inset-bottom))
+      max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .mobile-navigation a {
+    min-height: 2.75rem;
+    justify-content: center;
+    padding-inline: 0.35rem;
+  }
+
+  .page-content {
+    width: min(calc(100% - 1.5rem), 90rem);
+    padding-block: 1.5rem calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .ui-page-header {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 1.15rem;
+  }
+
+  .ui-page-header h1 {
+    font-size: clamp(2.35rem, 13vw, 3.6rem);
+  }
+
+  .ui-page-header__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-filters .ui-field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .transaction-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .transaction-filters .ui-segmented-control,
+  .transaction-search,
+  .custom-date-fields {
+    grid-column: 1 / -1;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-chart-grid,
+  .dashboard-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-chart-primary {
+    grid-column: auto;
+  }
+
+  .transaction-main {
+    max-width: 62%;
+  }
+
+  .transaction-meta {
+    max-width: 38%;
+  }
+
+  .account-filter-heading {
+    align-items: stretch;
+  }
+
+  .all-accounts-button {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ui-alert {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-overlay--sheet {
+    display: grid;
+    align-items: end;
+  }
+
+  .ui-overlay--sheet .ui-overlay__surface {
+    width: 100%;
+    height: auto;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-radius: var(--radius-hero) var(--radius-hero) 0 0;
+  }
+
+  @keyframes overlay-enter {
+    from {
+      opacity: 0;
+      transform: translateY(2rem) scale(0.985);
+    }
+  }
+
+  .offline-status {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 30rem) {
+  .ui-page-header__actions,
+  .dashboard-filters,
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-field {
+    grid-column: 1 / -1;
+  }
+
+  .transaction-row {
+    align-items: start;
+    padding: 0.9rem;
+  }
+
+  .transaction-main,
+  .transaction-meta {
+    max-width: 56%;
+  }
+
+  .transaction-meta {
+    max-width: 44%;
+  }
+
+  .category-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-canvas: #141416;
+    --color-surface: #242427;
+    --color-surface-raised: rgb(42 42 45 / 94%);
+    --color-surface-soft: #323236;
+    --color-glass: rgb(29 29 31 / 84%);
+    --color-text: #f5f5f7;
+    --color-text-secondary: #d1d1d6;
+    --color-text-tertiary: #a1a1a6;
+    --color-border: rgb(255 255 255 / 14%);
+    --color-border-strong: #69696e;
+    --color-action: #2997ff;
+    --color-action-hover: #69b7ff;
+    --color-action-soft: rgb(20 66 105 / 72%);
+    --color-income: #8de1b3;
+    --color-expense: #ffb4ab;
+    --color-warning: #ffe08a;
+    --color-warning-soft: rgb(96 70 13 / 44%);
+    --color-danger-soft: rgb(103 31 25 / 48%);
+    --color-success-soft: rgb(21 82 53 / 46%);
+    --shadow-card: 0 0.65rem 2rem rgb(0 0 0 / 20%);
+    --shadow-overlay: 0 1.5rem 4rem rgb(0 0 0 / 46%);
+    --focus-ring: 0 0 0 3px rgb(41 151 255 / 28%);
+  }
+
+  .ui-button--primary {
+    color: #071421;
+  }
+
+  .ui-segmented-control button[aria-pressed='true'],
+  .brand-mark {
+    background: #f5f5f7;
+    color: #1d1d1f;
+  }
+
+  .transaction-filters,
+  .dashboard-filters,
+  .category-form,
+  .category-list li,
+  .account-tile,
+  .login-card {
+    border-color: var(--color-border);
+    background: var(--color-surface-raised);
+  }
+
+  .transaction-row,
+  .transaction-search input,
+  .custom-date-fields input {
+    border-color: var(--color-border);
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-overlay__surface,
+  .ui-skeleton > span:not(.sr-only) {
+    animation: none;
+  }
+}
