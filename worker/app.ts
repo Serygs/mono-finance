@@ -24,6 +24,10 @@ import type { CompensationService } from './services/compensation-service'
 import { createCompensationService } from './services/compensation-service-factory'
 import type { AnalyticsService } from './services/analytics-service'
 import { createAnalyticsService } from './services/analytics-service-factory'
+import type { CurrencyPreferencesService } from './services/currency-preferences-service'
+import { createCurrencyPreferencesService } from './services/currency-preferences-service-factory'
+import type { ExchangeRateService } from './services/exchange-rate-service'
+import { createExchangeRateService } from './services/exchange-rate-service-factory'
 import {
   listAccountsHandler,
   synchronizeAccountsHandler,
@@ -64,6 +68,11 @@ import {
   analyticsOverviewHandler,
   analyticsTrendsHandler,
 } from './routes/analytics'
+import {
+  getCurrencyPreferencesHandler,
+  setCurrencyPreferencesHandler,
+  synchronizeExchangeRatesHandler,
+} from './routes/currency-preferences'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -98,6 +107,12 @@ export function createApp(
   analyticsServiceFactory: (
     environment: MonobankEnvironment,
   ) => AnalyticsService = createAnalyticsService,
+  currencyPreferencesServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => CurrencyPreferencesService = createCurrencyPreferencesService,
+  exchangeRateServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => ExchangeRateService = createExchangeRateService,
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
@@ -173,6 +188,24 @@ export function createApp(
   )
   app.get('/api/analytics/trends', (context) =>
     analyticsTrendsHandler(context, analyticsServiceFactory(context.env)),
+  )
+  app.get('/api/preferences/currency', (context) =>
+    getCurrencyPreferencesHandler(
+      context,
+      currencyPreferencesServiceFactory(context.env),
+    ),
+  )
+  app.put('/api/preferences/currency', (context) =>
+    setCurrencyPreferencesHandler(
+      context,
+      currencyPreferencesServiceFactory(context.env),
+    ),
+  )
+  app.post('/api/exchange-rates/sync', (context) =>
+    synchronizeExchangeRatesHandler(
+      context,
+      exchangeRateServiceFactory(context.env),
+    ),
   )
   app.get('/api/categories', (context) =>
     listCategoriesHandler(context, categoryServiceFactory(context.env)),

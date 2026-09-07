@@ -123,6 +123,57 @@ describe('AnalyticsService', () => {
       { currencyCode: 'UAH', amountMinor: 11_071 },
     ])
   })
+
+  it('returns base-currency analytics only for transactions with a stored historical rate', async () => {
+    const service = new AnalyticsService(
+      new FakeAnalyticsRepository(
+        [
+          item({ id: 'uah', amount: -1_000, timestamp: 1_704_067_200 }),
+          item({
+            id: 'usd',
+            amount: -1_000,
+            currency: 'USD',
+            timestamp: 1_704_067_200,
+          }),
+          item({
+            id: 'eur-missing',
+            amount: -1_000,
+            currency: 'EUR',
+            timestamp: 1_704_067_200,
+          }),
+        ],
+        [
+          {
+            rateAt: 1_704_000_000,
+            rateDenominator: 100,
+            rateNumerator: 4_000,
+            source: 'test',
+            sourceCurrencyCode: 'USD',
+            targetCurrencyCode: 'UAH',
+          },
+        ],
+      ),
+    )
+
+    const overview = await service.overview({
+      ...filters(),
+      baseCurrencyCode: 'UAH',
+    })
+
+    expect(overview.totals).toEqual([
+      {
+        currencyCode: 'UAH',
+        expenseAmountMinor: 41_000,
+        incomeAmountMinor: 0,
+        netAmountMinor: -41_000,
+      },
+    ])
+    expect(overview.currencyConversion).toEqual({
+      baseCurrencyCode: 'UAH',
+      missingRateTransactionCounts: [{ count: 1, currencyCode: 'EUR' }],
+      mode: 'base',
+    })
+  })
 })
 
 function filters() {
@@ -163,8 +214,20 @@ function item(
 }
 class FakeAnalyticsRepository implements AnalyticsRepository {
   private readonly transactions: ResolvedAnalyticsTransaction[]
-  constructor(transactions: ResolvedAnalyticsTransaction[]) {
+  private readonly rates
+  constructor(
+    transactions: ResolvedAnalyticsTransaction[],
+    rates: Array<{
+      rateAt: number
+      rateDenominator: number
+      rateNumerator: number
+      source: string
+      sourceCurrencyCode: string
+      targetCurrencyCode: string
+    }> = [],
+  ) {
     this.transactions = transactions
+    this.rates = rates
   }
   async listResolvedTransactions(filters: {
     accountIds: string[]
@@ -178,5 +241,8 @@ class FakeAnalyticsRepository implements AnalyticsRepository {
         (filters.accountIds.length === 0 ||
           filters.accountIds.includes(transaction.accountId)),
     )
+  }
+  async listExchangeRates() {
+    return this.rates
   }
 }

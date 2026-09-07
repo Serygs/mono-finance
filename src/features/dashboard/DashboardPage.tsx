@@ -27,6 +27,7 @@ import {
   type CurrencyAmount,
   type CurrencyTotals,
 } from './analytics-api'
+import { getCurrencyPreferences } from '../settings/currency-preferences-api'
 import {
   DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
@@ -68,6 +69,14 @@ export function DashboardPage() {
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null)
+  const [currencyMode, setCurrencyMode] = useState<'base' | 'original'>(
+    'original',
+  )
+  const preferencesQuery = useQuery({
+    queryFn: getCurrencyPreferences,
+    queryKey: ['currency-preferences'],
+  })
+  const baseCurrencyCode = preferencesQuery.data?.baseCurrencyCode ?? 'UAH'
   const range = useMemo(
     () => resolveDashboardRange(datePreset, customDateFrom, customDateTo),
     [customDateFrom, customDateTo, datePreset],
@@ -80,8 +89,13 @@ export function DashboardPage() {
     () =>
       range === null
         ? null
-        : { accountIds, dateFrom: range.dateFrom, dateTo: range.dateTo },
-    [accountIds, range],
+        : {
+            accountIds,
+            ...(currencyMode === 'base' ? { baseCurrencyCode } : {}),
+            dateFrom: range.dateFrom,
+            dateTo: range.dateTo,
+          },
+    [accountIds, baseCurrencyCode, currencyMode, range],
   )
   const analyticsQuery = useQuery({
     enabled: analyticsFilters !== null,
@@ -92,14 +106,14 @@ export function DashboardPage() {
     () => ({
       accountIds,
       category: null,
-      currency: displayCurrency,
+      currency: currencyMode === 'original' ? displayCurrency : null,
       dateFrom: range?.dateFrom ?? null,
       dateTo: range?.dateTo ?? null,
       direction: null,
       excluded: false,
       search: null,
     }),
-    [accountIds, displayCurrency, range],
+    [accountIds, currencyMode, displayCurrency, range],
   )
   const recentQuery = useQuery({
     enabled: analyticsFilters !== null,
@@ -255,21 +269,37 @@ export function DashboardPage() {
           </>
         ) : null}
         <label>
-          <span>Display currency</span>
+          <span>Currency view</span>
           <select
-            onChange={(event) => setDisplayCurrency(event.target.value || null)}
-            value={displayCurrency ?? ''}
+            onChange={(event) =>
+              setCurrencyMode(event.target.value as 'base' | 'original')
+            }
+            value={currencyMode}
           >
-            <option value="">All original currencies</option>
-            {analyticsQuery.data === undefined
-              ? null
-              : availableCurrencies(analyticsQuery.data).map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency}
-                  </option>
-                ))}
+            <option value="original">Original currencies</option>
+            <option value="base">Base currency · {baseCurrencyCode}</option>
           </select>
         </label>
+        {currencyMode === 'original' ? (
+          <label>
+            <span>Original currency</span>
+            <select
+              onChange={(event) =>
+                setDisplayCurrency(event.target.value || null)
+              }
+              value={displayCurrency ?? ''}
+            >
+              <option value="">All original currencies</option>
+              {analyticsQuery.data === undefined
+                ? null
+                : availableCurrencies(analyticsQuery.data).map((currency) => (
+                    <option key={currency} value={currency}>
+                      {currency}
+                    </option>
+                  ))}
+            </select>
+          </label>
+        ) : null}
       </section>
 
       {syncStates?.some((state) => state.status === 'failed') ? (
@@ -292,7 +322,8 @@ export function DashboardPage() {
         <DashboardAnalyticsView
           accounts={accounts ?? []}
           analytics={analyticsQuery.data}
-          displayCurrency={displayCurrency}
+          displayCurrency={currencyMode === 'original' ? displayCurrency : null}
+          currencyMode={currencyMode}
           recentTransactions={recentQuery.data?.transactions ?? []}
           recentTransactionsLoading={recentQuery.isPending}
         />
@@ -320,12 +351,14 @@ export function DashboardPage() {
 function DashboardAnalyticsView({
   accounts,
   analytics,
+  currencyMode,
   displayCurrency,
   recentTransactions,
   recentTransactionsLoading,
 }: {
   accounts: AccountSummary[]
   analytics: DashboardAnalytics
+  currencyMode: 'base' | 'original'
   displayCurrency: string | null
   recentTransactions: TransactionListItem[]
   recentTransactionsLoading: boolean
@@ -353,11 +386,32 @@ function DashboardAnalyticsView({
         <p>
           Change the filters or refresh transactions to build this dashboard.
         </p>
+        {currencyMode === 'base' &&
+        analytics.overview.currencyConversion.missingRateTransactionCounts
+          .length > 0 ? (
+          <p>
+            Historical rates are missing for{' '}
+            {analytics.overview.currencyConversion.missingRateTransactionCounts
+              .map((item) => `${item.count} ${item.currencyCode}`)
+              .join(', ')}{' '}
+            transaction(s). Switch to original currencies to view them.
+          </p>
+        ) : null}
       </section>
     )
   }
   return (
     <div className="dashboard-content">
+      {currencyMode === 'base' ? (
+        <p className="dashboard-state dashboard-state-warning" role="status">
+          Base-currency values are converted from preserved original amounts
+          using rates stored at or before each transaction.
+          {analytics.overview.currencyConversion.missingRateTransactionCounts
+            .length > 0
+            ? ` ${analytics.overview.currencyConversion.missingRateTransactionCounts.map((item) => `${item.count} ${item.currencyCode}`).join(', ')} transaction(s) have no historical rate and are excluded from base totals.`
+            : ''}
+        </p>
+      ) : null}
       <p className="dashboard-currency-note">
         {displayCurrency === null
           ? 'Totals remain separated by original currency. Choose a currency for a focused chart view.'

@@ -1,5 +1,12 @@
+import {
+  convertTransactionsToBaseCurrency,
+  type HistoricalExchangeRate,
+  type MissingCurrencyRate,
+} from '../analytics/currency-conversion'
+
 export interface AnalyticsFilters {
   accountIds: string[]
+  baseCurrencyCode?: string
   dateFrom: number
   dateTo: number
   userId: string
@@ -21,6 +28,10 @@ export interface ResolvedAnalyticsTransaction {
 }
 
 export interface AnalyticsRepository {
+  listExchangeRates(input: {
+    currencyCodes: string[]
+    dateTo: number
+  }): Promise<HistoricalExchangeRate[]>
   listResolvedTransactions(
     filters: AnalyticsFilters,
   ): Promise<ResolvedAnalyticsTransaction[]>
@@ -40,6 +51,7 @@ export interface AnalyticsOverview {
   excludedTotals: ExcludedTotals[]
   projectedMonthExpenses: CurrencyAmount[]
   totals: CurrencyTotals[]
+  currencyConversion: CurrencyConversion
 }
 
 export interface AnalyticsBreakdowns {
@@ -49,12 +61,20 @@ export interface AnalyticsBreakdowns {
   incomeByCategory: CategoryAmount[]
   largestTransactions: LargestTransaction[]
   topMerchants: MerchantAmount[]
+  currencyConversion: CurrencyConversion
 }
 
 export interface AnalyticsTrends {
   daily: TimeSeriesPoint[]
   monthly: TimeSeriesPoint[]
   spendingTrend: TimeSeriesPoint[]
+  currencyConversion: CurrencyConversion
+}
+
+export interface CurrencyConversion {
+  baseCurrencyCode: string | null
+  missingRateTransactionCounts: MissingCurrencyRate[]
+  mode: 'base' | 'original'
 }
 
 export interface CurrencyAmount {
@@ -121,33 +141,51 @@ export class AnalyticsService {
           dateTo: currentTimestamp,
         }),
       ])
-    const included = transactions.filter(
+    const converted = await this.convertGroups(filters.baseCurrencyCode, [
+      transactions,
+      previousTransactions,
+      monthTransactions,
+    ])
+    const [
+      currentTransactions,
+      previousTransactionsConverted,
+      monthTransactionsConverted,
+    ] = converted.groups
+    const [currentConversion] = converted.conversions
+    const included = (currentTransactions ?? []).filter(
       (transaction) => !transaction.isExcluded,
     )
-    const previousIncluded = previousTransactions.filter(
+    const previousIncluded = (previousTransactionsConverted ?? []).filter(
       (transaction) => !transaction.isExcluded,
     )
-    const monthIncluded = monthTransactions.filter(
+    const monthIncluded = (monthTransactionsConverted ?? []).filter(
       (transaction) => !transaction.isExcluded,
     )
     return {
       averageExpensePerDay: averageExpenses(included, filters),
       comparison: compareExpenses(included, previousIncluded),
       compensation: compensationTotals(included),
-      excludedTotals: excludedTotals(transactions),
+      excludedTotals: excludedTotals(currentTransactions ?? []),
       projectedMonthExpenses: projectMonthExpenses(
         monthIncluded,
         currentTimestamp,
       ),
       totals: totals(included),
+      currencyConversion: currentConversion ?? originalCurrencyConversion(),
     }
   }
 
   async breakdowns(filters: AnalyticsFilters): Promise<AnalyticsBreakdowns> {
-    const transactions = (
-      await this.repository.listResolvedTransactions(filters)
-    ).filter((transaction) => !transaction.isExcluded)
-    const expenses = transactions.filter(
+    const transactions = await this.repository.listResolvedTransactions(filters)
+    const converted = await this.convertGroups(filters.baseCurrencyCode, [
+      transactions,
+    ])
+    const [currentTransactions] = converted.groups
+    const [currentConversion] = converted.conversions
+    const included = (currentTransactions ?? []).filter(
+      (transaction) => !transaction.isExcluded,
+    )
+    const expenses = included.filter(
       (transaction) => transaction.direction === 'expense',
     )
     return {
@@ -162,11 +200,9 @@ export class AnalyticsService {
       expensesByCategory: categoryAmounts(expenses),
       expensesByCurrency: currencyAmounts(expenses),
       incomeByCategory: categoryAmounts(
-        transactions.filter(
-          (transaction) => transaction.direction === 'income',
-        ),
+        included.filter((transaction) => transaction.direction === 'income'),
       ),
-      largestTransactions: [...transactions]
+      largestTransactions: [...included]
         .sort(
           (left, right) =>
             Math.abs(right.effectiveAmountMinor) -
@@ -184,23 +220,77 @@ export class AnalyticsService {
           transactionId: transaction.id,
         })),
       topMerchants: merchantAmounts(expenses),
+      currencyConversion: currentConversion ?? originalCurrencyConversion(),
     }
   }
 
   async trends(filters: AnalyticsFilters): Promise<AnalyticsTrends> {
-    const transactions = (
-      await this.repository.listResolvedTransactions(filters)
-    ).filter((transaction) => !transaction.isExcluded)
+    const transactions = await this.repository.listResolvedTransactions(filters)
+    const converted = await this.convertGroups(filters.baseCurrencyCode, [
+      transactions,
+    ])
+    const [currentTransactions] = converted.groups
+    const [currentConversion] = converted.conversions
+    const included = (currentTransactions ?? []).filter(
+      (transaction) => !transaction.isExcluded,
+    )
     return {
-      daily: timeSeries(transactions, dayStart),
-      monthly: timeSeries(transactions, monthStart),
+      daily: timeSeries(included, dayStart),
+      monthly: timeSeries(included, monthStart),
       spendingTrend: timeSeries(
-        transactions.filter(
-          (transaction) => transaction.direction === 'expense',
-        ),
+        included.filter((transaction) => transaction.direction === 'expense'),
         monthStart,
       ),
+      currencyConversion: currentConversion ?? originalCurrencyConversion(),
     }
+  }
+
+  private async convertGroups(
+    baseCurrencyCode: string | undefined,
+    groups: ResolvedAnalyticsTransaction[][],
+  ): Promise<{
+    conversions: CurrencyConversion[]
+    groups: ResolvedAnalyticsTransaction[][]
+  }> {
+    if (baseCurrencyCode === undefined) {
+      return {
+        conversions: groups.map(() => originalCurrencyConversion()),
+        groups,
+      }
+    }
+    const transactions = groups.flat()
+    const rates = await this.repository.listExchangeRates({
+      currencyCodes: [
+        ...new Set(
+          transactions
+            .map((transaction) => transaction.currencyCode)
+            .concat(baseCurrencyCode),
+        ),
+      ],
+      dateTo: Math.max(
+        ...transactions.map((transaction) => transaction.originalTimestamp),
+        0,
+      ),
+    })
+    const converted = groups.map((group) =>
+      convertTransactionsToBaseCurrency(group, baseCurrencyCode, rates),
+    )
+    return {
+      conversions: converted.map((item) => ({
+        baseCurrencyCode,
+        missingRateTransactionCounts: item.missing,
+        mode: 'base' as const,
+      })),
+      groups: converted.map((item) => item.converted),
+    }
+  }
+}
+
+function originalCurrencyConversion(): CurrencyConversion {
+  return {
+    baseCurrencyCode: null,
+    missingRateTransactionCounts: [],
+    mode: 'original',
   }
 }
 

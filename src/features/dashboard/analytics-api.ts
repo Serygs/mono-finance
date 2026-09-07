@@ -11,6 +11,11 @@ export interface CurrencyTotals {
   incomeAmountMinor: number
   netAmountMinor: number
 }
+export interface CurrencyConversion {
+  baseCurrencyCode: string | null
+  missingRateTransactionCounts: Array<{ count: number; currencyCode: string }>
+  mode: 'base' | 'original'
+}
 
 export interface AnalyticsOverview {
   averageExpensePerDay: CurrencyAmount[]
@@ -34,6 +39,7 @@ export interface AnalyticsOverview {
   >
   projectedMonthExpenses: CurrencyAmount[]
   totals: CurrencyTotals[]
+  currencyConversion: CurrencyConversion
 }
 
 export interface AnalyticsBreakdowns {
@@ -56,12 +62,14 @@ export interface AnalyticsBreakdowns {
   topMerchants: Array<
     CurrencyAmount & { description: string; transactionCount: number }
   >
+  currencyConversion: CurrencyConversion
 }
 
 export interface AnalyticsTrends {
   daily: TimeSeriesPoint[]
   monthly: TimeSeriesPoint[]
   spendingTrend: TimeSeriesPoint[]
+  currencyConversion: CurrencyConversion
 }
 
 export interface TimeSeriesPoint extends CurrencyTotals {
@@ -70,6 +78,7 @@ export interface TimeSeriesPoint extends CurrencyTotals {
 
 export interface AnalyticsFilters {
   accountIds: string[]
+  baseCurrencyCode?: string
   dateFrom: number
   dateTo: number
 }
@@ -114,6 +123,9 @@ async function requestAnalytics<T>(
   })
   for (const accountId of filters.accountIds) {
     parameters.append('accountId', accountId)
+  }
+  if (filters.baseCurrencyCode !== undefined) {
+    parameters.set('baseCurrency', filters.baseCurrencyCode)
   }
   const response = await fetch(`${path}?${parameters.toString()}`, {
     credentials: 'same-origin',

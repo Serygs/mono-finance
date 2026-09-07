@@ -49,6 +49,11 @@ describe('dashboard data', () => {
 function analytics(): DashboardAnalytics {
   return {
     breakdowns: {
+      currencyConversion: {
+        baseCurrencyCode: null,
+        missingRateTransactionCounts: [],
+        mode: 'original',
+      },
       expensesByAccount: [],
       expensesByCategory: [
         {
@@ -73,6 +78,11 @@ function analytics(): DashboardAnalytics {
       topMerchants: [],
     },
     overview: {
+      currencyConversion: {
+        baseCurrencyCode: null,
+        missingRateTransactionCounts: [],
+        mode: 'original',
+      },
       averageExpensePerDay: [],
       comparison: [],
       compensation: [],
@@ -94,6 +104,11 @@ function analytics(): DashboardAnalytics {
       ],
     },
     trends: {
+      currencyConversion: {
+        baseCurrencyCode: null,
+        missingRateTransactionCounts: [],
+        mode: 'original',
+      },
       daily: [
         {
           currencyCode: 'UAH',
