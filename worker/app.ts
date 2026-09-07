@@ -14,6 +14,8 @@ import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
 import type { TransactionSyncService } from './services/transaction-sync-service'
 import { createTransactionSyncService } from './services/transaction-sync-service-factory'
+import type { TransactionQueryService } from './services/transaction-query-service'
+import { createTransactionQueryService } from './services/transaction-query-service-factory'
 import {
   listAccountsHandler,
   synchronizeAccountsHandler,
@@ -29,6 +31,7 @@ import {
   getTransactionSyncStatusHandler,
   synchronizeTransactionsHandler,
 } from './routes/transactions'
+import { listTransactionsHandler } from './routes/transaction-list'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -48,6 +51,9 @@ export function createApp(
   transactionSyncServiceFactory: (
     environment: MonobankEnvironment,
   ) => TransactionSyncService = createTransactionSyncService,
+  transactionQueryServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => TransactionQueryService = createTransactionQueryService,
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
@@ -108,6 +114,12 @@ export function createApp(
   )
   app.get('/api/accounts', (context) =>
     listAccountsHandler(context, accountServiceFactory(context.env)),
+  )
+  app.get('/api/transactions', (context) =>
+    listTransactionsHandler(
+      context,
+      transactionQueryServiceFactory(context.env),
+    ),
   )
   app.post('/api/sync/accounts', (context) =>
     synchronizeAccountsHandler(context, accountServiceFactory(context.env)),

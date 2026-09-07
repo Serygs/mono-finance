@@ -6,6 +6,7 @@ import { LoginPage } from '../features/auth/LoginPage'
 import { RequireAuthentication } from '../features/auth/RequireAuthentication'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
+import { TransactionsPage } from '../features/transactions/TransactionsPage'
 
 export function AppRouter() {
   return (
@@ -15,6 +16,7 @@ export function AppRouter() {
         <Route element={<RequireAuthentication />}>
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>

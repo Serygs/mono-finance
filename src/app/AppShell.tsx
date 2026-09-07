@@ -4,6 +4,7 @@ import { useAuth } from '../features/auth/auth-context'
 
 const navigationItems = [
   { label: 'Overview', to: '/' },
+  { label: 'Transactions', to: '/transactions' },
   { label: 'Settings', to: '/settings' },
 ] as const
 

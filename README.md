@@ -1,6 +1,6 @@
 # Mono Finance
 
-Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase synchronizes Monobank accounts, cards, and bounded transaction-history windows into D1, with resumable cursors, idempotent imports, and a scheduled ongoing sync.
+Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase synchronizes Monobank accounts, cards, and bounded transaction-history windows into D1, then exposes those immutable records through a paginated transaction browser.
 
 ## Development
 
@@ -14,7 +14,7 @@ npm run build
 npm run db:migrate:local
 ```
 
-Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local secrets, then run `npm run db:migrate:local` before starting the app. The local application is available at `http://localhost:5173`; use the one-time setup endpoint documented in [Phase 4 authentication](docs/phase-4-authentication.md) before signing in. Configure the server-only Monobank token as documented in [Phase 5 Monobank API](docs/phase-5-monobank-api.md), synchronize accounts as described in [Phase 6 account sync](docs/phase-6-account-sync.md), then import statements as described in [Phase 7 transaction sync](docs/phase-7-transaction-sync.md). The public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
+Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local secrets, then run `npm run db:migrate:local` before starting the app. The local application is available at `http://localhost:5173`; use the one-time setup endpoint documented in [Phase 4 authentication](docs/phase-4-authentication.md) before signing in. Configure the server-only Monobank token as documented in [Phase 5 Monobank API](docs/phase-5-monobank-api.md), synchronize accounts as described in [Phase 6 account sync](docs/phase-6-account-sync.md), then import statements as described in [Phase 7 transaction sync](docs/phase-7-transaction-sync.md). Browse imported records through the [Phase 8 transactions](docs/phase-8-transactions.md) screen. The public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
 
 ## Architecture
 
