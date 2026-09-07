@@ -1008,6 +1008,12 @@ h1 {
   color: #9f261c;
 }
 
+.dashboard-state-warning {
+  border-color: #e7c36a;
+  background: #fff9e8;
+  color: #765400;
+}
+
 .dashboard-skeleton {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1591,6 +1597,12 @@ h1 {
   .dashboard-skeleton span {
     background: linear-gradient(100deg, #2a2a2d 20%, #424245 40%, #2a2a2d 60%);
     background-size: 200% 100%;
+  }
+
+  .dashboard-state-warning {
+    border-color: #8f6a19;
+    background: rgb(96 70 13 / 34%);
+    color: #ffe08a;
   }
 }
 

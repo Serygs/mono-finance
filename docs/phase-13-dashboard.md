@@ -6,6 +6,9 @@ Phase 12 aggregate endpoints concurrently, then shows KPI cards, time series,
 category and distribution charts, forecasts, merchant rankings, and recent
 adjustment/compensation evidence.
 
+The initial range is 90 days so the first provider-supported historical
+backfill windows remain visible; the user can narrow it to 7 or 30 days.
+
 The dashboard never combines original currencies. With “All original
 currencies,” KPI values remain grouped by currency; charts use a single focused
 currency. No current exchange rate is applied because the exchange-rate

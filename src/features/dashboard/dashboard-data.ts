@@ -15,6 +15,8 @@ export type DashboardDatePreset =
   | 'current-year'
   | 'custom'
 
+export const DEFAULT_DASHBOARD_DATE_PRESET: DashboardDatePreset = '90d'
+
 export interface DashboardRange {
   dateFrom: number
   dateTo: number
