@@ -152,7 +152,8 @@ export class HttpMonobankClient implements MonobankClient {
     try {
       let response: Response
       try {
-        response = await this.fetcher(
+        const fetcher = this.fetcher
+        response = await fetcher(
           new Request(`${MONOBANK_API_BASE_URL}${path}`, {
             method: 'GET',
             headers: {
