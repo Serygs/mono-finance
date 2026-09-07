@@ -208,35 +208,35 @@ CREATE TRIGGER validate_compensation_link_insert
 BEFORE INSERT ON compensation_links
 FOR EACH ROW
 BEGIN
-  SELECT CASE
+  SELECT (CASE
     WHEN (SELECT direction FROM transactions WHERE id = NEW.expense_transaction_id) <> 'expense'
     THEN RAISE(ABORT, 'Compensation expense must reference an expense transaction')
-  END;
-  SELECT CASE
+  END);
+  SELECT (CASE
     WHEN (SELECT direction FROM transactions WHERE id = NEW.compensation_transaction_id) <> 'income'
     THEN RAISE(ABORT, 'Compensation must reference an incoming transaction')
-  END;
-  SELECT CASE
+  END);
+  SELECT (CASE
     WHEN NEW.currency_code <> (
       SELECT original_currency_code FROM transactions WHERE id = NEW.expense_transaction_id
     )
     THEN RAISE(ABORT, 'Compensation currency must match the expense currency')
-  END;
-  SELECT CASE
+  END);
+  SELECT (CASE
     WHEN NEW.currency_code <> (
       SELECT original_currency_code FROM transactions WHERE id = NEW.compensation_transaction_id
     )
     THEN RAISE(ABORT, 'Compensation currency must match the incoming transaction currency')
-  END;
-  SELECT CASE
+  END);
+  SELECT (CASE
     WHEN NEW.user_id <> (
       SELECT user_id FROM transactions WHERE id = NEW.expense_transaction_id
     ) OR NEW.user_id <> (
       SELECT user_id FROM transactions WHERE id = NEW.compensation_transaction_id
     )
     THEN RAISE(ABORT, 'Compensation transactions must belong to the same user')
-  END;
-  SELECT CASE
+  END);
+  SELECT (CASE
     WHEN NEW.compensated_amount_minor > (
       SELECT -original_amount_minor FROM transactions WHERE id = NEW.expense_transaction_id
     ) - COALESCE((
@@ -245,7 +245,7 @@ BEGIN
       WHERE expense_transaction_id = NEW.expense_transaction_id
     ), 0)
     THEN RAISE(ABORT, 'Compensation exceeds the original expense')
-  END;
+  END);
   SELECT CASE
     WHEN NEW.compensated_amount_minor > (
       SELECT original_amount_minor FROM transactions WHERE id = NEW.compensation_transaction_id
