@@ -18,7 +18,7 @@ describe('analytics routes', () => {
       () => service as unknown as AnalyticsService,
     )
     const response = await app.request(
-      '/api/analytics/overview?accountId=account-1&dateFrom=1704067200&dateTo=1706745599',
+      '/api/analytics/overview?accountId=account-1&baseCurrency=UAH&dateFrom=1704067200&dateTo=1706745599',
       { headers: { Cookie: 'mono_finance_session=test' } },
       environment,
     )
@@ -26,6 +26,7 @@ describe('analytics routes', () => {
     expect(response.headers.get('Cache-Control')).toBe('no-store')
     expect(service.received).toEqual({
       accountIds: ['account-1'],
+      baseCurrencyCode: 'UAH',
       dateFrom: 1_704_067_200,
       dateTo: 1_706_745_599,
       userId: 'owner-1',

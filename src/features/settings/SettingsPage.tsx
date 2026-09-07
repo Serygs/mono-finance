@@ -1,5 +1,11 @@
 import { CategoryManagement } from '../categories/CategoryManagement'
+import { CurrencyPreferences } from './CurrencyPreferences'
 
 export function SettingsPage() {
-  return <CategoryManagement />
+  return (
+    <>
+      <CurrencyPreferences />
+      <CategoryManagement />
+    </>
+  )
 }

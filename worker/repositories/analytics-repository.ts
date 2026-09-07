@@ -3,6 +3,7 @@ import type {
   AnalyticsRepository,
   ResolvedAnalyticsTransaction,
 } from '../services/analytics-service'
+import type { HistoricalExchangeRate } from '../analytics/currency-conversion'
 
 interface AnalyticsRow {
   account_id: string
@@ -24,6 +25,33 @@ export class D1AnalyticsRepository implements AnalyticsRepository {
 
   constructor(database: D1Database) {
     this.database = database
+  }
+
+  async listExchangeRates(input: {
+    currencyCodes: string[]
+    dateTo: number
+  }): Promise<HistoricalExchangeRate[]> {
+    if (input.currencyCodes.length === 0) return []
+    const placeholders = input.currencyCodes.map(() => '?').join(', ')
+    const result = await this.database
+      .prepare(
+        `SELECT source_currency_code, target_currency_code, rate_numerator,
+          rate_denominator, rate_at, source
+         FROM exchange_rates
+         WHERE rate_at <= ?
+           AND (source_currency_code IN (${placeholders})
+             OR target_currency_code IN (${placeholders}))`,
+      )
+      .bind(input.dateTo, ...input.currencyCodes, ...input.currencyCodes)
+      .all<ExchangeRateRow>()
+    return (result.results ?? []).map((row) => ({
+      rateAt: row.rate_at,
+      rateDenominator: row.rate_denominator,
+      rateNumerator: row.rate_numerator,
+      source: row.source,
+      sourceCurrencyCode: row.source_currency_code,
+      targetCurrencyCode: row.target_currency_code,
+    }))
   }
 
   async listResolvedTransactions(
@@ -79,4 +107,13 @@ export class D1AnalyticsRepository implements AnalyticsRepository {
       originalTimestamp: row.original_timestamp,
     }))
   }
+}
+
+interface ExchangeRateRow {
+  rate_at: number
+  rate_denominator: number
+  rate_numerator: number
+  source: string
+  source_currency_code: string
+  target_currency_code: string
 }

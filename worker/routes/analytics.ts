@@ -52,11 +52,13 @@ async function respond(
 function filters(context: AnalyticsContext): AnalyticsFilters {
   const query = context.req.queries()
   const accountIds = query['accountId'] ?? []
+  const baseCurrencyCode = currency(single(query['baseCurrency']))
   const dateFrom = epoch(single(query['dateFrom']))
   const dateTo = epoch(single(query['dateTo']))
   if (
     accountIds.length > 20 ||
     accountIds.some((value) => value.length === 0 || value.length > 128) ||
+    baseCurrencyCode === null ||
     dateFrom === null ||
     dateTo === null ||
     dateFrom > dateTo ||
@@ -65,10 +67,15 @@ function filters(context: AnalyticsContext): AnalyticsFilters {
     throw new AnalyticsValidationError()
   return {
     accountIds: [...new Set(accountIds)],
+    ...(baseCurrencyCode === undefined ? {} : { baseCurrencyCode }),
     dateFrom,
     dateTo,
     userId: context.get('authenticatedUser').id,
   }
+}
+function currency(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined
+  return /^[A-Za-z]{3}$/.test(value) ? value.toUpperCase() : null
 }
 function single(values: string[] | undefined): string | undefined {
   return values?.length === 1 ? values[0] : undefined

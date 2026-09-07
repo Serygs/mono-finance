@@ -110,6 +110,7 @@ export function filterDashboardAnalytics(
       totals: byCurrency(analytics.overview.totals, currencyCode),
     },
     trends: {
+      ...analytics.trends,
       daily: byCurrency(analytics.trends.daily, currencyCode),
       monthly: byCurrency(analytics.trends.monthly, currencyCode),
       spendingTrend: byCurrency(analytics.trends.spendingTrend, currencyCode),
