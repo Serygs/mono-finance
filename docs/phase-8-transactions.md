@@ -32,8 +32,5 @@ the first page once per active filter set and requests subsequent pages only
 when the user chooses **Load more**. Search input is deferred so rapid typing
 does not block rendering.
 
-## Scope
-
-This phase is read-only. Creating adjustments, exclusions, category overrides,
-or compensation links remains outside the phase; their existing records are
-only surfaced as immutable-aware indicators.
+Corrections and exclusions are documented in
+[Phase 9 transaction corrections](phase-9-transaction-corrections.md).

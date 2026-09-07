@@ -24,6 +24,8 @@ interface TransactionRow {
   original_description: string
   original_mcc: number | null
   original_timestamp: number
+  adjustment_note: string | null
+  exclusion_reason: string | null
 }
 
 interface TransactionCursor {
@@ -102,7 +104,9 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
            transactions.original_category_name AS category_name,
            COALESCE(transaction_adjustments.adjusted_amount_minor, transactions.original_amount_minor) AS effective_amount_minor,
            CASE WHEN transaction_adjustments.id IS NULL THEN 0 ELSE 1 END AS has_adjustment,
+           transaction_adjustments.note AS adjustment_note,
            CASE WHEN transaction_exclusions.is_excluded = 1 THEN 1 ELSE 0 END AS is_excluded,
+           transaction_exclusions.reason AS exclusion_reason,
            CASE WHEN EXISTS (
              SELECT 1 FROM compensation_links
              WHERE compensation_links.expense_transaction_id = transactions.id
@@ -162,10 +166,12 @@ function mapTransactionRow(row: TransactionRow): TransactionListItem {
     currencyCode: row.original_currency_code,
     currencyMinorUnit: row.currency_minor_unit,
     effectiveAmountMinor: row.effective_amount_minor,
+    adjustmentNote: row.adjustment_note,
     hasAdjustment: row.has_adjustment === 1,
     hasCompensation: row.has_compensation === 1,
     id: row.id,
     isExcluded: row.is_excluded === 1,
+    exclusionReason: row.exclusion_reason,
     originalAmountMinor: row.original_amount_minor,
     originalDescription: row.original_description,
     originalMcc: row.original_mcc,

@@ -14,10 +14,12 @@ export interface TransactionListItem {
   currencyCode: string
   currencyMinorUnit: number
   effectiveAmountMinor: number
+  adjustmentNote: string | null
   hasAdjustment: boolean
   hasCompensation: boolean
   id: string
   isExcluded: boolean
+  exclusionReason: string | null
   originalAmountMinor: number
   originalDescription: string
   originalMcc: number | null

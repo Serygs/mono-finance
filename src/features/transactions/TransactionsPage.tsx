@@ -257,6 +257,19 @@ export function TransactionsPage() {
           </ol>
           <TransactionDetails
             onClose={() => setSelectedTransaction(null)}
+            onTransactionUpdated={(correction, metadata) =>
+              setSelectedTransaction((current) =>
+                current === null || current.id !== correction.id
+                  ? current
+                  : {
+                      ...current,
+                      ...metadata,
+                      effectiveAmountMinor: correction.effectiveAmountMinor,
+                      hasAdjustment: correction.hasAdjustment,
+                      isExcluded: correction.isExcluded,
+                    },
+              )
+            }
             transaction={selectedTransaction}
           />
         </div>

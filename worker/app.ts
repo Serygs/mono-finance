@@ -16,6 +16,8 @@ import type { TransactionSyncService } from './services/transaction-sync-service
 import { createTransactionSyncService } from './services/transaction-sync-service-factory'
 import type { TransactionQueryService } from './services/transaction-query-service'
 import { createTransactionQueryService } from './services/transaction-query-service-factory'
+import type { TransactionCorrectionService } from './services/transaction-correction-service'
+import { createTransactionCorrectionService } from './services/transaction-correction-service-factory'
 import {
   listAccountsHandler,
   synchronizeAccountsHandler,
@@ -32,6 +34,12 @@ import {
   synchronizeTransactionsHandler,
 } from './routes/transactions'
 import { listTransactionsHandler } from './routes/transaction-list'
+import {
+  excludeTransactionHandler,
+  resetAdjustmentHandler,
+  restoreTransactionHandler,
+  saveAdjustmentHandler,
+} from './routes/transaction-corrections'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -54,6 +62,9 @@ export function createApp(
   transactionQueryServiceFactory: (
     environment: MonobankEnvironment,
   ) => TransactionQueryService = createTransactionQueryService,
+  transactionCorrectionServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => TransactionCorrectionService = createTransactionCorrectionService,
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
@@ -119,6 +130,30 @@ export function createApp(
     listTransactionsHandler(
       context,
       transactionQueryServiceFactory(context.env),
+    ),
+  )
+  app.put('/api/transactions/:transactionId/adjustment', (context) =>
+    saveAdjustmentHandler(
+      context,
+      transactionCorrectionServiceFactory(context.env),
+    ),
+  )
+  app.delete('/api/transactions/:transactionId/adjustment', (context) =>
+    resetAdjustmentHandler(
+      context,
+      transactionCorrectionServiceFactory(context.env),
+    ),
+  )
+  app.put('/api/transactions/:transactionId/exclusion', (context) =>
+    excludeTransactionHandler(
+      context,
+      transactionCorrectionServiceFactory(context.env),
+    ),
+  )
+  app.delete('/api/transactions/:transactionId/exclusion', (context) =>
+    restoreTransactionHandler(
+      context,
+      transactionCorrectionServiceFactory(context.env),
     ),
   )
   app.post('/api/sync/accounts', (context) =>
