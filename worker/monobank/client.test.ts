@@ -74,6 +74,27 @@ describe('HttpMonobankClient successful requests', () => {
     expect((request as Request).headers.has('X-Token')).toBe(true)
   })
 
+  it('removes invalid surrounding whitespace from a server-side token', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        clientId: 'client-1',
+        name: 'Owner',
+        accounts: [],
+      }),
+    )
+    const client = new HttpMonobankClient({
+      token: '\u000bvalid-token\u000b',
+      fetcher,
+      requestGate: new RecordingRequestGate(),
+    })
+
+    await expect(client.getClientInfo()).resolves.toMatchObject({
+      providerClientId: 'client-1',
+    })
+    const [request] = fetcher.mock.calls[0] ?? []
+    expect((request as Request).headers.get('X-Token')).toBe('valid-token')
+  })
+
   it('retrieves and maps a bounded statement without exposing provider DTOs', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json([
