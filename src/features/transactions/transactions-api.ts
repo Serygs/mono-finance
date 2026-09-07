@@ -10,6 +10,7 @@ import type {
 export async function getTransactions(
   filters: TransactionListFilters,
   cursor?: string,
+  limit?: number,
 ): Promise<TransactionPage> {
   const parameters = new URLSearchParams()
   for (const accountId of filters.accountIds) {
@@ -23,6 +24,7 @@ export async function getTransactions(
   appendParameter(parameters, 'excluded', filters.excluded)
   appendParameter(parameters, 'search', filters.search)
   appendParameter(parameters, 'cursor', cursor)
+  appendParameter(parameters, 'limit', limit)
   const search = parameters.toString()
   const response = await fetch(
     `/api/transactions${search ? `?${search}` : ''}`,

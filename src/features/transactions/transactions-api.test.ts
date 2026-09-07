@@ -74,4 +74,36 @@ describe('getTransactions', () => {
       }),
     )
   })
+
+  it('allows the dashboard to request a bounded recent transaction page', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ data: { nextCursor: null, transactions: [] } }),
+          { status: 200 },
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await getTransactions(
+      {
+        accountIds: [],
+        category: null,
+        currency: null,
+        dateFrom: 1_704_067_200,
+        dateTo: 1_706_745_599,
+        direction: null,
+        excluded: false,
+        search: null,
+      },
+      undefined,
+      100,
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/transactions?dateFrom=1704067200&dateTo=1706745599&excluded=false&limit=100',
+      expect.objectContaining({ credentials: 'same-origin' }),
+    )
+  })
 })
