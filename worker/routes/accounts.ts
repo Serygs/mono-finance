@@ -30,6 +30,14 @@ export async function synchronizeAccountsHandler(
     return noStore(context.json(success({ accounts })))
   } catch (error) {
     if (error instanceof MonobankApiError) {
+      console.error(
+        JSON.stringify({
+          errorCode: error.code,
+          message: 'monobank_account_sync_failed',
+          ...(error.status === undefined ? {} : { status: error.status }),
+          ...safeCauseDetails(error.cause),
+        }),
+      )
       return monobankFailure(context, error)
     }
     throw error
@@ -70,6 +78,20 @@ function monobankFailure(context: AccountContext, error: MonobankApiError) {
       502,
     ),
   )
+}
+
+function safeCauseDetails(cause: unknown): {
+  causeCode?: string
+  causeName?: string
+} {
+  if (!(cause instanceof Error)) {
+    return {}
+  }
+  const code = (cause as Error & { code?: unknown }).code
+  return {
+    causeName: cause.name,
+    ...(typeof code === 'string' ? { causeCode: code } : {}),
+  }
 }
 
 function noStore(response: Response): Response {
