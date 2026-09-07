@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { AuthService } from '../auth/auth-service'
 import { createApp } from '../app'
@@ -27,6 +27,9 @@ const account = {
 }
 
 describe('accounts routes', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
   it('returns only the authenticated owner safe account view', async () => {
     const service = new FakeAccountService()
     const response = await authenticatedRequest(service, '/api/accounts')
@@ -116,6 +119,52 @@ describe('accounts routes', () => {
       },
     })
     expect(JSON.stringify(payload)).not.toContain('credential')
+  })
+
+  it('logs only the safe provider failure category for diagnosis', async () => {
+    const service = new FakeAccountService()
+    service.synchronizeError = new MonobankApiError(
+      'malformed_response',
+      'provider payload must not leak',
+      { retryable: false, status: 200 },
+    )
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await authenticatedRequest(service, '/api/sync/accounts', 'POST')
+
+    expect(errorLog).toHaveBeenCalledWith(
+      JSON.stringify({
+        errorCode: 'malformed_response',
+        message: 'monobank_account_sync_failed',
+        status: 200,
+      }),
+    )
+    expect(errorLog.mock.calls.flat().join('')).not.toContain('payload')
+  })
+
+  it('logs a transport error code without its diagnostic message', async () => {
+    const service = new FakeAccountService()
+    service.synchronizeError = new MonobankApiError(
+      'remote_api_error',
+      'provider diagnostic must not leak',
+      {
+        cause: Object.assign(new Error('sensitive network diagnostic'), {
+          code: 'UND_ERR_CONNECT_TIMEOUT',
+        }),
+        retryable: true,
+      },
+    )
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await authenticatedRequest(service, '/api/sync/accounts', 'POST')
+
+    expect(JSON.parse(errorLog.mock.calls[0]![0] as string)).toEqual({
+      causeCode: 'UND_ERR_CONNECT_TIMEOUT',
+      causeName: 'Error',
+      errorCode: 'remote_api_error',
+      message: 'monobank_account_sync_failed',
+    })
+    expect(errorLog.mock.calls.flat().join('')).not.toContain('sensitive')
   })
 
   it('rejects cross-origin synchronization before invoking the service', async () => {
