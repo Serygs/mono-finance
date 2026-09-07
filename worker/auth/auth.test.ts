@@ -279,6 +279,7 @@ function createFixture() {
   const environment = {
     APP_ENV: 'production' as const,
     DB: {} as D1Database,
+    MONOBANK_TOKEN: 'test-monobank-token',
     SESSION_TOKEN_PEPPER: 'test-pepper',
     SETUP_TOKEN: 'test-setup-token',
   }
