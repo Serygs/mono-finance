@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router'
 
 import { useAuth } from '../features/auth/auth-context'
+import { OfflineStatus } from '../features/offline/OfflineStatus'
 
 const navigationItems = [
   { label: 'Overview', to: '/' },
@@ -40,6 +41,7 @@ export function AppShell() {
           Sign out
         </button>
       </header>
+      <OfflineStatus />
       <main className="page-content">
         <Outlet />
       </main>
