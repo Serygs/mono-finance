@@ -1,6 +1,6 @@
 # Mono Finance
 
-Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase establishes the application skeleton only; it does not yet authenticate users, persist data, or call Monobank.
+Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase synchronizes Monobank accounts, cards, and bounded transaction-history windows into D1, then exposes those immutable records through a paginated transaction browser.
 
 ## Development
 
@@ -10,19 +10,34 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
+npm run test:e2e
 npm run build
+npm run security:client-bundle
+npm run audit:dependencies
+npm run db:migrate:local
 ```
 
-The local application is available at `http://localhost:5173`. Its public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
+Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local secrets, then run `npm run db:migrate:local` before starting the app. The local application is available at `http://localhost:5173`; use the one-time setup endpoint documented in [Phase 4 authentication](docs/phase-4-authentication.md) before signing in. Configure the server-only Monobank token as documented in [Phase 5 Monobank API](docs/phase-5-monobank-api.md), synchronize accounts as described in [Phase 6 account sync](docs/phase-6-account-sync.md), then import statements as described in [Phase 7 transaction sync](docs/phase-7-transaction-sync.md). Browse imported records through the [Phase 8 transactions](docs/phase-8-transactions.md) screen, manage analytics-only changes through [Phase 9 transaction corrections](docs/phase-9-transaction-corrections.md), manage effective categories via [Phase 10 custom categories](docs/phase-10-custom-categories.md), link reimbursements through [Phase 11 compensations](docs/phase-11-compensations.md), consume aggregate reports through [Phase 12 analytics](docs/phase-12-analytics.md), use the [Phase 13 dashboard](docs/phase-13-dashboard.md) for the financial overview, configure reproducible base-currency analytics in [Phase 14 multi-currency](docs/phase-14-multi-currency.md), install the encrypted offline shell described in [Phase 15 PWA/offline](docs/phase-15-pwa-offline.md), and follow the reusable UI contracts in the [Phase 16 design system](docs/phase-16-design-system.md). The public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
 
 ## Architecture
 
 - `src/` contains the React application, organized by feature.
 - `worker/` contains the Hono API and server-only integration boundaries.
-- `migrations/` will contain ordered D1 migrations beginning in Phase 3.
+- `migrations/` contains ordered D1 migrations; see [migrations/README.md](migrations/README.md) for local and remote workflows.
 - `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
 
-`wrangler.jsonc` separates development and production application modes. A D1 binding is intentionally not configured until a real database is provisioned; do not add a placeholder database ID.
+`wrangler.jsonc` provides an explicit local-only D1 binding for the `development` environment and declares the Worker-only authentication and Monobank secrets. Production uses a build-time generated, ignored config alongside the Vite Worker artifact, populated from the protected GitHub `production` environment; do not add a placeholder database ID or application secret to committed configuration. See [Phase 19 CI/CD and deployment](docs/phase-19-deployment.md) before deploying.
+
+## Testing and quality gates
+
+The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
+
+The security findings, remediations, and accepted risks are documented in [Phase 18 security hardening](docs/phase-18-security.md). The client bundle check must follow `npm run build`; it verifies the deployable browser asset directory only, because Cloudflare Vite copies `.dev.vars` into its separate preview-only Worker output by design.
+
+## Deployment
+
+GitHub Actions runs quality checks for each pull request and deploys only a successful `main` workflow after the GitHub `production` environment approval. The deployment applies pending D1 migrations, deploys the Worker, and calls `GET /api/health` over HTTPS. See [the production runbook](docs/phase-19-deployment.md) for one-time setup, secret handling, rollback, and recovery instructions.
 
 ## Codex project skills
 
@@ -36,8 +51,13 @@ Repository-scoped Codex skills live in [`.agents/skills`](.agents/skills). Codex
 | `frontend-design`                                                                                             | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design)                                   | Production frontend and dashboard UI work.            |
 | `data-visualization`                                                                                          | [openai/plugins](https://github.com/openai/plugins/tree/main/plugins/build-web-data-visualization/skills/data-visualization) | Financial analytics and chart design.                 |
 | `yafa-ui-dashboard`                                                                                           | [rejourneyco/yafa-ui-dashboard](https://github.com/rejourneyco/yafa-ui-dashboard)                                            | Responsive, accessible analytics dashboard UX.        |
+| `mono-finance-dev`                                                                                            | This repository                                                                                                              | Mandatory Mono Finance domain and architecture rules. |
 
 The skills were installed as source snapshots with the Codex skill installer; they are documentation/workflow assets only and add no runtime or build dependencies.
+
+### Mono Finance project skill
+
+Use `$mono-finance-dev` in every future prompt that changes Mono Finance application code, schema, API, analytics, integrations, offline behavior, or customer-facing UI. It is located at [`.agents/skills/mono-finance-dev/SKILL.md`](.agents/skills/mono-finance-dev/SKILL.md), is automatically discoverable from this repository, and routes each task to the relevant domain reference. It adds no runtime dependency and does not authorize work outside the prompt's stated phase.
 
 ### Sources not installed
 
