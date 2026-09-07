@@ -62,4 +62,9 @@ describe('initial D1 schema', () => {
     expect(migration).toContain('rate_numerator INTEGER NOT NULL')
     expect(migration).toContain('rate_denominator INTEGER NOT NULL')
   })
+
+  it('uses LF-only, D1-compatible trigger statements for remote migrations', () => {
+    expect(migration).not.toContain('\r\n')
+    expect(migration).toContain('SELECT (CASE')
+  })
 })

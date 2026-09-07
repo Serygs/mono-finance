@@ -3,96 +3,75 @@
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "mono-finance",
-	"main": "worker/index.ts",
-	"compatibility_date": "2026-09-03",
-	"assets": {
-		"not_found_handling": "single-page-application",
-	},
-	"observability": {
-		"enabled": true,
-		"traces": {
-			"enabled": true,
-		},
-	},
-	"triggers": {
-		"crons": [
-			"*/5 * * * *"
-		],
-	},
-	"upload_source_maps": true,
-	"secrets": {
-		"required": [
-			"MONOBANK_TOKEN",
-			"SESSION_TOKEN_PEPPER",
-			"SETUP_TOKEN"
-		],
-	},
-	"env": {
-		"development": {
-			"vars": {
-				"APP_ENV": "development",
-			},
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "mono-finance-local",
-					"migrations_dir": "migrations",
-				},
-			],
-			"secrets": {
-				"required": [
-					"MONOBANK_TOKEN",
-					"SESSION_TOKEN_PEPPER",
-					"SETUP_TOKEN"
-				],
-			},
-		},
-		"production": {
-			"vars": {
-				"APP_ENV": "production",
-			},
-			// D1 bindings are non-inheritable. The deployment workflow replaces this
-			// empty list in the production build artifact with a real, protected ID.
-			"d1_databases": [],
-			"secrets": {
-				"required": [
-					"MONOBANK_TOKEN",
-					"SESSION_TOKEN_PEPPER",
-					"SETUP_TOKEN"
-				],
-			},
-		},
-	},
-	"d1_databases": [
-		{
-			"binding": "mono_finance_production",
-			"database_name": "mono-finance-production",
-			"database_id": "e388c19d-9f66-4395-b667-dee945bff00a"
-		}
-	],
-	/**
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mono-finance",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "not_found_handling": "single-page-application",
+  },
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+    },
+  },
+  "triggers": {
+    "crons": ["*/5 * * * *"],
+  },
+  "upload_source_maps": true,
+  "secrets": {
+    "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "APP_ENV": "development",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "mono-finance-local",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "secrets": {
+        "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+      },
+    },
+    "production": {
+      "vars": {
+        "APP_ENV": "production",
+      },
+      // D1 bindings are non-inheritable. The deployment workflow replaces this
+      // empty list in the production build artifact with a real, protected ID.
+      "d1_databases": [],
+      "secrets": {
+        "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+      },
+    },
+  },
+  /**
    * Smart Placement
    * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
    */
-	// "placement": {  "mode": "smart" }
-	/**
+  // "placement": {  "mode": "smart" }
+  /**
    * Bindings
    * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
    * databases, object storage, AI inference, real-time communication and more.
    * https://developers.cloudflare.com/workers/runtime-apis/bindings/
    */
-	/**
+  /**
    * Environment Variables
    * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
+  // "vars": {  "MY_VARIABLE": "production_value" }
+  /**
    * Service Bindings (communicate between multiple Workers)
    * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
    */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+  // "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
 }

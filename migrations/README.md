@@ -34,4 +34,10 @@ npm run prepare:production
 npm run db:migrate:production
 ```
 
-Wrangler records applied migrations. Re-running an apply command is safe: it applies only unapplied numbered files. Never edit a migration that may already be applied; add the next ordered `.sql` file instead. Production migrations must be backward-compatible with the currently deployed Worker because a Worker code rollback does not roll back D1 data or schema.
+Wrangler records applied migrations. Re-running an apply command is safe: it applies only unapplied numbered files. Never edit a migration that may already be applied; add the next ordered `.sql` file instead. Production migrations must be backward-compatible with the currently deployed Worker because a Worker code rollback does not roll back D1 data or schema. `.gitattributes` enforces LF endings for SQL migration files because Wrangler's remote D1 migration parser has a known Windows CRLF + trigger failure mode.
+
+## Empty remote database trigger workaround
+
+If an entirely new remote D1 database returns `incomplete input: SQLITE_ERROR` while applying a migration that contains a SQLite trigger, do not retry through normal migration application indefinitely. First confirm that `d1_migrations` has no rows and that no application tables exist. Only then execute each migration file sequentially using `wrangler d1 execute --remote --file`, then insert the corresponding migration names into the existing `d1_migrations` table. This path uploads each SQL file intact and avoids Wrangler's migration-statement parser. Confirm that the migration table contains every applied filename before resuming `npm run db:migrate:production`.
+
+Never use this workaround on a non-empty database or after any migration has been recorded: investigate and add a forward migration instead.
