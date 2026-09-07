@@ -18,6 +18,12 @@ import type { TransactionQueryService } from './services/transaction-query-servi
 import { createTransactionQueryService } from './services/transaction-query-service-factory'
 import type { TransactionCorrectionService } from './services/transaction-correction-service'
 import { createTransactionCorrectionService } from './services/transaction-correction-service-factory'
+import type { CategoryService } from './services/category-service'
+import { createCategoryService } from './services/category-service-factory'
+import type { CompensationService } from './services/compensation-service'
+import { createCompensationService } from './services/compensation-service-factory'
+import type { AnalyticsService } from './services/analytics-service'
+import { createAnalyticsService } from './services/analytics-service-factory'
 import {
   listAccountsHandler,
   synchronizeAccountsHandler,
@@ -40,6 +46,24 @@ import {
   restoreTransactionHandler,
   saveAdjustmentHandler,
 } from './routes/transaction-corrections'
+import {
+  createCategoryHandler,
+  deleteCategoryHandler,
+  listCategoriesHandler,
+  resetTransactionCategoryHandler,
+  saveTransactionCategoryHandler,
+  updateCategoryHandler,
+} from './routes/categories'
+import {
+  compensationDetailsHandler,
+  linkCompensationHandler,
+  unlinkCompensationHandler,
+} from './routes/compensations'
+import {
+  analyticsBreakdownsHandler,
+  analyticsOverviewHandler,
+  analyticsTrendsHandler,
+} from './routes/analytics'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -65,6 +89,15 @@ export function createApp(
   transactionCorrectionServiceFactory: (
     environment: MonobankEnvironment,
   ) => TransactionCorrectionService = createTransactionCorrectionService,
+  categoryServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => CategoryService = createCategoryService,
+  compensationServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => CompensationService = createCompensationService,
+  analyticsServiceFactory: (
+    environment: MonobankEnvironment,
+  ) => AnalyticsService = createAnalyticsService,
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
@@ -132,6 +165,39 @@ export function createApp(
       transactionQueryServiceFactory(context.env),
     ),
   )
+  app.get('/api/analytics/overview', (context) =>
+    analyticsOverviewHandler(context, analyticsServiceFactory(context.env)),
+  )
+  app.get('/api/analytics/breakdowns', (context) =>
+    analyticsBreakdownsHandler(context, analyticsServiceFactory(context.env)),
+  )
+  app.get('/api/analytics/trends', (context) =>
+    analyticsTrendsHandler(context, analyticsServiceFactory(context.env)),
+  )
+  app.get('/api/categories', (context) =>
+    listCategoriesHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.post('/api/categories', (context) =>
+    createCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.put('/api/categories/:categoryId', (context) =>
+    updateCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.delete('/api/categories/:categoryId', (context) =>
+    deleteCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.put('/api/transactions/:transactionId/category', (context) =>
+    saveTransactionCategoryHandler(
+      context,
+      categoryServiceFactory(context.env),
+    ),
+  )
+  app.delete('/api/transactions/:transactionId/category', (context) =>
+    resetTransactionCategoryHandler(
+      context,
+      categoryServiceFactory(context.env),
+    ),
+  )
   app.put('/api/transactions/:transactionId/adjustment', (context) =>
     saveAdjustmentHandler(
       context,
@@ -155,6 +221,23 @@ export function createApp(
       context,
       transactionCorrectionServiceFactory(context.env),
     ),
+  )
+  app.get('/api/transactions/:transactionId/compensations', (context) =>
+    compensationDetailsHandler(
+      context,
+      compensationServiceFactory(context.env),
+    ),
+  )
+  app.post('/api/transactions/:transactionId/compensations', (context) =>
+    linkCompensationHandler(context, compensationServiceFactory(context.env)),
+  )
+  app.delete(
+    '/api/transactions/:transactionId/compensations/:linkId',
+    (context) =>
+      unlinkCompensationHandler(
+        context,
+        compensationServiceFactory(context.env),
+      ),
   )
   app.post('/api/sync/accounts', (context) =>
     synchronizeAccountsHandler(context, accountServiceFactory(context.env)),

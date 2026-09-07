@@ -8,6 +8,7 @@ import {
 import { loadAccountFilter } from '../accounts/account-filter-storage'
 import { getAccounts } from '../accounts/accounts-api'
 import type { AccountSummary } from '../accounts/account-types'
+import { getCategories } from '../categories/categories-api'
 
 import { TransactionDetails } from './TransactionDetails'
 import {
@@ -56,6 +57,10 @@ export function TransactionsPage() {
     queryFn: getAccounts,
     queryKey: ['accounts'],
   })
+  const customCategoriesQuery = useQuery({
+    queryFn: getCategories,
+    queryKey: ['categories'],
+  })
   const dateRange = useMemo(
     () => resolveDateRange(datePreset, customDateFrom, customDateTo),
     [customDateFrom, customDateTo, datePreset],
@@ -88,12 +93,15 @@ export function TransactionsPage() {
   const transactions =
     transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
   const categories = [
+    ...(customCategoriesQuery.data ?? []).map((item) => item.name),
     ...new Set(
       transactions.flatMap((transaction) =>
         transaction.category.name === null ? [] : [transaction.category.name],
       ),
     ),
-  ].sort()
+  ]
+    .filter((item, index, values) => values.indexOf(item) === index)
+    .sort()
 
   return (
     <section className="transactions-page" aria-labelledby="transactions-title">
@@ -264,9 +272,18 @@ export function TransactionsPage() {
                   : {
                       ...current,
                       ...metadata,
-                      effectiveAmountMinor: correction.effectiveAmountMinor,
-                      hasAdjustment: correction.hasAdjustment,
-                      isExcluded: correction.isExcluded,
+                      ...(correction.effectiveAmountMinor === undefined
+                        ? {}
+                        : {
+                            effectiveAmountMinor:
+                              correction.effectiveAmountMinor,
+                          }),
+                      ...(correction.hasAdjustment === undefined
+                        ? {}
+                        : { hasAdjustment: correction.hasAdjustment }),
+                      ...(correction.isExcluded === undefined
+                        ? {}
+                        : { isExcluded: correction.isExcluded }),
                     },
               )
             }

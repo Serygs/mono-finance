@@ -4,6 +4,7 @@ import type {
   TransactionListFilters,
   TransactionCorrection,
   TransactionPage,
+  CompensationDetails,
 } from './transaction-types'
 
 export async function getTransactions(
@@ -41,6 +42,48 @@ export async function getTransactions(
   return payload.data
 }
 
+export async function getCompensationDetails(
+  transactionId: string,
+): Promise<CompensationDetails> {
+  const response = await fetch(
+    `/api/transactions/${transactionId}/compensations`,
+    { credentials: 'same-origin', headers: { Accept: 'application/json' } },
+  )
+  return compensationPayload(response)
+}
+export async function linkCompensation(
+  transactionId: string,
+  input: { compensationTransactionId: string; compensatedAmountMinor: number },
+): Promise<CompensationDetails> {
+  const response = await fetch(
+    `/api/transactions/${transactionId}/compensations`,
+    {
+      body: JSON.stringify(input),
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    },
+  )
+  return compensationPayload(response)
+}
+export async function unlinkCompensation(
+  transactionId: string,
+  linkId: string,
+): Promise<CompensationDetails> {
+  const response = await fetch(
+    `/api/transactions/${transactionId}/compensations/${linkId}`,
+    {
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      method: 'DELETE',
+    },
+  )
+  return compensationPayload(response)
+}
+
 export function saveTransactionAdjustment(
   transactionId: string,
   input: { adjustedAmountMinor: number; note: string | null },
@@ -75,6 +118,18 @@ function appendParameter(
   if (value !== null && value !== undefined) {
     parameters.set(key, value.toString())
   }
+}
+async function compensationPayload(
+  response: Response,
+): Promise<CompensationDetails> {
+  const payload = (await response.json()) as ApiResponse<CompensationDetails>
+  if (!response.ok || !('data' in payload))
+    throw new Error(
+      'error' in payload
+        ? payload.error.message
+        : 'Compensation could not be saved. Try again later.',
+    )
+  return payload.data
 }
 
 async function mutateCorrection(

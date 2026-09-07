@@ -6,7 +6,7 @@
 
 - Every timestamp is an `INTEGER` UTC Unix epoch in seconds.
 - Every monetary value is a signed `INTEGER` in currency minor units.
-- Imported Monobank transaction source fields are protected by a database trigger. Model corrections through adjustment, exclusion, category-override, and compensation tables instead of updating the source record.
+- Imported Monobank transaction source fields are protected by a database trigger. `categories` and `transaction_category_overrides` model effective custom classification separately; the original MCC-derived category is never changed.
 - Exchange rates are rational values (`rate_numerator / rate_denominator`) with their source and timestamp, rather than floats.
 
 ## Workflow
