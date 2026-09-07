@@ -10,6 +10,7 @@ import { readCookie, SESSION_COOKIE_NAME } from './auth/cookies'
 import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
+import { applyApiSecurityHeaders } from './common/security-headers'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
 import type { TransactionSyncService } from './services/transaction-sync-service'
@@ -118,6 +119,14 @@ export function createApp(
     Bindings: MonobankEnvironment
     Variables: { authenticatedUser: AuthenticatedUser }
   }>()
+
+  app.use('/api/*', async (context, next) => {
+    try {
+      await next()
+    } finally {
+      applyApiSecurityHeaders(context.res.headers, context.env)
+    }
+  })
 
   app.use('/api/*', async (context, next) => {
     if (publicApiPaths.has(new URL(context.req.url).pathname)) {
@@ -299,10 +308,12 @@ export function createApp(
         path: new URL(context.req.url).pathname,
       }),
     )
-    return context.json(
+    const response = context.json(
       failure('internal_error', 'An unexpected error occurred.'),
       500,
     )
+    applyApiSecurityHeaders(response.headers, context.env)
+    return response
   })
 
   return app

@@ -13,6 +13,8 @@ npm test
 npm run test:coverage
 npm run test:e2e
 npm run build
+npm run security:client-bundle
+npm run audit:dependencies
 npm run db:migrate:local
 ```
 
@@ -30,6 +32,8 @@ Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local sec
 ## Testing and quality gates
 
 The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
+
+The security findings, remediations, and accepted risks are documented in [Phase 18 security hardening](docs/phase-18-security.md). The client bundle check must follow `npm run build`; it verifies the deployable browser asset directory only, because Cloudflare Vite copies `.dev.vars` into its separate preview-only Worker output by design.
 
 ## Codex project skills
 

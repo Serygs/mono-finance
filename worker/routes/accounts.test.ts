@@ -121,6 +121,27 @@ describe('accounts routes', () => {
     expect(JSON.stringify(payload)).not.toContain('credential')
   })
 
+  it('applies the API security policy to unexpected errors', async () => {
+    const service = new FakeAccountService()
+    service.synchronizeError = new Error('internal diagnostic')
+
+    const response = await authenticatedRequest(
+      service,
+      '/api/sync/accounts',
+      'POST',
+    )
+
+    expect(response.status).toBe(500)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(response.headers.get('X-Frame-Options')).toBe('DENY')
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: 'internal_error',
+        message: 'An unexpected error occurred.',
+      },
+    })
+  })
+
   it('logs only the safe provider failure category for diagnosis', async () => {
     const service = new FakeAccountService()
     service.synchronizeError = new MonobankApiError(
