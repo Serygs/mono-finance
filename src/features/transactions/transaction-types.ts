@@ -25,10 +25,12 @@ export interface TransactionListItem {
   currencyCode: string
   currencyMinorUnit: number
   effectiveAmountMinor: number
+  adjustmentNote: string | null
   hasAdjustment: boolean
   hasCompensation: boolean
   id: string
   isExcluded: boolean
+  exclusionReason: string | null
   originalAmountMinor: number
   originalDescription: string
   originalMcc: number | null
@@ -38,4 +40,11 @@ export interface TransactionListItem {
 export interface TransactionPage {
   nextCursor: string | null
   transactions: TransactionListItem[]
+}
+
+export interface TransactionCorrection {
+  effectiveAmountMinor: number
+  hasAdjustment: boolean
+  id: string
+  isExcluded: boolean
 }

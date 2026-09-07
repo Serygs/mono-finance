@@ -27,3 +27,18 @@ export function accountLabel(transaction: TransactionListItem): string {
     ? `${type} account`
     : `${type} •••• ${transaction.account.maskedPan.slice(-4)}`
 }
+
+export function parseAmountInputToMinor(
+  value: string,
+  minorUnit: number,
+): number | null {
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(value.trim())
+  if (match === null) return null
+  const whole = match[2]
+  const fraction = match[3] ?? ''
+  if (whole === undefined || fraction.length > minorUnit) return null
+  const scale = 10 ** minorUnit
+  const amount = Number(whole) * scale + Number(fraction.padEnd(minorUnit, '0'))
+  if (!Number.isSafeInteger(amount)) return null
+  return match[1] === '-' ? -amount : amount
+}

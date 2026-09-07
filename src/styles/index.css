@@ -358,6 +358,91 @@ a {
   color: #9f261c;
 }
 
+.transaction-original-amount {
+  display: block;
+  margin-top: 0.35rem;
+  color: #6e6e73;
+  font-size: 0.88rem;
+}
+
+.transaction-correction-form,
+.transaction-exclusion {
+  display: grid;
+  gap: 0.8rem;
+  border-top: 1px solid rgb(0 0 0 / 7%);
+  padding-top: 1rem;
+}
+
+.transaction-correction-form h3,
+.transaction-exclusion h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.transaction-correction-form p,
+.transaction-exclusion p {
+  margin: 0.3rem 0 0;
+  color: #6e6e73;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.transaction-correction-form label,
+.transaction-exclusion label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.transaction-correction-form label span,
+.transaction-exclusion label span {
+  color: #6e6e73;
+  font-weight: 400;
+}
+
+.transaction-correction-form input,
+.transaction-correction-form textarea,
+.transaction-exclusion textarea {
+  width: 100%;
+  border: 1px solid #d2d2d7;
+  border-radius: 0.7rem;
+  background: rgb(255 255 255 / 82%);
+  color: inherit;
+  font: inherit;
+  padding: 0.6rem 0.7rem;
+}
+
+.transaction-correction-form textarea,
+.transaction-exclusion textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.transaction-correction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.secondary-action,
+.danger-action {
+  border: 1px solid #d2d2d7;
+  background: rgb(255 255 255 / 72%);
+  color: inherit;
+}
+
+.danger-action {
+  border-color: #f2c5c0;
+  color: #9f261c;
+}
+
+.transaction-correction-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.86rem;
+}
+
 .load-more-button {
   display: block;
   margin: 1.25rem auto 0;
@@ -370,6 +455,15 @@ a {
 .transaction-search input:focus-visible,
 .filter-field select:focus-visible,
 .custom-date-fields input:focus-visible {
+  outline: 3px solid #0071e3;
+  outline-offset: 3px;
+}
+
+.transaction-correction-form input:focus-visible,
+.transaction-correction-form textarea:focus-visible,
+.transaction-exclusion textarea:focus-visible,
+.secondary-action:focus-visible,
+.danger-action:focus-visible {
   outline: 3px solid #0071e3;
   outline-offset: 3px;
 }
