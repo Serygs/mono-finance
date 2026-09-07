@@ -33,7 +33,7 @@ npm run dev
 
 The migration command intentionally targets `.wrangler/state`, the same local D1 persistence directory used by Vite. Do not substitute a different `--persist-to` path or the running Worker will see a separate empty database.
 
-Use a cryptographically random value for each local secret. `SETUP_TOKEN` is supplied only to the one-time setup request, for example with an API client; it must never be embedded in the React application.
+Use independently generated cryptographically random values for `SESSION_TOKEN_PEPPER` and `SETUP_TOKEN`; `MONOBANK_TOKEN` is the personal token issued by Monobank and is documented separately in [Phase 5](phase-5-monobank-api.md). `SETUP_TOKEN` is supplied only to the one-time setup request, for example with an API client; none of these values may be embedded in the React application.
 
 ## Production prerequisite
 
@@ -42,6 +42,7 @@ Use a cryptographically random value for each local secret. `SETUP_TOKEN` is sup
 ```sh
 wrangler secret put SESSION_TOKEN_PEPPER --env production
 wrangler secret put SETUP_TOKEN --env production
+wrangler secret put MONOBANK_TOKEN --env production
 ```
 
 After changing bindings, run `npm run cf-typegen`, apply migrations to the confirmed production database, and only then deploy. A production deployment without that D1 binding is intentionally invalid.

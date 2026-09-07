@@ -11,3 +11,6 @@ export interface AuthEnvironment extends AppEnvironment {
   SESSION_TOKEN_PEPPER: string
   SETUP_TOKEN: string
 }
+
+/** Monobank credentials remain available only to Worker integration code. */
+export type MonobankEnvironment = AuthEnvironment & Pick<Env, 'MONOBANK_TOKEN'>

@@ -1,6 +1,6 @@
 # D1 migrations
 
-`0001_initial_schema.sql` establishes the financial data model and `0002_authentication.sql` adds durable login-rate-limit state. The migrations are deliberately plain SQL: no ORM is used, and repository code binds all dynamic query values with D1 prepared statements.
+`0001_initial_schema.sql` establishes the financial data model, `0002_authentication.sql` adds durable login-rate-limit state, and `0003_monobank_api_rate_limits.sql` coordinates outbound Monobank request windows across Worker isolates. The migrations are deliberately plain SQL: no ORM is used, and repository code binds all dynamic query values with D1 prepared statements.
 
 ## Timestamp and money conventions
 
