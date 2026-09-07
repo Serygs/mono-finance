@@ -28,6 +28,7 @@ import {
   type CurrencyTotals,
 } from './analytics-api'
 import {
+  DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
   chartSeries,
   filterDashboardAnalytics,
@@ -61,7 +62,9 @@ export function DashboardPage() {
   )
   const [syncStatusError, setSyncStatusError] = useState<string | null>(null)
   const [filter, setFilter] = useState<AccountFilter>(loadBrowserAccountFilter)
-  const [datePreset, setDatePreset] = useState<DashboardDatePreset>('30d')
+  const [datePreset, setDatePreset] = useState<DashboardDatePreset>(
+    DEFAULT_DASHBOARD_DATE_PRESET,
+  )
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
   const [displayCurrency, setDisplayCurrency] = useState<string | null>(null)
@@ -268,6 +271,13 @@ export function DashboardPage() {
           </select>
         </label>
       </section>
+
+      {syncStates?.some((state) => state.status === 'failed') ? (
+        <p className="dashboard-state dashboard-state-warning" role="status">
+          Some accounts still need a transaction sync retry. The dashboard shows
+          transactions already stored in D1.
+        </p>
+      ) : null}
 
       {range === null ? (
         <p className="dashboard-state dashboard-state-error" role="alert">

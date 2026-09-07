@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
   filterDashboardAnalytics,
   resolveDashboardRange,
@@ -8,6 +9,10 @@ import {
 } from './dashboard-data'
 
 describe('dashboard data', () => {
+  it('starts with a range wide enough to include the first historical backfill windows', () => {
+    expect(DEFAULT_DASHBOARD_DATE_PRESET).toBe('90d')
+  })
+
   it('keeps currency groups separate when a display currency is selected', () => {
     const filtered = filterDashboardAnalytics(analytics(), 'UAH')
 
