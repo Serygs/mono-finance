@@ -2,6 +2,7 @@ import type { Context } from 'hono'
 
 import {
   AuthenticationError,
+  type AuthenticatedUser,
   type AuthService,
   SESSION_TTL_SECONDS,
 } from '../auth/auth-service'
@@ -13,9 +14,12 @@ import {
 } from '../auth/cookies'
 import { assertSameOrigin, clientIdentifier } from '../auth/request-security'
 import { failure, success } from '../common/api-response'
-import type { AuthEnvironment } from '../common/environment'
+import type { MonobankEnvironment } from '../common/environment'
 
-type AuthContext = Context<{ Bindings: AuthEnvironment }>
+type AuthContext = Context<{
+  Bindings: MonobankEnvironment
+  Variables: { authenticatedUser: AuthenticatedUser }
+}>
 
 export async function setupHandler(context: AuthContext, service: AuthService) {
   try {
