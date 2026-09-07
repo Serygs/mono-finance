@@ -10,6 +10,8 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
+npm run test:e2e
 npm run build
 npm run db:migrate:local
 ```
@@ -24,6 +26,10 @@ Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local sec
 - `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
 
 `wrangler.jsonc` provides a local-only D1 binding for development and declares the Worker-only authentication and Monobank secrets. Production remains deliberately unconfigured until a real D1 ID is provisioned; do not add placeholder database IDs. See [Phase 4 authentication](docs/phase-4-authentication.md) and [Phase 5 Monobank API](docs/phase-5-monobank-api.md) before deploying.
+
+## Testing and quality gates
+
+The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
 
 ## Codex project skills
 
