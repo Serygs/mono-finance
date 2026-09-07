@@ -20,6 +20,33 @@ class RecordingRequestGate implements MonobankRequestGate {
 }
 
 describe('HttpMonobankClient successful requests', () => {
+  it('calls a runtime fetch function without rebinding its receiver', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(function (
+      this: unknown,
+    ) {
+      if (this !== undefined) {
+        return Promise.reject(new TypeError('Illegal invocation'))
+      }
+
+      return Promise.resolve(
+        Response.json({
+          clientId: 'client-1',
+          name: 'Owner',
+          accounts: [],
+        }),
+      )
+    })
+    const client = new HttpMonobankClient({
+      token: 'not-a-real-token',
+      fetcher,
+      requestGate: new RecordingRequestGate(),
+    })
+
+    await expect(client.getClientInfo()).resolves.toMatchObject({
+      providerClientId: 'client-1',
+    })
+  })
+
   it('retrieves and maps client account information through the rate-limit gate', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json({
