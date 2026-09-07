@@ -15,6 +15,7 @@ export default defineConfig({
     include: [
       'worker/**/*.test.ts',
       'migrations/**/*.test.ts',
+      'scripts/**/*.test.mjs',
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
     ],

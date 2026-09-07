@@ -11,7 +11,7 @@
 
 ## Workflow
 
-Create a real remote database once for each environment. Do not copy the returned ID into the repository until the matching environment binding is intentionally configured.
+Create a real remote database once for each environment. Do not copy the returned ID into the repository. For production, save it as the protected GitHub `production` environment variable `CLOUDFLARE_D1_DATABASE_ID`; the deployment workflow injects it only into an ignored generated Wrangler config.
 
 ```sh
 npm run db:create -- mono-finance-development
@@ -26,10 +26,12 @@ npm run db:migrations:local
 npm run db:execute:local -- --command "SELECT name FROM d1_migrations"
 ```
 
-After configuring the actual production D1 binding and confirming the target database, apply remotely:
+The GitHub production deployment applies pending migrations before deploying the Worker. To run the same workflow from a trusted workstation, first set `CLOUDFLARE_D1_DATABASE_ID` in that process (do not commit it), then build and prepare the ignored production config:
 
 ```sh
-npm run db:migrate:remote -- mono-finance-production --remote
+npm run build
+npm run prepare:production
+npm run db:migrate:production
 ```
 
-Wrangler records applied migrations. Re-running an apply command is safe: it applies only unapplied numbered files. Never edit a migration that may already be applied; add the next ordered `.sql` file instead.
+Wrangler records applied migrations. Re-running an apply command is safe: it applies only unapplied numbered files. Never edit a migration that may already be applied; add the next ordered `.sql` file instead. Production migrations must be backward-compatible with the currently deployed Worker because a Worker code rollback does not roll back D1 data or schema.

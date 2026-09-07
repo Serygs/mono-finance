@@ -1,4 +1,4 @@
-export interface AppEnvironment extends Env {
+export interface AppEnvironment extends Omit<Env, 'APP_ENV'> {
   APP_ENV: 'development' | 'production'
 }
 
