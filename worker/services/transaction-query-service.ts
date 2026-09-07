@@ -11,6 +11,10 @@ export interface TransactionListItem {
     name: string | null
     source: 'custom' | 'original' | null
   }
+  originalCategory: {
+    id: string | null
+    name: string | null
+  }
   currencyCode: string
   currencyMinorUnit: number
   effectiveAmountMinor: number

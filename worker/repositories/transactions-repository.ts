@@ -163,6 +163,7 @@ function mapTransactionRow(row: TransactionRow): TransactionListItem {
       : row.category_name === null
         ? { id: null, name: null, source: null }
         : { id: row.category_id, name: row.category_name, source: 'original' },
+    originalCategory: { id: row.category_id, name: row.category_name },
     currencyCode: row.original_currency_code,
     currencyMinorUnit: row.currency_minor_unit,
     effectiveAmountMinor: row.effective_amount_minor,

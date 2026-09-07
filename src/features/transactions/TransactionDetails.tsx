@@ -1,5 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  getCategories,
+  resetTransactionCategory,
+  saveTransactionCategory,
+} from '../categories/categories-api'
 
 import {
   accountLabel,
@@ -9,9 +14,12 @@ import {
 } from './transaction-formatting'
 import {
   excludeTransaction,
+  getCompensationDetails,
+  linkCompensation,
   resetTransactionAdjustment,
   restoreTransaction,
   saveTransactionAdjustment,
+  unlinkCompensation,
 } from './transactions-api'
 import type {
   TransactionCorrection,
@@ -21,9 +29,12 @@ import type {
 interface TransactionDetailsProps {
   onClose(): void
   onTransactionUpdated(
-    correction: TransactionCorrection,
+    correction: Pick<TransactionCorrection, 'id'> &
+      Partial<TransactionCorrection>,
     metadata: {
       adjustmentNote?: string | null
+      category?: TransactionListItem['category']
+      originalCategory?: TransactionListItem['originalCategory']
       exclusionReason?: string | null
     },
   ): void
@@ -69,6 +80,22 @@ function TransactionDetailsContent({
   const [validationMessage, setValidationMessage] = useState<string | null>(
     null,
   )
+  const [categoryId, setCategoryId] = useState(
+    transaction.category.source === 'custom'
+      ? (transaction.category.id ?? '')
+      : '',
+  )
+  const categoriesQuery = useQuery({
+    queryFn: getCategories,
+    queryKey: ['categories'],
+  })
+  const compensationQuery = useQuery({
+    enabled: transaction.originalAmountMinor < 0,
+    queryFn: () => getCompensationDetails(transaction.id),
+    queryKey: ['compensations', transaction.id],
+  })
+  const [compensationTransactionId, setCompensationTransactionId] = useState('')
+  const [compensationAmount, setCompensationAmount] = useState('')
 
   const refreshTransactions = () =>
     void queryClient.invalidateQueries({ queryKey: ['transactions'] })
@@ -115,17 +142,65 @@ function TransactionDetailsContent({
       refreshTransactions()
     },
   })
+  const categoryMutation = useMutation({
+    mutationFn: (id: string) => saveTransactionCategory(transaction.id, id),
+    onSuccess: (result) => {
+      onTransactionUpdated(
+        { id: transaction.id },
+        {
+          category: result.category,
+          originalCategory: result.originalCategory,
+        },
+      )
+      refreshTransactions()
+    },
+  })
+  const resetCategoryMutation = useMutation({
+    mutationFn: () => resetTransactionCategory(transaction.id),
+    onSuccess: (result) => {
+      setCategoryId('')
+      onTransactionUpdated(
+        { id: transaction.id },
+        {
+          category: result.category,
+          originalCategory: result.originalCategory,
+        },
+      )
+      refreshTransactions()
+    },
+  })
+  const compensationMutation = useMutation({
+    mutationFn: (input: {
+      compensationTransactionId: string
+      compensatedAmountMinor: number
+    }) => linkCompensation(transaction.id, input),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({
+        queryKey: ['compensations', transaction.id],
+      }),
+  })
+  const unlinkCompensationMutation = useMutation({
+    mutationFn: (linkId: string) => unlinkCompensation(transaction.id, linkId),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({
+        queryKey: ['compensations', transaction.id],
+      }),
+  })
 
   const isSaving =
     adjustmentMutation.isPending ||
     resetMutation.isPending ||
     exclusionMutation.isPending ||
-    restoreMutation.isPending
+    restoreMutation.isPending ||
+    categoryMutation.isPending ||
+    resetCategoryMutation.isPending
   const mutationError =
     adjustmentMutation.error ??
     resetMutation.error ??
     exclusionMutation.error ??
-    restoreMutation.error
+    restoreMutation.error ??
+    categoryMutation.error ??
+    resetCategoryMutation.error
 
   function submitAdjustment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -191,9 +266,210 @@ function TransactionDetailsContent({
         </div>
         <div>
           <dt>Category</dt>
-          <dd>{transaction.category.name ?? 'Uncategorized'}</dd>
+          <dd>
+            {transaction.category.name ?? 'Uncategorized'}
+            {transaction.category.source === 'custom' &&
+            transaction.originalCategory.name !== null ? (
+              <span className="transaction-original-amount">
+                Original: {transaction.originalCategory.name}
+              </span>
+            ) : null}
+          </dd>
         </div>
       </dl>
+      <section
+        className="transaction-correction-form"
+        aria-labelledby="category-title"
+      >
+        <div>
+          <h3 id="category-title">Analytics category</h3>
+          <p>
+            Changes analytics classification only. The imported MCC category
+            stays preserved.
+          </p>
+        </div>
+        <label>
+          Custom category
+          <select
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            disabled={isSaving || categoriesQuery.isPending}
+          >
+            <option value="">Select a custom category</option>
+            {(categoriesQuery.data ?? []).map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.icon ? `${category.icon} ` : ''}
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="transaction-correction-actions">
+          <button
+            disabled={isSaving || categoryId === ''}
+            onClick={() => categoryMutation.mutate(categoryId)}
+            type="button"
+          >
+            {categoryMutation.isPending ? 'Saving…' : 'Save category'}
+          </button>
+          {transaction.category.source === 'custom' ? (
+            <button
+              className="secondary-action"
+              disabled={isSaving}
+              onClick={() => resetCategoryMutation.mutate()}
+              type="button"
+            >
+              Reset to original
+            </button>
+          ) : null}
+        </div>
+      </section>
+      {transaction.originalAmountMinor < 0 ? (
+        <section
+          className="transaction-correction-form"
+          aria-labelledby="compensation-title"
+        >
+          <div>
+            <h3 id="compensation-title">Compensations</h3>
+            <p>
+              Link confirmed incoming transfers. Bank transactions remain
+              unchanged.
+            </p>
+          </div>
+          {compensationQuery.data ? (
+            <>
+              <dl className="compensation-summary">
+                <div>
+                  <dt>Original expense</dt>
+                  <dd>
+                    {formatMinor(
+                      compensationQuery.data.summary.originalExpenseAmountMinor,
+                      transaction,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Compensated</dt>
+                  <dd>
+                    {formatMinor(
+                      compensationQuery.data.summary.compensatedAmountMinor,
+                      transaction,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Personal expense remaining</dt>
+                  <dd>
+                    {formatMinor(
+                      compensationQuery.data.summary
+                        .remainingPersonalExpenseMinor,
+                      transaction,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              {compensationQuery.data.links.map((link) => (
+                <div className="compensation-link" key={link.id}>
+                  <span>
+                    {link.description} ·{' '}
+                    {formatMinor(link.compensatedAmountMinor, transaction)}
+                  </span>
+                  <button
+                    className="secondary-action"
+                    disabled={unlinkCompensationMutation.isPending}
+                    onClick={() => unlinkCompensationMutation.mutate(link.id)}
+                    type="button"
+                  >
+                    Unlink
+                  </button>
+                </div>
+              ))}
+              <label>
+                Suggested incoming transaction
+                <select
+                  value={compensationTransactionId}
+                  onChange={(event) => {
+                    const candidate = compensationQuery.data?.suggestions.find(
+                      (item) => item.transactionId === event.target.value,
+                    )
+                    setCompensationTransactionId(event.target.value)
+                    setCompensationAmount(
+                      candidate
+                        ? toEditableAmount(
+                            Math.min(
+                              candidate.availableAmountMinor,
+                              -compensationQuery.data.summary
+                                .remainingPersonalExpenseMinor,
+                            ),
+                            transaction.currencyMinorUnit,
+                          )
+                        : '',
+                    )
+                  }}
+                >
+                  <option value="">Choose a suggestion</option>
+                  {compensationQuery.data.suggestions.map((candidate) => (
+                    <option
+                      key={candidate.transactionId}
+                      value={candidate.transactionId}
+                    >
+                      {candidate.description} · {candidate.confidenceScore}%
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Compensated amount ({transaction.currencyCode})
+                <input
+                  inputMode="decimal"
+                  value={compensationAmount}
+                  onChange={(event) =>
+                    setCompensationAmount(event.target.value)
+                  }
+                />
+              </label>
+              <button
+                disabled={
+                  compensationTransactionId === '' ||
+                  compensationMutation.isPending
+                }
+                onClick={() => {
+                  const amount = parseAmountInputToMinor(
+                    compensationAmount,
+                    transaction.currencyMinorUnit,
+                  )
+                  if (amount === null || amount <= 0) {
+                    setValidationMessage(
+                      'Enter a valid positive compensation amount.',
+                    )
+                    return
+                  }
+                  setValidationMessage(null)
+                  compensationMutation.mutate({
+                    compensationTransactionId,
+                    compensatedAmountMinor: amount,
+                  })
+                }}
+                type="button"
+              >
+                {compensationMutation.isPending
+                  ? 'Linking…'
+                  : 'Link compensation'}
+              </button>
+            </>
+          ) : null}
+          {compensationQuery.isPending ? (
+            <p>Loading compensation details…</p>
+          ) : null}
+          {compensationQuery.isError ||
+          compensationMutation.isError ||
+          unlinkCompensationMutation.isError ? (
+            <p className="transaction-correction-error" role="alert">
+              Compensation could not be saved. Try again later.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
       <form className="transaction-correction-form" onSubmit={submitAdjustment}>
         <div>
           <h3>Analytics adjustment</h3>
@@ -320,6 +596,18 @@ function formatOriginalAmount(transaction: TransactionListItem): string {
   }).format(
     transaction.originalAmountMinor / 10 ** transaction.currencyMinorUnit,
   )
+}
+function formatMinor(
+  amountMinor: number,
+  transaction: TransactionListItem,
+): string {
+  return new Intl.NumberFormat(undefined, {
+    currency: transaction.currencyCode,
+    currencyDisplay: 'code',
+    minimumFractionDigits: transaction.currencyMinorUnit,
+    maximumFractionDigits: transaction.currencyMinorUnit,
+    style: 'currency',
+  }).format(amountMinor / 10 ** transaction.currencyMinorUnit)
 }
 
 function toEditableAmount(amountMinor: number, minorUnit: number): string {

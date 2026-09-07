@@ -1,0 +1,97 @@
+import { describe, expect, it } from 'vitest'
+
+import { CategoryService, type CategoryRepository } from './category-service'
+
+describe('CategoryService', () => {
+  it('creates a custom category for the owner', async () => {
+    const repository = new FakeCategoryRepository()
+    const service = new CategoryService(repository, () => 1_700_000_000)
+
+    await expect(
+      service.create('owner-1', {
+        colorToken: 'mint',
+        icon: 'leaf',
+        name: 'Shared meals',
+      }),
+    ).resolves.toMatchObject({ name: 'Shared meals', icon: 'leaf' })
+  })
+
+  it('uses an owned override for analytics while retaining the imported category', async () => {
+    const repository = new FakeCategoryRepository()
+    const service = new CategoryService(repository)
+
+    await expect(
+      service.setTransactionOverride('owner-1', 'transaction-1', 'category-1'),
+    ).resolves.toEqual({
+      category: { id: 'category-1', name: 'Shared meals', source: 'custom' },
+      originalCategory: { id: '5812', name: 'Restaurants' },
+    })
+    expect(repository.transaction.originalCategoryName).toBe('Restaurants')
+  })
+
+  it('resets an override back to the immutable imported category', async () => {
+    const repository = new FakeCategoryRepository()
+    repository.overrideCategoryId = 'category-1'
+    const service = new CategoryService(repository)
+
+    await expect(
+      service.resetTransactionOverride('owner-1', 'transaction-1'),
+    ).resolves.toEqual({
+      category: { id: '5812', name: 'Restaurants', source: 'original' },
+      originalCategory: { id: '5812', name: 'Restaurants' },
+    })
+  })
+})
+
+class FakeCategoryRepository implements CategoryRepository {
+  overrideCategoryId: string | null = null
+  readonly category = {
+    colorToken: 'mint',
+    icon: 'leaf',
+    id: 'category-1',
+    name: 'Shared meals',
+  }
+  readonly transaction = {
+    id: 'transaction-1',
+    originalCategoryCode: '5812',
+    originalCategoryName: 'Restaurants',
+    overrideCategory: null as typeof this.category | null,
+  }
+
+  async countOverrides() {
+    return this.overrideCategoryId === null ? 0 : 1
+  }
+  async createCategory(input: {
+    colorToken: string | null
+    icon: string | null
+    name: string
+  }) {
+    return { ...this.category, ...input }
+  }
+  async deleteCategory() {}
+  async findCategory() {
+    return this.category
+  }
+  async findOwnedTransaction() {
+    return {
+      ...this.transaction,
+      overrideCategory: this.overrideCategoryId === null ? null : this.category,
+    }
+  }
+  async listCategories() {
+    return [this.category]
+  }
+  async removeTransactionOverride() {
+    this.overrideCategoryId = null
+  }
+  async setTransactionOverride(_transactionId: string, categoryId: string) {
+    this.overrideCategoryId = categoryId
+  }
+  async updateCategory(
+    _categoryId: string,
+    _userId: string,
+    input: { colorToken: string | null; icon: string | null; name: string },
+  ) {
+    return { ...this.category, ...input }
+  }
+}

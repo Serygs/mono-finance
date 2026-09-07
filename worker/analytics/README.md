@@ -1,3 +1,3 @@
 # Analytics boundary
 
-Analytics queries belong here and must read persisted D1 data only. They are intentionally absent until the transaction model exists.
+Analytics queries read persisted D1 data only and return typed aggregates, never a ledger export. The Phase 12 service resolves effective amounts, exclusions, category overrides, and compensation links before aggregation; it keeps currencies separate until historical exchange rates are available for a reproducible base-currency view.

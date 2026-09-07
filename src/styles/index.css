@@ -403,7 +403,9 @@ a {
 
 .transaction-correction-form input,
 .transaction-correction-form textarea,
-.transaction-exclusion textarea {
+.transaction-correction-form select,
+.transaction-exclusion textarea,
+.category-form input {
   width: 100%;
   border: 1px solid #d2d2d7;
   border-radius: 0.7rem;
@@ -417,6 +419,81 @@ a {
 .transaction-exclusion textarea {
   min-height: 4.5rem;
   resize: vertical;
+}
+
+.category-management {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.category-form,
+.category-list li {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 0.65rem 1.75rem rgb(29 29 31 / 5%);
+  padding: 1.15rem;
+}
+
+.category-form h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.category-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.category-form label span,
+.category-list span {
+  color: #6e6e73;
+  font-weight: 400;
+}
+
+.category-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.category-list li {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.category-list li div:nth-child(2) {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.category-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: #8e8e93;
+}
+
+.category-swatch-mint {
+  background: #34c759;
+}
+.category-swatch-blue {
+  background: #007aff;
+}
+.category-swatch-orange {
+  background: #ff9500;
+}
+.category-swatch-pink {
+  background: #ff2d55;
+}
+.category-swatch-purple {
+  background: #af52de;
 }
 
 .transaction-correction-actions {
@@ -461,7 +538,9 @@ a {
 
 .transaction-correction-form input:focus-visible,
 .transaction-correction-form textarea:focus-visible,
+.transaction-correction-form select:focus-visible,
 .transaction-exclusion textarea:focus-visible,
+.category-form input:focus-visible,
 .secondary-action:focus-visible,
 .danger-action:focus-visible {
   outline: 3px solid #0071e3;
@@ -807,6 +886,37 @@ h1 {
   color: #6e6e73;
 }
 
+.compensation-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.compensation-summary div,
+.compensation-link {
+  border: 1px solid rgb(0 0 0 / 8%);
+  border-radius: 0.75rem;
+  padding: 0.65rem;
+}
+
+.compensation-summary dt {
+  color: #6e6e73;
+  font-size: 0.76rem;
+}
+
+.compensation-summary dd {
+  margin: 0.25rem 0 0;
+  font-weight: 650;
+}
+
+.compensation-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 @media (max-width: 40rem) {
   .app-header {
     flex-wrap: wrap;
@@ -899,6 +1009,10 @@ h1 {
   .transaction-meta {
     max-width: 42%;
   }
+
+  .compensation-summary {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -955,6 +1069,12 @@ h1 {
     background: rgb(42 42 45 / 72%);
   }
 
+  .category-form,
+  .category-list li {
+    border-color: rgb(255 255 255 / 12%);
+    background: rgb(42 42 45 / 72%);
+  }
+
   .transaction-search,
   .filter-field,
   .custom-date-fields label,
@@ -962,6 +1082,11 @@ h1 {
   .transaction-category,
   .direction-filter legend,
   .transaction-details-list dt {
+    color: #a1a1a6;
+  }
+
+  .category-form label span,
+  .category-list span {
     color: #a1a1a6;
   }
 

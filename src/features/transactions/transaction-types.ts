@@ -22,6 +22,10 @@ export interface TransactionListItem {
     name: string | null
     source: 'custom' | 'original' | null
   }
+  originalCategory: {
+    id: string | null
+    name: string | null
+  }
   currencyCode: string
   currencyMinorUnit: number
   effectiveAmountMinor: number
@@ -47,4 +51,29 @@ export interface TransactionCorrection {
   hasAdjustment: boolean
   id: string
   isExcluded: boolean
+}
+
+export interface CompensationDetails {
+  links: CompensationLink[]
+  suggestions: CompensationSuggestion[]
+  summary: {
+    compensatedAmountMinor: number
+    currencyCode: string
+    originalExpenseAmountMinor: number
+    remainingPersonalExpenseMinor: number
+  }
+}
+export interface CompensationLink {
+  compensatedAmountMinor: number
+  compensationTransactionId: string
+  description: string
+  id: string
+  originalTimestamp: number
+}
+export interface CompensationSuggestion {
+  availableAmountMinor: number
+  confidenceScore: number
+  description: string
+  originalTimestamp: number
+  transactionId: string
 }
