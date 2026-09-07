@@ -27,13 +27,17 @@ Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local sec
 - `migrations/` contains ordered D1 migrations; see [migrations/README.md](migrations/README.md) for local and remote workflows.
 - `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
 
-`wrangler.jsonc` provides a local-only D1 binding for development and declares the Worker-only authentication and Monobank secrets. Production remains deliberately unconfigured until a real D1 ID is provisioned; do not add placeholder database IDs. See [Phase 4 authentication](docs/phase-4-authentication.md) and [Phase 5 Monobank API](docs/phase-5-monobank-api.md) before deploying.
+`wrangler.jsonc` provides an explicit local-only D1 binding for the `development` environment and declares the Worker-only authentication and Monobank secrets. Production uses a build-time generated, ignored config alongside the Vite Worker artifact, populated from the protected GitHub `production` environment; do not add a placeholder database ID or application secret to committed configuration. See [Phase 19 CI/CD and deployment](docs/phase-19-deployment.md) before deploying.
 
 ## Testing and quality gates
 
 The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
 
 The security findings, remediations, and accepted risks are documented in [Phase 18 security hardening](docs/phase-18-security.md). The client bundle check must follow `npm run build`; it verifies the deployable browser asset directory only, because Cloudflare Vite copies `.dev.vars` into its separate preview-only Worker output by design.
+
+## Deployment
+
+GitHub Actions runs quality checks for each pull request and deploys only a successful `main` workflow after the GitHub `production` environment approval. The deployment applies pending D1 migrations, deploys the Worker, and calls `GET /api/health` over HTTPS. See [the production runbook](docs/phase-19-deployment.md) for one-time setup, secret handling, rollback, and recovery instructions.
 
 ## Codex project skills
 
