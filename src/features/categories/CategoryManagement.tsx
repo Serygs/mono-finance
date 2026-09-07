@@ -1,5 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CategoryChip } from '../../components/ui/Chips'
+import { Button } from '../../components/ui/Controls'
+import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { FormField } from '../../components/ui/FormControls'
+import { Dialog } from '../../components/ui/Overlay'
 import {
   createCategory,
   deleteCategory,
@@ -20,6 +25,10 @@ export function CategoryManagement() {
     id: string
     input: CategoryInput
   } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string
+    name: string
+  } | null>(null)
   const mutation = useMutation({
     mutationFn: async (input: CategoryInput) =>
       editing === null
@@ -32,8 +41,10 @@ export function CategoryManagement() {
   })
   const removal = useMutation({
     mutationFn: deleteCategory,
-    onSuccess: () =>
-      void client.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () => {
+      setPendingDelete(null)
+      void client.invalidateQueries({ queryKey: ['categories'] })
+    },
   })
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -46,103 +57,96 @@ export function CategoryManagement() {
   }
   return (
     <section className="category-management" aria-labelledby="categories-title">
-      <div>
-        <p className="eyebrow">Classification</p>
-        <h1 id="categories-title">Custom categories</h1>
-        <p className="page-description">
+      <header className="section-heading">
+        <h2 id="categories-title">Custom categories</h2>
+        <p>
           Use these for personal analytics. Imported Monobank and MCC categories
           remain unchanged.
         </p>
-      </div>
+      </header>
       <form
         className="category-form"
         key={editing?.id ?? 'new'}
         onSubmit={submit}
       >
-        <h2>{editing === null ? 'Add category' : 'Edit category'}</h2>
-        <label>
-          Name
+        <h3>{editing === null ? 'Add category' : 'Edit category'}</h3>
+        <FormField label="Name">
           <input
+            autoComplete="off"
             name="name"
             defaultValue={editing?.input.name ?? EMPTY.name}
             maxLength={80}
             required
           />
-        </label>
-        <label>
-          Icon <span>(letters, numbers, hyphen)</span>
+        </FormField>
+        <FormField label="Icon" hint="Letters, numbers, or hyphen">
           <input
+            autoComplete="off"
             name="icon"
             defaultValue={editing?.input.icon ?? ''}
             maxLength={32}
             pattern="[A-Za-z0-9-]+"
           />
-        </label>
-        <label>
-          Color token <span>(letters, numbers, hyphen)</span>
+        </FormField>
+        <FormField label="Color token" hint="Letters, numbers, or hyphen">
           <input
+            autoComplete="off"
             name="colorToken"
             defaultValue={editing?.input.colorToken ?? ''}
             maxLength={32}
             pattern="[A-Za-z0-9-]+"
           />
-        </label>
+        </FormField>
         <div className="transaction-correction-actions">
-          <button disabled={mutation.isPending} type="submit">
+          <Button loading={mutation.isPending} type="submit">
             {mutation.isPending
               ? 'Saving…'
               : editing === null
                 ? 'Add category'
                 : 'Save category'}
-          </button>
+          </Button>
           {editing !== null ? (
-            <button
-              className="secondary-action"
+            <Button
               type="button"
               onClick={() => setEditing(null)}
+              variant="secondary"
             >
               Cancel
-            </button>
+            </Button>
           ) : null}
         </div>
         {mutation.isError ? (
-          <p className="transaction-correction-error" role="alert">
-            Category could not be saved.
-          </p>
+          <Alert tone="danger">Category could not be saved.</Alert>
         ) : null}
       </form>
       {categories.isPending ? (
-        <p className="transaction-state">Loading categories…</p>
+        <Skeleton label="Loading categories…" lines={2} />
       ) : null}
       {categories.isError ? (
-        <p className="transaction-state transaction-state-error" role="alert">
-          Categories could not be loaded.
-        </p>
+        <Alert tone="danger">Categories could not be loaded.</Alert>
       ) : null}
       {categories.data?.length === 0 ? (
-        <p className="transaction-state">No custom categories yet.</p>
+        <EmptyState title="No custom categories">
+          <p>Add a category to personalize transaction analytics.</p>
+        </EmptyState>
       ) : null}
       <ul className="category-list">
         {categories.data?.map((category) => (
           <li key={category.id}>
-            <span
-              className={
-                category.colorToken === null
-                  ? 'category-swatch'
-                  : `category-swatch category-swatch-${category.colorToken}`
+            <CategoryChip
+              color={category.colorToken}
+              label={
+                category.icon
+                  ? `${category.icon} ${category.name}`
+                  : category.name
               }
-              aria-hidden="true"
             />
             <div>
-              <strong>
-                {category.icon ? `${category.icon} ` : ''}
-                {category.name}
-              </strong>
               <span>{category.colorToken ?? 'Default color'}</span>
             </div>
             <div className="transaction-correction-actions">
-              <button
-                className="secondary-action"
+              <Button
+                size="small"
                 type="button"
                 onClick={() =>
                   setEditing({
@@ -154,27 +158,64 @@ export function CategoryManagement() {
                     },
                   })
                 }
+                variant="secondary"
               >
                 Edit
-              </button>
-              <button
-                className="danger-action"
+              </Button>
+              <Button
                 disabled={removal.isPending}
+                size="small"
                 type="button"
-                onClick={() => removal.mutate(category.id)}
+                onClick={() => {
+                  removal.reset()
+                  setPendingDelete({ id: category.id, name: category.name })
+                }}
+                variant="danger"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </li>
         ))}
       </ul>
-      {removal.isError ? (
-        <p className="transaction-correction-error" role="alert">
-          This category cannot be deleted while transactions use it. Reset or
-          reassign their overrides first.
+      <Dialog
+        onClose={() => {
+          if (!removal.isPending) {
+            removal.reset()
+            setPendingDelete(null)
+          }
+        }}
+        open={pendingDelete !== null}
+        title="Delete category?"
+      >
+        <p>
+          {pendingDelete?.name ?? 'This category'} will be permanently removed.
+          Categories currently used by transactions cannot be deleted.
         </p>
-      ) : null}
+        {removal.isError ? (
+          <Alert tone="danger" title="Category is still in use">
+            Reset or reassign its transaction overrides first.
+          </Alert>
+        ) : null}
+        <div className="transaction-correction-actions">
+          <Button
+            disabled={removal.isPending}
+            onClick={() => setPendingDelete(null)}
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+          <Button
+            loading={removal.isPending}
+            onClick={() => {
+              if (pendingDelete !== null) removal.mutate(pendingDelete.id)
+            }}
+            variant="danger"
+          >
+            Delete category
+          </Button>
+        </div>
+      </Dialog>
     </section>
   )
 }

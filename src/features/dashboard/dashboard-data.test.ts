@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
+  chartAccentIndex,
   filterDashboardAnalytics,
   resolveDashboardRange,
   type DashboardAnalytics,
@@ -43,6 +44,22 @@ describe('dashboard data', () => {
     const range = resolveDashboardRange('custom', '2024-01-01', '2024-01-31')
 
     expect(range?.dateTo).toBe((range?.dateFrom ?? 0) + 30 * 86_400 + 86_399)
+  })
+
+  it('keeps a category accent stable when the chart order changes', () => {
+    const originalOrder = ['Food', 'Travel', 'Home'].map((category) =>
+      chartAccentIndex(category),
+    )
+    const reordered = ['Home', 'Food', 'Travel'].map((category) =>
+      chartAccentIndex(category),
+    )
+
+    expect(reordered).toEqual([
+      originalOrder[2],
+      originalOrder[0],
+      originalOrder[1],
+    ])
+    expect(originalOrder.every((index) => index >= 0 && index < 5)).toBe(true)
   })
 })
 

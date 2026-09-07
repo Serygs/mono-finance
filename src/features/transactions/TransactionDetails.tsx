@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button } from '../../components/ui/Controls'
+import { Alert, Skeleton } from '../../components/ui/Feedback'
+import { FormField, Select } from '../../components/ui/FormControls'
 import {
   getCategories,
   resetTransactionCategory,
@@ -27,7 +30,6 @@ import type {
 } from './transaction-types'
 
 interface TransactionDetailsProps {
-  onClose(): void
   onTransactionUpdated(
     correction: Pick<TransactionCorrection, 'id'> &
       Partial<TransactionCorrection>,
@@ -42,7 +44,6 @@ interface TransactionDetailsProps {
 }
 
 export function TransactionDetails({
-  onClose,
   onTransactionUpdated,
   transaction,
 }: TransactionDetailsProps) {
@@ -50,7 +51,6 @@ export function TransactionDetails({
   return (
     <TransactionDetailsContent
       key={transaction.id}
-      onClose={onClose}
       onTransactionUpdated={onTransactionUpdated}
       transaction={transaction}
     />
@@ -58,7 +58,6 @@ export function TransactionDetails({
 }
 
 function TransactionDetailsContent({
-  onClose,
   onTransactionUpdated,
   transaction,
 }: Omit<TransactionDetailsProps, 'transaction'> & {
@@ -231,19 +230,12 @@ function TransactionDetailsContent({
   }
 
   return (
-    <aside
-      aria-label="Transaction details"
-      className="transaction-details"
-      role="dialog"
-    >
+    <div className="transaction-details">
       <div className="transaction-details-heading">
         <div>
           <p className="eyebrow">Transaction details</p>
           <h2>{transaction.originalDescription}</h2>
         </div>
-        <button className="details-close" onClick={onClose} type="button">
-          Close
-        </button>
       </div>
       <div>
         <strong className="transaction-details-amount">
@@ -288,9 +280,8 @@ function TransactionDetailsContent({
             stays preserved.
           </p>
         </div>
-        <label>
-          Custom category
-          <select
+        <FormField label="Custom category">
+          <Select
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
             disabled={isSaving || categoriesQuery.isPending}
@@ -302,25 +293,28 @@ function TransactionDetailsContent({
                 {category.name}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </FormField>
         <div className="transaction-correction-actions">
-          <button
+          <Button
             disabled={isSaving || categoryId === ''}
+            loading={categoryMutation.isPending}
             onClick={() => categoryMutation.mutate(categoryId)}
+            size="small"
             type="button"
           >
             {categoryMutation.isPending ? 'Saving…' : 'Save category'}
-          </button>
+          </Button>
           {transaction.category.source === 'custom' ? (
-            <button
-              className="secondary-action"
+            <Button
               disabled={isSaving}
               onClick={() => resetCategoryMutation.mutate()}
+              size="small"
               type="button"
+              variant="secondary"
             >
               Reset to original
-            </button>
+            </Button>
           ) : null}
         </div>
       </section>
@@ -374,19 +368,19 @@ function TransactionDetailsContent({
                     {link.description} ·{' '}
                     {formatMinor(link.compensatedAmountMinor, transaction)}
                   </span>
-                  <button
-                    className="secondary-action"
+                  <Button
                     disabled={unlinkCompensationMutation.isPending}
                     onClick={() => unlinkCompensationMutation.mutate(link.id)}
+                    size="small"
                     type="button"
+                    variant="quiet"
                   >
                     Unlink
-                  </button>
+                  </Button>
                 </div>
               ))}
-              <label>
-                Suggested incoming transaction
-                <select
+              <FormField label="Suggested incoming transaction">
+                <Select
                   value={compensationTransactionId}
                   onChange={(event) => {
                     const candidate = compensationQuery.data?.suggestions.find(
@@ -416,19 +410,22 @@ function TransactionDetailsContent({
                       {candidate.description} · {candidate.confidenceScore}%
                     </option>
                   ))}
-                </select>
-              </label>
-              <label>
-                Compensated amount ({transaction.currencyCode})
+                </Select>
+              </FormField>
+              <FormField
+                label={`Compensated amount (${transaction.currencyCode})`}
+              >
                 <input
+                  autoComplete="off"
                   inputMode="decimal"
+                  name="compensated-amount"
                   value={compensationAmount}
                   onChange={(event) =>
                     setCompensationAmount(event.target.value)
                   }
                 />
-              </label>
-              <button
+              </FormField>
+              <Button
                 disabled={
                   compensationTransactionId === '' ||
                   compensationMutation.isPending
@@ -450,23 +447,24 @@ function TransactionDetailsContent({
                     compensatedAmountMinor: amount,
                   })
                 }}
+                loading={compensationMutation.isPending}
                 type="button"
               >
                 {compensationMutation.isPending
                   ? 'Linking…'
                   : 'Link compensation'}
-              </button>
+              </Button>
             </>
           ) : null}
           {compensationQuery.isPending ? (
-            <p>Loading compensation details…</p>
+            <Skeleton label="Loading compensation details…" lines={2} />
           ) : null}
           {compensationQuery.isError ||
           compensationMutation.isError ||
           unlinkCompensationMutation.isError ? (
-            <p className="transaction-correction-error" role="alert">
+            <Alert tone="danger">
               Compensation could not be saved. Try again later.
-            </p>
+            </Alert>
           ) : null}
         </section>
       ) : null}
@@ -478,37 +476,39 @@ function TransactionDetailsContent({
             unchanged.
           </p>
         </div>
-        <label>
-          Effective amount ({transaction.currencyCode})
+        <FormField label={`Effective amount (${transaction.currencyCode})`}>
           <input
+            autoComplete="off"
             inputMode="decimal"
+            name="effective-amount"
             onChange={(event) => setAdjustmentAmount(event.target.value)}
             required
             type="text"
             value={adjustmentAmount}
           />
-        </label>
-        <label>
-          Note <span>(optional)</span>
+        </FormField>
+        <FormField label="Note" hint="Optional">
           <textarea
+            autoComplete="off"
             maxLength={1_000}
+            name="adjustment-note"
             onChange={(event) => setAdjustmentNote(event.target.value)}
             value={adjustmentNote}
           />
-        </label>
+        </FormField>
         <div className="transaction-correction-actions">
-          <button disabled={isSaving} type="submit">
+          <Button loading={adjustmentMutation.isPending} type="submit">
             {adjustmentMutation.isPending ? 'Saving…' : 'Save adjustment'}
-          </button>
+          </Button>
           {transaction.hasAdjustment ? (
-            <button
-              className="secondary-action"
+            <Button
               disabled={isSaving}
               onClick={() => resetMutation.mutate()}
               type="button"
+              variant="secondary"
             >
               Reset adjustment
-            </button>
+            </Button>
           ) : null}
         </div>
       </form>
@@ -524,48 +524,49 @@ function TransactionDetailsContent({
           </p>
         </div>
         {transaction.isExcluded ? (
-          <button
-            className="secondary-action"
+          <Button
             disabled={isSaving}
+            loading={restoreMutation.isPending}
             onClick={() => restoreMutation.mutate()}
             type="button"
+            variant="secondary"
           >
             {restoreMutation.isPending ? 'Restoring…' : 'Restore to analytics'}
-          </button>
+          </Button>
         ) : (
           <>
-            <label>
-              Reason <span>(optional)</span>
+            <FormField label="Reason" hint="Optional">
               <textarea
+                autoComplete="off"
                 maxLength={1_000}
+                name="exclusion-reason"
                 onChange={(event) => setExclusionReason(event.target.value)}
                 value={exclusionReason}
               />
-            </label>
-            <button
-              className="danger-action"
+            </FormField>
+            <Button
               disabled={isSaving}
+              loading={exclusionMutation.isPending}
               onClick={() =>
                 exclusionMutation.mutate(exclusionReason.trim() || null)
               }
               type="button"
+              variant="danger"
             >
               {exclusionMutation.isPending
                 ? 'Excluding…'
                 : 'Exclude from analytics'}
-            </button>
+            </Button>
           </>
         )}
       </section>
       {validationMessage !== null ? (
-        <p className="transaction-correction-error" role="alert">
-          {validationMessage}
-        </p>
+        <Alert tone="danger">{validationMessage}</Alert>
       ) : null}
       {mutationError !== null ? (
-        <p className="transaction-correction-error" role="alert">
+        <Alert tone="danger">
           Transaction correction could not be saved. Try again later.
-        </p>
+        </Alert>
       ) : null}
       {transaction.hasAdjustment ? (
         <p className="transaction-detail-note">
@@ -582,7 +583,7 @@ function TransactionDetailsContent({
           Excluded from normal analytics.
         </p>
       ) : null}
-    </aside>
+    </div>
   )
 }
 

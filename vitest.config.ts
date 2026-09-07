@@ -6,6 +6,7 @@ export default defineConfig({
       'worker/**/*.test.ts',
       'migrations/**/*.test.ts',
       'src/**/*.test.ts',
+      'src/**/*.test.tsx',
     ],
   },
 })
