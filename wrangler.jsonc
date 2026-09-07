@@ -30,7 +30,7 @@
     },
   ],
   "secrets": {
-    "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+    "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
   },
   "env": {
     "development": {
@@ -38,7 +38,7 @@
         "APP_ENV": "development",
       },
       "secrets": {
-        "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+        "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
       },
     },
     "production": {
@@ -46,7 +46,7 @@
         "APP_ENV": "production",
       },
       "secrets": {
-        "required": ["SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
+        "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
       },
     },
   },
