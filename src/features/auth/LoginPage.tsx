@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
+import { Button } from '../../components/ui/Controls'
+import { Alert } from '../../components/ui/Feedback'
+import { FormField } from '../../components/ui/FormControls'
 import { useAuth } from './auth-context'
 
 export function LoginPage() {
@@ -44,33 +47,32 @@ export function LoginPage() {
           Sign in to access your personal financial workspace.
         </p>
         <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="email">Email</label>
-          <input
-            autoComplete="username"
-            id="email"
-            name="email"
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            type="email"
-            value={email}
-          />
-          <label htmlFor="password">Password</label>
-          <input
-            autoComplete="current-password"
-            id="password"
-            minLength={12}
-            name="password"
-            required
-            type="password"
-          />
-          {error === null ? null : (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
-          <button disabled={isSubmitting} type="submit">
+          <FormField label="Email">
+            <input
+              autoComplete="username"
+              id="email"
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              spellCheck={false}
+              type="email"
+              value={email}
+            />
+          </FormField>
+          <FormField label="Password">
+            <input
+              autoComplete="current-password"
+              id="password"
+              minLength={12}
+              name="password"
+              required
+              type="password"
+            />
+          </FormField>
+          {error === null ? null : <Alert tone="danger">{error}</Alert>}
+          <Button loading={isSubmitting} size="large" type="submit">
             {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

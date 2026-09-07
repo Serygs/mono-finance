@@ -1,6 +1,9 @@
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { Button } from '../../components/ui/Controls'
+import { Alert } from '../../components/ui/Feedback'
+import { FormField } from '../../components/ui/FormControls'
 import {
   getCurrencyPreferences,
   saveCurrencyPreferences,
@@ -34,46 +37,44 @@ export function CurrencyPreferences() {
       aria-labelledby="currency-settings-title"
       className="category-management"
     >
-      <div>
-        <p className="eyebrow">Analytics</p>
-        <h1 id="currency-settings-title">Base currency</h1>
-        <p className="page-description">
+      <header className="section-heading">
+        <h2 id="currency-settings-title">Base currency</h2>
+        <p>
           Base-currency totals use saved historical rates. Original transaction
           amounts always remain unchanged.
         </p>
-      </div>
+      </header>
       <form
         className="category-form"
         key={preferences.data?.baseCurrencyCode ?? 'UAH'}
         onSubmit={submit}
       >
-        <label>
-          Base currency (ISO 4217)
+        <FormField label="Base currency (ISO 4217)">
           <input
+            autoComplete="off"
             defaultValue={preferences.data?.baseCurrencyCode ?? 'UAH'}
             maxLength={3}
             name="baseCurrencyCode"
             pattern="[A-Za-z]{3}"
             required
           />
-        </label>
+        </FormField>
         <div className="transaction-correction-actions">
-          <button disabled={save.isPending} type="submit">
+          <Button loading={save.isPending} type="submit">
             {save.isPending ? 'Saving…' : 'Save base currency'}
-          </button>
-          <button
-            className="secondary-action"
+          </Button>
+          <Button
             disabled={rates.isPending}
+            loading={rates.isPending}
             onClick={() => rates.mutate()}
             type="button"
+            variant="secondary"
           >
             {rates.isPending ? 'Updating…' : 'Update exchange rates'}
-          </button>
+          </Button>
         </div>
         {save.isError || rates.isError ? (
-          <p className="transaction-correction-error" role="alert">
-            Currency settings could not be updated.
-          </p>
+          <Alert tone="danger">Currency settings could not be updated.</Alert>
         ) : null}
       </form>
     </section>

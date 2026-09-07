@@ -9,6 +9,11 @@ import { loadAccountFilter } from '../accounts/account-filter-storage'
 import { getAccounts } from '../accounts/accounts-api'
 import type { AccountSummary } from '../accounts/account-types'
 import { getCategories } from '../categories/categories-api'
+import { Button, SegmentedControl } from '../../components/ui/Controls'
+import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { FormField, Select } from '../../components/ui/FormControls'
+import { BottomSheet } from '../../components/ui/Overlay'
+import { PageHeader, PageSurface } from '../../components/ui/Page'
 
 import { TransactionDetails } from './TransactionDetails'
 import {
@@ -41,6 +46,12 @@ const DATE_PRESETS: { label: string; value: DatePreset }[] = [
   { label: 'This year', value: 'current-year' },
   { label: 'Custom range', value: 'custom' },
 ]
+
+const DIRECTION_OPTIONS = [
+  { label: 'All', value: 'all' },
+  { label: 'Expenses', value: 'expense' },
+  { label: 'Income', value: 'income' },
+] as const
 
 export function TransactionsPage() {
   const [datePreset, setDatePreset] = useState<DatePreset>('30d')
@@ -104,31 +115,35 @@ export function TransactionsPage() {
     .sort()
 
   return (
-    <section className="transactions-page" aria-labelledby="transactions-title">
-      <header className="transactions-intro">
-        <div>
-          <p className="eyebrow">Ledger</p>
-          <h1 id="transactions-title">Transactions</h1>
-          <p className="page-description">
+    <PageSurface className="transactions-page">
+      <PageHeader
+        description={
+          <p>
             Your imported bank records, in order. Adjustments and relationships
             remain visible without rewriting the original entry.
           </p>
-        </div>
-      </header>
+        }
+        eyebrow="Ledger"
+        id="transactions-title"
+        title="Transactions"
+      />
 
       <section className="transaction-filters" aria-label="Transaction filters">
-        <label className="transaction-search">
-          <span>Search merchant or description</span>
+        <FormField
+          className="transaction-search"
+          label="Search merchant or description"
+        >
           <input
+            autoComplete="off"
+            name="transaction-search"
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search transactions"
+            placeholder="Search transactions…"
             type="search"
             value={search}
           />
-        </label>
-        <div className="filter-field">
-          <span>Date range</span>
-          <select
+        </FormField>
+        <FormField className="filter-field" label="Date range">
+          <Select
             onChange={(event) =>
               setDatePreset(event.target.value as DatePreset)
             }
@@ -139,55 +154,38 @@ export function TransactionsPage() {
                 {preset.label}
               </option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </FormField>
         {datePreset === 'custom' ? (
           <div className="custom-date-fields">
-            <label>
-              From
+            <FormField label="From">
               <input
+                autoComplete="off"
+                name="transactions-from"
                 onChange={(event) => setCustomDateFrom(event.target.value)}
                 type="date"
                 value={customDateFrom}
               />
-            </label>
-            <label>
-              To
+            </FormField>
+            <FormField label="To">
               <input
+                autoComplete="off"
+                name="transactions-to"
                 onChange={(event) => setCustomDateTo(event.target.value)}
                 type="date"
                 value={customDateTo}
               />
-            </label>
+            </FormField>
           </div>
         ) : null}
-        <fieldset className="direction-filter">
-          <legend>Direction</legend>
-          <button
-            aria-pressed={direction === null}
-            onClick={() => setDirection(null)}
-            type="button"
-          >
-            All
-          </button>
-          <button
-            aria-pressed={direction === 'expense'}
-            onClick={() => setDirection('expense')}
-            type="button"
-          >
-            Expenses
-          </button>
-          <button
-            aria-pressed={direction === 'income'}
-            onClick={() => setDirection('income')}
-            type="button"
-          >
-            Income
-          </button>
-        </fieldset>
-        <label className="filter-field">
-          <span>Category</span>
-          <select
+        <SegmentedControl
+          label="Direction"
+          onChange={(value) => setDirection(value === 'all' ? null : value)}
+          options={DIRECTION_OPTIONS}
+          value={direction ?? 'all'}
+        />
+        <FormField className="filter-field" label="Category">
+          <Select
             onChange={(event) => setCategory(event.target.value || null)}
             value={category ?? ''}
           >
@@ -197,8 +195,8 @@ export function TransactionsPage() {
                 {item}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </FormField>
         <AccountMultiSelector
           accounts={accountsQuery.data ?? []}
           selectedIds={accountIds}
@@ -207,22 +205,19 @@ export function TransactionsPage() {
       </section>
 
       {transactionsQuery.isPending ? (
-        <p className="transaction-state" role="status">
-          Loading transactions…
-        </p>
+        <Skeleton label="Loading transactions…" lines={5} />
       ) : null}
       {transactionsQuery.isError ? (
-        <p className="transaction-state transaction-state-error" role="alert">
-          Transactions could not be loaded. Try again later.
-        </p>
+        <Alert tone="danger" title="Transactions could not be loaded">
+          Try again when the connection is available.
+        </Alert>
       ) : null}
       {!transactionsQuery.isPending &&
       !transactionsQuery.isError &&
       transactions.length === 0 ? (
-        <p className="transaction-state">
-          No transactions match these filters. Import a transaction window or
-          broaden the filters.
-        </p>
+        <EmptyState title="No matching transactions">
+          <p>Import a transaction window or broaden the filters.</p>
+        </EmptyState>
       ) : null}
       {transactions.length > 0 ? (
         <div className="transaction-layout">
@@ -233,6 +228,7 @@ export function TransactionsPage() {
             {transactions.map((transaction) => (
               <li key={transaction.id}>
                 <button
+                  aria-pressed={selectedTransaction?.id === transaction.id}
                   className="transaction-row"
                   onClick={() => setSelectedTransaction(transaction)}
                   type="button"
@@ -263,45 +259,54 @@ export function TransactionsPage() {
               </li>
             ))}
           </ol>
-          <TransactionDetails
+          <BottomSheet
             onClose={() => setSelectedTransaction(null)}
-            onTransactionUpdated={(correction, metadata) =>
-              setSelectedTransaction((current) =>
-                current === null || current.id !== correction.id
-                  ? current
-                  : {
-                      ...current,
-                      ...metadata,
-                      ...(correction.effectiveAmountMinor === undefined
-                        ? {}
-                        : {
-                            effectiveAmountMinor:
-                              correction.effectiveAmountMinor,
-                          }),
-                      ...(correction.hasAdjustment === undefined
-                        ? {}
-                        : { hasAdjustment: correction.hasAdjustment }),
-                      ...(correction.isExcluded === undefined
-                        ? {}
-                        : { isExcluded: correction.isExcluded }),
-                    },
-              )
+            open={selectedTransaction !== null}
+            title={
+              selectedTransaction?.originalDescription ?? 'Transaction details'
             }
-            transaction={selectedTransaction}
-          />
+          >
+            <TransactionDetails
+              onTransactionUpdated={(correction, metadata) =>
+                setSelectedTransaction((current) =>
+                  current === null || current.id !== correction.id
+                    ? current
+                    : {
+                        ...current,
+                        ...metadata,
+                        ...(correction.effectiveAmountMinor === undefined
+                          ? {}
+                          : {
+                              effectiveAmountMinor:
+                                correction.effectiveAmountMinor,
+                            }),
+                        ...(correction.hasAdjustment === undefined
+                          ? {}
+                          : { hasAdjustment: correction.hasAdjustment }),
+                        ...(correction.isExcluded === undefined
+                          ? {}
+                          : { isExcluded: correction.isExcluded }),
+                      },
+                )
+              }
+              transaction={selectedTransaction}
+            />
+          </BottomSheet>
         </div>
       ) : null}
       {transactionsQuery.hasNextPage ? (
-        <button
+        <Button
           className="load-more-button"
           disabled={transactionsQuery.isFetchingNextPage}
+          loading={transactionsQuery.isFetchingNextPage}
           onClick={() => void transactionsQuery.fetchNextPage()}
           type="button"
+          variant="secondary"
         >
           {transactionsQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
-        </button>
+        </Button>
       ) : null}
-    </section>
+    </PageSurface>
   )
 }
 
@@ -334,9 +339,8 @@ function AccountMultiSelector({
   selectedIds: string[]
 }) {
   return (
-    <label className="filter-field">
-      <span>Accounts</span>
-      <select
+    <FormField className="filter-field" label="Accounts">
+      <Select
         multiple
         onChange={(event) =>
           onChange(
@@ -350,8 +354,8 @@ function AccountMultiSelector({
             {account.type} · {account.currency.code}
           </option>
         ))}
-      </select>
-    </label>
+      </Select>
+    </FormField>
   )
 }
 

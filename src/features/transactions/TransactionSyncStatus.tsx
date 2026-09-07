@@ -1,4 +1,6 @@
 import type { TransactionSyncState } from './transaction-sync-types'
+import { EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { Card } from '../../components/ui/Surfaces'
 
 interface TransactionSyncStatusProps {
   states: TransactionSyncState[] | null
@@ -6,29 +8,19 @@ interface TransactionSyncStatusProps {
 
 export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
   if (states === null) {
-    return (
-      <section className="transaction-sync-status" aria-live="polite">
-        <p>Loading transaction sync status…</p>
-      </section>
-    )
+    return <Skeleton label="Loading transaction sync status…" lines={2} />
   }
 
   return (
-    <section
-      className="transaction-sync-status"
-      aria-labelledby="transaction-sync-status-title"
-    >
-      <div>
-        <h2 id="transaction-sync-status-title">Transaction sync</h2>
-        <p>
-          Imported data stays in D1; refreshes run one safe account window at a
-          time.
-        </p>
-      </div>
+    <Card className="transaction-sync-status" title="Transaction sync">
+      <p>
+        Imported data stays in D1; refreshes run one safe account window at a
+        time.
+      </p>
       {states.length === 0 ? (
-        <p className="sync-status-empty">
-          Synchronize accounts before importing transactions.
-        </p>
+        <EmptyState title="No accounts ready for sync">
+          <p>Synchronize accounts before importing transactions.</p>
+        </EmptyState>
       ) : (
         <ul className="sync-status-list">
           {states.map((state) => (
@@ -43,7 +35,7 @@ export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   )
 }
 

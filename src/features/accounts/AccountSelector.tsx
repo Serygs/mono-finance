@@ -1,6 +1,8 @@
 import type { AccountFilter } from './account-filter-storage'
 import { formatAccountBalance } from './account-formatting'
 import type { AccountSummary } from './account-types'
+import { AccountChip } from '../../components/ui/Chips'
+import { EmptyState } from '../../components/ui/Feedback'
 
 interface AccountSelectorProps {
   accounts: AccountSummary[]
@@ -17,10 +19,9 @@ export function AccountSelector({
 }: AccountSelectorProps) {
   if (accounts.length === 0) {
     return (
-      <div className="accounts-empty">
-        <p>No accounts have been synchronized yet.</p>
-        <span>Use Sync accounts to import the latest Monobank accounts.</span>
-      </div>
+      <EmptyState title="No synchronized accounts">
+        <p>Use Sync accounts to import the latest Monobank accounts.</p>
+      </EmptyState>
     )
   }
 
@@ -31,15 +32,13 @@ export function AccountSelector({
           <h2 id="account-filter-title">Accounts in view</h2>
           <p>Choose one, combine several, or return to the full picture.</p>
         </div>
-        <button
-          aria-pressed={filter.mode === 'all'}
+        <AccountChip
           className="all-accounts-button"
+          detail={accounts.length}
+          label="All accounts"
           onClick={onSelectAll}
-          type="button"
-        >
-          All accounts
-          <span>{accounts.length}</span>
-        </button>
+          selected={filter.mode === 'all'}
+        />
       </div>
 
       <div className="account-shelf" aria-label="Account filter">

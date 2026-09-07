@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { Button } from '../../components/ui/Controls'
+import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { FormField, Select } from '../../components/ui/FormControls'
+import { PageHeader, PageSurface } from '../../components/ui/Page'
+import { Card, ChartContainer, KpiCard } from '../../components/ui/Surfaces'
 import { AccountSelector } from '../accounts/AccountSelector'
 import {
   loadAccountFilter,
@@ -31,6 +36,7 @@ import { getCurrencyPreferences } from '../settings/currency-preferences-api'
 import {
   DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
+  chartAccentIndex,
   chartSeries,
   filterDashboardAnalytics,
   formatCurrencyAmount,
@@ -187,53 +193,58 @@ export function DashboardPage() {
   }
 
   return (
-    <section className="dashboard-page" aria-labelledby="dashboard-title">
-      <section className="dashboard-intro">
-        <div>
-          <p className="eyebrow">Personal finance</p>
-          <h1 id="dashboard-title">Your money, in clear focus.</h1>
-          <p className="page-description">
+    <PageSurface className="dashboard-page">
+      <PageHeader
+        actions={
+          <>
+            <Button
+              disabled={isSynchronizing || accounts === null}
+              loading={isSynchronizing}
+              onClick={() => void handleAccountSynchronize()}
+              size="small"
+              type="button"
+              variant="secondary"
+            >
+              {isSynchronizing ? 'Syncing…' : 'Sync accounts'}
+            </Button>
+            <Button
+              disabled={isTransactionSynchronizing || accounts === null}
+              loading={isTransactionSynchronizing}
+              onClick={() => void handleTransactionSynchronize()}
+              size="small"
+              type="button"
+            >
+              {isTransactionSynchronizing
+                ? 'Refreshing…'
+                : 'Refresh transactions'}
+            </Button>
+          </>
+        }
+        description={
+          <p>
             Imported transactions, shaped by your adjustments and compensation
             links.
           </p>
-        </div>
-        <div className="sync-actions">
-          <button
-            className="sync-accounts-button"
-            disabled={isSynchronizing || accounts === null}
-            onClick={() => void handleAccountSynchronize()}
-            type="button"
-          >
-            {isSynchronizing ? 'Syncing…' : 'Sync accounts'}
-          </button>
-          <button
-            className="sync-transactions-button"
-            disabled={isTransactionSynchronizing || accounts === null}
-            onClick={() => void handleTransactionSynchronize()}
-            type="button"
-          >
-            {isTransactionSynchronizing
-              ? 'Refreshing…'
-              : 'Refresh transactions'}
-          </button>
-        </div>
-      </section>
+        }
+        eyebrow="Personal finance"
+        id="dashboard-title"
+        title="Your money, in clear focus."
+      />
 
       {error === null ? null : (
-        <p className="accounts-error" role="alert">
+        <Alert tone="danger" title="Accounts could not be synchronized">
           {error}
-        </p>
+        </Alert>
       )}
       {syncStatusError === null ? null : (
-        <p className="accounts-error" role="alert">
+        <Alert tone="danger" title="Transaction sync is unavailable">
           {syncStatusError}
-        </p>
+        </Alert>
       )}
 
       <section className="dashboard-filters" aria-label="Dashboard filters">
-        <label>
-          <span>Period</span>
-          <select
+        <FormField label="Period">
+          <Select
             onChange={(event) =>
               setDatePreset(event.target.value as DashboardDatePreset)
             }
@@ -244,33 +255,32 @@ export function DashboardPage() {
                 {preset.label}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </FormField>
         {datePreset === 'custom' ? (
           <>
-            <label>
-              <span>From</span>
+            <FormField label="From">
               <input
+                autoComplete="off"
                 name="dashboard-from"
                 onChange={(event) => setCustomDateFrom(event.target.value)}
                 type="date"
                 value={customDateFrom}
               />
-            </label>
-            <label>
-              <span>To</span>
+            </FormField>
+            <FormField label="To">
               <input
+                autoComplete="off"
                 name="dashboard-to"
                 onChange={(event) => setCustomDateTo(event.target.value)}
                 type="date"
                 value={customDateTo}
               />
-            </label>
+            </FormField>
           </>
         ) : null}
-        <label>
-          <span>Currency view</span>
-          <select
+        <FormField label="Currency view">
+          <Select
             onChange={(event) =>
               setCurrencyMode(event.target.value as 'base' | 'original')
             }
@@ -278,12 +288,11 @@ export function DashboardPage() {
           >
             <option value="original">Original currencies</option>
             <option value="base">Base currency · {baseCurrencyCode}</option>
-          </select>
-        </label>
+          </Select>
+        </FormField>
         {currencyMode === 'original' ? (
-          <label>
-            <span>Original currency</span>
-            <select
+          <FormField label="Original currency">
+            <Select
               onChange={(event) =>
                 setDisplayCurrency(event.target.value || null)
               }
@@ -297,22 +306,22 @@ export function DashboardPage() {
                       {currency}
                     </option>
                   ))}
-            </select>
-          </label>
+            </Select>
+          </FormField>
         ) : null}
       </section>
 
       {syncStates?.some((state) => state.status === 'failed') ? (
-        <p className="dashboard-state dashboard-state-warning" role="status">
+        <Alert tone="warning" title="Some accounts need attention">
           Some accounts still need a transaction sync retry. The dashboard shows
           transactions already stored in D1.
-        </p>
+        </Alert>
       ) : null}
 
       {range === null ? (
-        <p className="dashboard-state dashboard-state-error" role="alert">
+        <Alert tone="danger" title="Date range is incomplete">
           Enter a valid start and end date to view analytics.
-        </p>
+        </Alert>
       ) : null}
       {analyticsQuery.isPending ? <DashboardSkeleton /> : null}
       {analyticsQuery.isError ? (
@@ -330,9 +339,7 @@ export function DashboardPage() {
       )}
 
       {accounts === null ? (
-        <p className="accounts-loading" role="status">
-          Loading accounts…
-        </p>
+        <Skeleton label="Loading accounts…" lines={2} />
       ) : (
         <AccountSelector
           accounts={accounts}
@@ -344,7 +351,7 @@ export function DashboardPage() {
         />
       )}
       <TransactionSyncStatus states={syncStates} />
-    </section>
+    </PageSurface>
   )
 }
 
@@ -381,8 +388,7 @@ function DashboardAnalyticsView({
     .slice(0, 5)
   if (displayed.overview.totals.length === 0) {
     return (
-      <section className="dashboard-empty">
-        <h2>No transactions in this view</h2>
+      <EmptyState title="No transactions in this view">
         <p>
           Change the filters or refresh transactions to build this dashboard.
         </p>
@@ -397,20 +403,20 @@ function DashboardAnalyticsView({
             transaction(s). Switch to original currencies to view them.
           </p>
         ) : null}
-      </section>
+      </EmptyState>
     )
   }
   return (
     <div className="dashboard-content">
       {currencyMode === 'base' ? (
-        <p className="dashboard-state dashboard-state-warning" role="status">
+        <Alert tone="warning" title="Historical currency conversion">
           Base-currency values are converted from preserved original amounts
           using rates stored at or before each transaction.
           {analytics.overview.currencyConversion.missingRateTransactionCounts
             .length > 0
             ? ` ${analytics.overview.currencyConversion.missingRateTransactionCounts.map((item) => `${item.count} ${item.currencyCode}`).join(', ')} transaction(s) have no historical rate and are excluded from base totals.`
             : ''}
-        </p>
+        </Alert>
       ) : null}
       <p className="dashboard-currency-note">
         {displayCurrency === null
@@ -572,28 +578,17 @@ function DashboardAnalyticsView({
 }
 
 function DashboardSkeleton() {
-  return (
-    <div
-      aria-label="Loading dashboard"
-      className="dashboard-skeleton"
-      role="status"
-    >
-      {Array.from({ length: 6 }, (_, index) => (
-        <span key={index} />
-      ))}
-    </div>
-  )
+  return <Skeleton label="Loading dashboard…" lines={6} />
 }
 
 function DashboardError({ onRetry }: { onRetry(): void }) {
   return (
-    <section className="dashboard-state dashboard-state-error" role="alert">
-      <h2>Analytics could not be loaded</h2>
+    <Alert tone="danger" title="Analytics could not be loaded">
       <p>Check the connection, then try again.</p>
-      <button onClick={onRetry} type="button">
+      <Button onClick={onRetry} size="small" type="button">
         Retry analytics
-      </button>
-    </section>
+      </Button>
+    </Alert>
   )
 }
 
@@ -607,10 +602,11 @@ function MetricCard({
   values: CurrencyAmount[]
 }) {
   return (
-    <section className="metric-card">
-      <h2>{title}</h2>
-      <MetricValues empty="—" minorUnits={minorUnits} values={values} />
-    </section>
+    <KpiCard
+      accent={metricAccent(title)}
+      label={title}
+      value={<MetricValues empty="—" minorUnits={minorUnits} values={values} />}
+    />
   )
 }
 
@@ -650,10 +646,13 @@ function ChartCard({
   title: string
 }) {
   return (
-    <section className={`dashboard-card ${className ?? ''}`}>
-      <h2>{title}</h2>
+    <ChartContainer
+      {...(className === undefined ? {} : { className })}
+      summary={`${title} for the selected period. Exact values are available in the chart content.`}
+      title={title}
+    >
       {children}
-    </section>
+    </ChartContainer>
   )
 }
 
@@ -842,10 +841,13 @@ function DonutChart({
         viewBox="0 0 42 42"
       >
         <title>Expense distribution by category</title>
-        {segments.map(({ offset, value }, index) => {
+        {segments.map(({ offset, value }) => {
+          const accentIndex = chartAccentIndex(
+            `${value.categoryName}:${value.currencyCode}`,
+          )
           return (
             <circle
-              className={`donut-segment donut-segment-${index}`}
+              className={`donut-segment donut-segment-${accentIndex}`}
               cx="21"
               cy="21"
               fill="transparent"
@@ -860,7 +862,13 @@ function DonutChart({
       <ol className="donut-legend">
         {displayed.map((value) => (
           <li key={`${value.categoryName}-${value.currencyCode}`}>
-            <span>{value.categoryName}</span>
+            <span>
+              <i
+                aria-hidden="true"
+                className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
+              />
+              {value.categoryName}
+            </span>
             <strong>
               {formatCurrencyAmount(
                 value.amountMinor,
@@ -885,8 +893,7 @@ function EvidenceList({
   values: Array<CurrencyAmount & { detail: string; label: string }>
 }) {
   return (
-    <section className="dashboard-card evidence-card">
-      <h2>{title}</h2>
+    <Card className="evidence-card" title={title}>
       {values.length === 0 ? (
         <p className="metric-empty">No data in this period.</p>
       ) : (
@@ -908,7 +915,7 @@ function EvidenceList({
           ))}
         </ol>
       )}
-    </section>
+    </Card>
   )
 }
 
@@ -926,8 +933,7 @@ function TransactionEvidence({
   transactions: TransactionListItem[]
 }) {
   return (
-    <section className="dashboard-card evidence-card">
-      <h2>{title}</h2>
+    <Card className="evidence-card" title={title}>
       {loading ? (
         <p className="metric-empty">Loading…</p>
       ) : transactions.length === 0 ? (
@@ -954,12 +960,27 @@ function TransactionEvidence({
           ))}
         </ol>
       )}
-    </section>
+    </Card>
   )
 }
 
 function EmptyChart() {
   return <p className="chart-empty">No data in this period.</p>
+}
+
+function metricAccent(
+  title: string,
+): 'cyan' | 'blue' | 'green' | 'violet' | 'pink' {
+  const accents = ['cyan', 'blue', 'green', 'violet', 'pink'] as const
+  const titles = [
+    'Total spent',
+    'Total income',
+    'Net cash flow',
+    'Available to save',
+    'Average spend / day',
+  ]
+  const index = titles.indexOf(title)
+  return accents[index < 0 ? 0 : index % accents.length] ?? 'cyan'
 }
 function accountName(accounts: AccountSummary[], accountId: string): string {
   const account = accounts.find((item) => item.id === accountId)

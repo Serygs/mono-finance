@@ -149,6 +149,15 @@ export function chartSeries(
   }))
 }
 
+export function chartAccentIndex(stableKey: string): number {
+  let hash = 2_166_136_261
+  for (let index = 0; index < stableKey.length; index += 1) {
+    hash ^= stableKey.charCodeAt(index)
+    hash = Math.imul(hash, 16_777_619)
+  }
+  return (hash >>> 0) % 5
+}
+
 export function formatCurrencyAmount(
   amountMinor: number,
   currencyCode: string,
