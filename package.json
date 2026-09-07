@@ -22,6 +22,7 @@
     "db:execute:local": "wrangler d1 execute DB --local --persist-to .wrangler/state"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.102.8",
     "hono": "^4.13.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
