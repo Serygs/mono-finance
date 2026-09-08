@@ -2,7 +2,11 @@ import type { PasswordHasher, SessionTokenService } from './auth-service'
 
 const PASSWORD_ALGORITHM = 'pbkdf2-sha256'
 const PASSWORD_HASH_BYTES = 32
-const PASSWORD_ITERATIONS = 600_000
+// Cloudflare's production workerd runtime rejects PBKDF2 requests above
+// 100,000 iterations even though local Web Crypto implementations may accept
+// them. Keep this at the platform maximum so setup and login behave equally in
+// local and production environments.
+const PASSWORD_ITERATIONS = 100_000
 const PASSWORD_SALT_BYTES = 16
 const textEncoder = new TextEncoder()
 
