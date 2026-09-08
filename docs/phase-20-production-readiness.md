@@ -2,7 +2,7 @@
 
 ## Operational signals
 
-The Worker emits structured JSON events with a request ID, safe route, HTTP status, and duration. It never logs request bodies, cookies, account balances, Monobank tokens, passwords, or database error messages. Cloudflare Workers Logs and traces are enabled; `OBSERVABILITY` writes aggregate request, authentication-failure, and internal-error metrics to the `mono-finance-observability` Analytics Engine dataset.
+The Worker emits structured JSON events with a request ID, safe route, HTTP status, and duration. Unexpected API failures also include the HTTP method, exception name, safe error code, sanitized and length-limited message, and the immediate cause when available. D1 failures deliberately omit exception messages because they can contain SQL details. Stack traces, request bodies, cookies, account balances, Monobank tokens, passwords, and database error messages are never added to application logs. Cloudflare Workers Logs and traces are enabled; `OBSERVABILITY` writes aggregate request, authentication-failure, and internal-error metrics to the `mono-finance-observability` Analytics Engine dataset.
 
 The private **System status** screen reads `/api/system/status`. It shows only aggregate state: application versions, D1 probe outcome, persisted account and transaction sync timestamps, Monobank state inferred from the latest persisted sync result, and this browser session's encrypted offline-cache state. It does not contact Monobank and does not contain transaction data.
 
@@ -20,7 +20,7 @@ Create Cloudflare notification policies in the dashboard for Worker 5xx/error-ra
 
 ## Recovery and incident notes
 
-- Use the request ID from the response header to locate safe structured logs in Workers Logs or `wrangler tail`; do not paste cookies, tokens, or raw request bodies into incident notes.
+- Use the `X-Request-Id` response header to locate the matching `api_request_failed` or `d1_query_failed` event in Workers Logs or `wrangler tail`; inspect `errorName`, `errorCode`, `errorMessage`, and the corresponding `cause*` fields. Do not paste cookies, tokens, or raw request bodies into incident notes.
 - For a failed transaction sync, inspect the System status screen and the persisted safe `lastErrorCode`; resolve provider access/rate limiting, then use the normal manual refresh. Duplicate imports remain safe by the Monobank transaction-ID constraint.
 - For D1 failures, inspect D1 Metrics and `wrangler d1 insights`; query parameters are not included in Cloudflare D1 insights. Do not retry writes outside the application's idempotent sync path.
 - Roll back Worker code through Cloudflare deployments if needed. Do not edit an applied migration; recover schema with a new forward migration.

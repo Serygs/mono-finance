@@ -123,12 +123,21 @@ describe('accounts routes', () => {
 
   it('applies the API security policy to unexpected errors', async () => {
     const service = new FakeAccountService()
-    service.synchronizeError = new Error('internal diagnostic')
+    service.synchronizeError = Object.assign(
+      new Error('PBKDF2 iterations exceed the runtime limit', {
+        cause: Object.assign(new Error('deriveBits failed'), {
+          code: 'OperationError',
+        }),
+      }),
+      { code: 'AUTH_CRYPTO_FAILED' },
+    )
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const response = await authenticatedRequest(
       service,
       '/api/sync/accounts',
       'POST',
+      { 'X-Request-Id': 'request_12345678' },
     )
 
     expect(response.status).toBe(500)
@@ -140,6 +149,46 @@ describe('accounts routes', () => {
         message: 'An unexpected error occurred.',
       },
     })
+    expect(JSON.parse(errorLog.mock.calls[0]![0] as string)).toEqual({
+      causeCode: 'OperationError',
+      causeMessage: 'deriveBits failed',
+      causeName: 'Error',
+      errorCode: 'AUTH_CRYPTO_FAILED',
+      errorMessage: 'PBKDF2 iterations exceed the runtime limit',
+      errorName: 'Error',
+      event: 'api_request_failed',
+      method: 'POST',
+      path: '/api/sync/accounts',
+      requestId: 'request_12345678',
+    })
+    expect(errorLog.mock.calls.flat().join('')).not.toContain('stack')
+  })
+
+  it('classifies D1 failures without logging SQL diagnostics', async () => {
+    const service = new FakeAccountService()
+    service.synchronizeError = Object.assign(
+      new Error('D1_ERROR: no such column: password_hash near SELECT'),
+      { code: 'SQLITE_ERROR' },
+    )
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const response = await authenticatedRequest(
+      service,
+      '/api/sync/accounts',
+      'POST',
+      { 'X-Request-Id': 'request_87654321' },
+    )
+
+    expect(response.status).toBe(500)
+    expect(JSON.parse(errorLog.mock.calls[0]![0] as string)).toEqual({
+      errorCode: 'SQLITE_ERROR',
+      errorName: 'Error',
+      event: 'd1_query_failed',
+      method: 'POST',
+      path: '/api/sync/accounts',
+      requestId: 'request_87654321',
+    })
+    expect(errorLog.mock.calls.flat().join('')).not.toContain('password_hash')
   })
 
   it('logs only the safe provider failure category for diagnosis', async () => {
@@ -230,6 +279,7 @@ async function authenticatedRequest(
   service: FakeAccountService,
   path: string,
   method = 'GET',
+  headers: Record<string, string> = {},
 ) {
   const app = createApp(
     () => authenticatedService,
@@ -241,6 +291,7 @@ async function authenticatedRequest(
       headers: {
         Cookie: 'mono_finance_session=test-session',
         Origin: 'http://localhost',
+        ...headers,
       },
       method,
     },
