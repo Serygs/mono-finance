@@ -17,6 +17,7 @@ import {
   recordMetric,
   requestId,
   REQUEST_ID_HEADER,
+  safeErrorLogFields,
 } from './common/observability'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
@@ -125,11 +126,12 @@ export function createApp(
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
-    Variables: { authenticatedUser: AuthenticatedUser }
+    Variables: { authenticatedUser: AuthenticatedUser; requestId?: string }
   }>()
 
   app.use('/api/*', async (context, next) => {
     const id = requestId(context.req.raw)
+    context.set('requestId', id)
     const startedAt = Date.now()
     try {
       await next()
@@ -339,7 +341,12 @@ export function createApp(
   app.onError((error, context) => {
     const event = isD1Failure(error) ? 'd1_query_failed' : 'api_request_failed'
     logError(event, {
+      ...safeErrorLogFields(error, {
+        includeMessage: event !== 'd1_query_failed',
+      }),
+      method: context.req.method,
       path: new URL(context.req.url).pathname,
+      requestId: context.get('requestId') ?? 'unavailable',
     })
     recordMetric(context.env?.OBSERVABILITY, event, 'internal_error')
     const response = context.json(
