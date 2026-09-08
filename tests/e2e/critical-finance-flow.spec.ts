@@ -71,6 +71,106 @@ test('an owner can complete the critical private-finance workflow', async ({
   ).toBeVisible()
 })
 
+test('primary screens fit an iPhone Pro Max standalone viewport', async ({
+  page,
+}) => {
+  await page.setViewportSize({ height: 932, width: 430 })
+  await installFinanceApiMock(page)
+
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+  ).toBeVisible()
+
+  await expectMobileLayoutToFit(page)
+
+  const accountShelf = await page.locator('.account-shelf').boundingBox()
+  expect(accountShelf).not.toBeNull()
+  expect(accountShelf!.x + accountShelf!.width).toBeLessThanOrEqual(430)
+
+  const actionButtons = page.locator('.ui-page-header__actions .ui-button')
+  await expect(actionButtons).toHaveCount(2)
+  const firstAction = await actionButtons.nth(0).boundingBox()
+  const secondAction = await actionButtons.nth(1).boundingBox()
+  expect(firstAction).not.toBeNull()
+  expect(secondAction).not.toBeNull()
+  expect(Math.abs(firstAction!.y - secondAction!.y)).toBeLessThan(2)
+
+  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
+    'content',
+    /viewport-fit=cover/,
+  )
+
+  await page
+    .locator('.mobile-navigation')
+    .getByRole('link', { name: 'Transactions', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      exact: true,
+      level: 1,
+      name: 'Transactions',
+    }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'All accounts', exact: true }),
+  ).toBeVisible()
+  await expect(page.locator('select[multiple]')).toHaveCount(0)
+
+  const allAccounts = page.getByRole('button', {
+    name: 'All accounts',
+    exact: true,
+  })
+  const blackAccount = page.getByRole('button', {
+    name: 'Black · UAH',
+    exact: true,
+  })
+  await blackAccount.click()
+  await expect(blackAccount).toHaveAttribute('aria-pressed', 'true')
+  await expect(allAccounts).toHaveAttribute('aria-pressed', 'false')
+  await allAccounts.click()
+  await expect(allAccounts).toHaveAttribute('aria-pressed', 'true')
+
+  await expectMobileLayoutToFit(page)
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ height: 844, width })
+    await expectMobileLayoutToFit(page)
+  }
+})
+
+async function expectMobileLayoutToFit(page: Page): Promise<void> {
+  const layout = await page.evaluate(() => {
+    const header = document.querySelector<HTMLElement>('.app-header')
+    const navigation = document.querySelector<HTMLElement>('.mobile-navigation')
+    return {
+      documentWidth: document.documentElement.scrollWidth,
+      headerLeft: header?.getBoundingClientRect().left,
+      headerRight: header?.getBoundingClientRect().right,
+      headerTop: header?.getBoundingClientRect().top,
+      navigationBottom: navigation?.getBoundingClientRect().bottom,
+      navigationLinkHeights: navigation
+        ? [...navigation.querySelectorAll('a')].map(
+            (link) => link.getBoundingClientRect().height,
+          )
+        : [],
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    }
+  })
+
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth)
+  expect(layout.headerLeft).toBe(0)
+  expect(layout.headerRight).toBe(layout.viewportWidth)
+  expect(layout.headerTop).toBe(0)
+  expect(layout.navigationBottom).toBe(layout.viewportHeight)
+  expect(layout.navigationLinkHeights.every((height) => height >= 44)).toBe(
+    true,
+  )
+}
+
 async function installFinanceApiMock(page: Page): Promise<void> {
   const sessionExpiry = Math.floor(Date.now() / 1_000) + 8 * 60 * 60
   const state = {
