@@ -141,6 +141,32 @@ test('primary screens fit an iPhone Pro Max standalone viewport', async ({
   }
 })
 
+test('an owner can rename an imported MCC category for every matching transaction', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('link', { name: 'Settings' }).first().click()
+
+  await expect(
+    page.getByRole('heading', { name: 'Bank categories' }),
+  ).toBeVisible()
+  await page
+    .getByLabel('Display category for 5812')
+    .selectOption('category-dining')
+  await page.getByRole('button', { name: 'Apply to all' }).click()
+  await expect(page.getByText('Effective category: Dining')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Transactions' }).first().click()
+  await expect(
+    page.getByRole('button', { name: /Restaurant/ }).getByText('Dining'),
+  ).toBeVisible()
+})
+
 async function expectMobileLayoutToFit(page: Page): Promise<void> {
   const layout = await page.evaluate(() => {
     const header = document.querySelector<HTMLElement>('.app-header')
@@ -179,14 +205,24 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     compensated: false,
     excluded: false,
     signedIn: false,
+    sourceMapped: false,
   }
   const transaction = () => ({
     account: { id: 'account-1', maskedPan: '537541******1234', type: 'black' },
     adjustmentNote: state.adjusted ? 'Shared dinner' : null,
     category: {
-      id: state.category === 'Dining' ? 'category-dining' : 'mcc-5812',
-      name: state.category,
-      source: state.category === 'Dining' ? 'custom' : 'original',
+      id:
+        state.category === 'Dining' || state.sourceMapped
+          ? 'category-dining'
+          : '5812',
+      name:
+        state.category === 'Dining' || state.sourceMapped ? 'Dining' : 'Food',
+      source:
+        state.category === 'Dining'
+          ? 'custom'
+          : state.sourceMapped
+            ? 'mapped'
+            : 'original',
     },
     currencyCode: 'UAH',
     currencyMinorUnit: 2,
@@ -197,7 +233,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     id: 'expense-1',
     isExcluded: state.excluded,
     originalAmountMinor: -4_000,
-    originalCategory: { id: 'mcc-5812', name: 'Food' },
+    originalCategory: { id: '5812', name: 'MCC 5812' },
     originalDescription: 'Restaurant',
     originalMcc: 5812,
     originalTimestamp: 1_735_689_600,
@@ -248,6 +284,37 @@ async function installFinanceApiMock(page: Page): Promise<void> {
       return void route.fulfill(json({ data: trends }))
     if (path === '/api/categories' && method === 'GET')
       return void route.fulfill(json({ data: { categories } }))
+    if (path === '/api/category-sources' && method === 'GET')
+      return void route.fulfill(
+        json({
+          data: {
+            sourceCategories: [
+              {
+                code: '5812',
+                mappedCategory: state.sourceMapped ? categories[0] : null,
+                originalName: 'MCC 5812',
+                transactionCount: 4,
+              },
+            ],
+          },
+        }),
+      )
+    if (path === '/api/category-sources/5812' && method === 'PUT') {
+      state.sourceMapped = true
+      await route.fulfill(
+        json({
+          data: {
+            sourceCategory: {
+              code: '5812',
+              mappedCategory: categories[0],
+              originalName: 'MCC 5812',
+              transactionCount: 4,
+            },
+          },
+        }),
+      )
+      return
+    }
     if (path === '/api/transactions' && method === 'GET')
       return void route.fulfill(
         json({ data: { nextCursor: null, transactions: [transaction()] } }),
@@ -280,7 +347,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
               name: 'Dining',
               source: 'custom',
             },
-            originalCategory: { id: 'mcc-5812', name: 'Food' },
+            originalCategory: { id: '5812', name: 'MCC 5812' },
           },
         }),
       )

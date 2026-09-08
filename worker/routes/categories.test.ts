@@ -55,6 +55,37 @@ describe('category routes', () => {
       error: { code: 'category_referenced' },
     })
   })
+
+  it('maps an MCC source and merges custom categories for the authenticated owner', async () => {
+    const service = new FakeCategoryService()
+    const app = appFor(service)
+
+    const mapping = await app.request(
+      '/api/category-sources/5411',
+      request('PUT', { categoryId: 'category-1' }),
+      environment,
+    )
+    expect(mapping.status).toBe(200)
+    expect(service.received).toEqual({
+      categoryId: 'category-1',
+      operation: 'map-source',
+      sourceCode: '5411',
+      userId: 'owner-1',
+    })
+
+    const merge = await app.request(
+      '/api/categories/category-1/merge',
+      request('POST', { targetCategoryId: 'category-2' }),
+      environment,
+    )
+    expect(merge.status).toBe(200)
+    expect(service.received).toEqual({
+      operation: 'merge',
+      sourceCategoryId: 'category-1',
+      targetCategoryId: 'category-2',
+      userId: 'owner-1',
+    })
+  })
 })
 
 function appFor(service: FakeCategoryService) {
@@ -105,6 +136,21 @@ class FakeCategoryService {
   async list() {
     return []
   }
+  async listSources() {
+    return []
+  }
+  async merge(
+    userId: string,
+    sourceCategoryId: string,
+    targetCategoryId: string,
+  ) {
+    this.received = {
+      operation: 'merge',
+      sourceCategoryId,
+      targetCategoryId,
+      userId,
+    }
+  }
   async resetTransactionOverride(userId: string, transactionId: string) {
     this.received = { operation: 'reset', userId, transactionId }
     return {}
@@ -115,6 +161,22 @@ class FakeCategoryService {
     categoryId: string,
   ) {
     this.received = { operation: 'override', userId, transactionId, categoryId }
+    return {}
+  }
+  async setSourceMapping(
+    userId: string,
+    sourceCode: string,
+    categoryId: string,
+  ) {
+    this.received = {
+      categoryId,
+      operation: 'map-source',
+      sourceCode,
+      userId,
+    }
+    return {}
+  }
+  async resetSourceMapping() {
     return {}
   }
   async update() {

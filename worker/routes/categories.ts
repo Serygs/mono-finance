@@ -25,6 +25,20 @@ export async function listCategoriesHandler(
     ),
   )
 }
+export async function listSourceCategoriesHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return noStore(
+    context.json(
+      success({
+        sourceCategories: await service.listSources(
+          context.get('authenticatedUser').id,
+        ),
+      }),
+    ),
+  )
+}
 export async function createCategoryHandler(
   context: CategoryContext,
   service: CategoryService,
@@ -68,6 +82,53 @@ export async function deleteCategoryHandler(
     )
     return context.json(success({}))
   })
+}
+export async function mergeCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        category: await service.merge(
+          context.get('authenticatedUser').id,
+          categoryId(context),
+          await readTargetCategoryId(context.req.raw),
+        ),
+      }),
+    ),
+  )
+}
+export async function saveSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        sourceCategory: await service.setSourceMapping(
+          context.get('authenticatedUser').id,
+          sourceCode(context),
+          await readCategoryId(context.req.raw),
+        ),
+      }),
+    ),
+  )
+}
+export async function resetSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        sourceCategory: await service.resetSourceMapping(
+          context.get('authenticatedUser').id,
+          sourceCode(context),
+        ),
+      }),
+    ),
+  )
 }
 export async function saveTransactionCategoryHandler(
   context: CategoryContext,
@@ -114,13 +175,14 @@ async function categoryOperation(
         context.json(
           failure(
             'category_referenced',
-            'Reset or reassign transaction category overrides before deleting this category.',
+            'Reset, reassign, or merge category references before deleting this category.',
           ),
           409,
         ),
       )
     if (
       error.code === 'category_not_found' ||
+      error.code === 'source_category_not_found' ||
       error.code === 'transaction_not_found'
     )
       return noStore(
@@ -143,6 +205,12 @@ async function readCategory(request: Request): Promise<CreateCategoryInput> {
 async function readCategoryId(request: Request): Promise<string> {
   const input = await json(request)
   const value = text(input['categoryId'], 128)
+  if (value === null) throw new CategoryError('invalid_category')
+  return value
+}
+async function readTargetCategoryId(request: Request): Promise<string> {
+  const input = await json(request)
+  const value = text(input['targetCategoryId'], 128)
   if (value === null) throw new CategoryError('invalid_category')
   return value
 }
@@ -182,6 +250,17 @@ function categoryId(context: CategoryContext): string {
 function transactionId(context: CategoryContext): string {
   const value = context.req.param('transactionId')
   if (value === undefined || value.length === 0 || value.length > 128)
+    throw new CategoryError('invalid_category')
+  return value
+}
+function sourceCode(context: CategoryContext): string {
+  const value = context.req.param('sourceCode')
+  if (
+    value === undefined ||
+    value.length === 0 ||
+    value.length > 64 ||
+    !/^[a-z0-9._:-]+$/i.test(value)
+  )
     throw new CategoryError('invalid_category')
   return value
 }

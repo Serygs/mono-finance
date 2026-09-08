@@ -9,7 +9,7 @@ export interface TransactionListItem {
   category: {
     id: string | null
     name: string | null
-    source: 'custom' | 'original' | null
+    source: 'custom' | 'mapped' | 'original' | null
   }
   originalCategory: {
     id: string | null

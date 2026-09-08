@@ -260,7 +260,8 @@ function TransactionDetailsContent({
           <dt>Category</dt>
           <dd>
             {transaction.category.name ?? 'Uncategorized'}
-            {transaction.category.source === 'custom' &&
+            {(transaction.category.source === 'custom' ||
+              transaction.category.source === 'mapped') &&
             transaction.originalCategory.name !== null ? (
               <span className="transaction-original-amount">
                 Original: {transaction.originalCategory.name}

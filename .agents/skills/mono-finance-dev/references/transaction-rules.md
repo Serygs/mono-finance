@@ -4,6 +4,8 @@
 
 Imported bank data is immutable. Never overwrite an imported transaction’s original amount, currency, description, MCC, timestamp, or Monobank transaction ID. Store adjustments, exclusions, category overrides, compensation links, notes, and audit metadata in separate records.
 
+Resolve effective categories without editing imported Monobank/MCC fields. The precedence is: per-transaction custom override, then an owner-defined global mapping for the immutable source category code, then the original category. Mapping multiple source codes to one custom category is allowed; a custom-category merge must move both transaction overrides and source mappings before deleting the source category.
+
 Resolve the adjusted amount centrally:
 
 ```ts

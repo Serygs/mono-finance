@@ -1,12 +1,12 @@
 # D1 migrations
 
-`0001_initial_schema.sql` establishes the financial data model, `0002_authentication.sql` adds durable login-rate-limit state, `0003_monobank_api_rate_limits.sql` coordinates outbound Monobank request windows across Worker isolates, `0004_transaction_sync_state.sql` adds resumable transaction-backfill cursors and short-lived sync leases, and `0005_currency_preferences.sql` stores each user's analytics base currency. The migrations are deliberately plain SQL: no ORM is used, and repository code binds all dynamic query values with D1 prepared statements.
+`0001_initial_schema.sql` establishes the financial data model, `0002_authentication.sql` adds durable login-rate-limit state, `0003_monobank_api_rate_limits.sql` coordinates outbound Monobank request windows across Worker isolates, `0004_transaction_sync_state.sql` adds resumable transaction-backfill cursors and short-lived sync leases, `0005_currency_preferences.sql` stores each user's analytics base currency, and `0006_category_source_mappings.sql` maps immutable imported MCC/category codes to user-owned effective categories. The migrations are deliberately plain SQL: no ORM is used, and repository code binds all dynamic query values with D1 prepared statements.
 
 ## Timestamp and money conventions
 
 - Every timestamp is an `INTEGER` UTC Unix epoch in seconds.
 - Every monetary value is a signed `INTEGER` in currency minor units.
-- Imported Monobank transaction source fields are protected by a database trigger. `categories` and `transaction_category_overrides` model effective custom classification separately; the original MCC-derived category is never changed.
+- Imported Monobank transaction source fields are protected by a database trigger. `categories`, `transaction_category_overrides`, and `category_source_mappings` model effective custom classification separately; the original MCC-derived category is never changed.
 - Exchange rates are rational values (`rate_numerator / rate_denominator`) with their source and timestamp, rather than floats.
 
 ## Workflow

@@ -63,7 +63,11 @@ import {
   createCategoryHandler,
   deleteCategoryHandler,
   listCategoriesHandler,
+  listSourceCategoriesHandler,
+  mergeCategoryHandler,
   resetTransactionCategoryHandler,
+  resetSourceCategoryHandler,
+  saveSourceCategoryHandler,
   saveTransactionCategoryHandler,
   updateCategoryHandler,
 } from './routes/categories'
@@ -258,6 +262,18 @@ export function createApp(
   )
   app.post('/api/categories', (context) =>
     createCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.get('/api/category-sources', (context) =>
+    listSourceCategoriesHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.put('/api/category-sources/:sourceCode', (context) =>
+    saveSourceCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.delete('/api/category-sources/:sourceCode', (context) =>
+    resetSourceCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.post('/api/categories/:categoryId/merge', (context) =>
+    mergeCategoryHandler(context, categoryServiceFactory(context.env)),
   )
   app.put('/api/categories/:categoryId', (context) =>
     updateCategoryHandler(context, categoryServiceFactory(context.env)),

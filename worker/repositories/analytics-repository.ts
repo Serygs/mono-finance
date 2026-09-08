@@ -80,14 +80,18 @@ export class D1AnalyticsRepository implements AnalyticsRepository {
           transactions.original_description, transactions.original_timestamp,
           COALESCE(transaction_adjustments.adjusted_amount_minor, transactions.original_amount_minor) AS effective_amount_minor,
           CASE WHEN transaction_exclusions.is_excluded = 1 THEN 1 ELSE 0 END AS is_excluded,
-          COALESCE(categories.id, transactions.original_category_code) AS category_id,
-          COALESCE(categories.name, transactions.original_category_name) AS category_name,
+          COALESCE(override_categories.id, mapped_categories.id, transactions.original_category_code) AS category_id,
+          COALESCE(override_categories.name, mapped_categories.name, transactions.original_category_name) AS category_name,
           COALESCE((SELECT SUM(compensated_amount_minor) FROM compensation_links WHERE expense_transaction_id = transactions.id), 0) AS compensation_amount_minor
          FROM transactions
          LEFT JOIN transaction_adjustments ON transaction_adjustments.transaction_id = transactions.id
          LEFT JOIN transaction_exclusions ON transaction_exclusions.transaction_id = transactions.id
          LEFT JOIN transaction_category_overrides ON transaction_category_overrides.transaction_id = transactions.id
-         LEFT JOIN categories ON categories.id = transaction_category_overrides.category_id
+         LEFT JOIN categories AS override_categories ON override_categories.id = transaction_category_overrides.category_id
+         LEFT JOIN category_source_mappings
+           ON category_source_mappings.user_id = transactions.user_id
+          AND category_source_mappings.original_category_code = transactions.original_category_code
+         LEFT JOIN categories AS mapped_categories ON mapped_categories.id = category_source_mappings.category_id
          WHERE ${conditions.join(' AND ')}`,
       )
       .bind(...bindings)
