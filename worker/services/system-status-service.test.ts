@@ -33,6 +33,21 @@ describe('SystemStatusService', () => {
       monobankConnectivity: 'unknown',
     })
   })
+
+  it('does not report Monobank as healthy before any synchronization succeeds', async () => {
+    const service = new SystemStatusService(
+      database({
+        last_account_sync_at: null,
+        last_error_code: null,
+        last_transaction_sync_at: null,
+      }),
+      { frontend: '0.0.0', worker: 'worker-1' },
+    )
+
+    await expect(service.get('owner-1')).resolves.toMatchObject({
+      monobankConnectivity: 'unknown',
+    })
+  })
 })
 
 function database(row: object | null, rejects = false): D1Database {

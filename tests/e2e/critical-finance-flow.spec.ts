@@ -72,6 +72,7 @@ test('an owner can complete the critical private-finance workflow', async ({
 })
 
 async function installFinanceApiMock(page: Page): Promise<void> {
+  const sessionExpiry = Math.floor(Date.now() / 1_000) + 8 * 60 * 60
   const state = {
     adjusted: false,
     category: 'Food',
@@ -113,13 +114,19 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     const method = request.method()
     if (path === '/api/auth/session') {
       await route.fulfill(
-        json(state.signedIn ? { data: { user: owner } } : unauthorized),
+        json(
+          state.signedIn
+            ? { data: { expiresAt: sessionExpiry, user: owner } }
+            : unauthorized,
+        ),
       )
       return
     }
     if (path === '/api/auth/login' && method === 'POST') {
       state.signedIn = true
-      await route.fulfill(json({ data: { user: owner } }))
+      await route.fulfill(
+        json({ data: { expiresAt: sessionExpiry, user: owner } }),
+      )
       return
     }
     if (path === '/api/auth/logout' && method === 'POST') {
