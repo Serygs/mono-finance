@@ -60,6 +60,23 @@
   align-self: end;
 }
 
+.transaction-account-filter {
+  display: grid;
+  grid-column: 1 / -1;
+  min-width: 0;
+  gap: 0.4rem;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.transaction-account-options {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .kpi-grid {
   grid-template-columns: repeat(6, minmax(10.5rem, 1fr));
   overflow-x: auto;
@@ -414,9 +431,18 @@
     min-height: 3.75rem;
     flex-wrap: nowrap;
     gap: 0.75rem;
-    padding: max(0.55rem, env(safe-area-inset-top))
+    padding: calc(env(safe-area-inset-top) + 0.55rem)
       max(0.75rem, env(safe-area-inset-right)) 0.55rem
       max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .brand-lockup {
+    flex: 1 1 auto;
+  }
+
+  .sign-out-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .desktop-navigation {
@@ -438,6 +464,7 @@
     padding: 0.4rem max(0.5rem, env(safe-area-inset-right))
       max(0.4rem, env(safe-area-inset-bottom))
       max(0.5rem, env(safe-area-inset-left));
+    box-shadow: 0 -0.5rem 1.5rem rgb(29 29 31 / 6%);
   }
 
   .mobile-navigation a {
@@ -447,8 +474,10 @@
   }
 
   .page-content {
-    width: min(calc(100% - 1.5rem), 90rem);
-    padding-block: 1.5rem calc(5.5rem + env(safe-area-inset-bottom));
+    width: 100%;
+    padding: 1.25rem max(0.875rem, env(safe-area-inset-right))
+      calc(5.5rem + env(safe-area-inset-bottom))
+      max(0.875rem, env(safe-area-inset-left));
   }
 
   .ui-page-header {
@@ -458,12 +487,28 @@
   }
 
   .ui-page-header h1 {
-    font-size: clamp(2.35rem, 13vw, 3.6rem);
+    font-size: clamp(2.2rem, 10vw, 3rem);
+    line-height: 1.02;
   }
 
   .ui-page-header__actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ui-page-header__actions .ui-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0.65rem;
+  }
+
+  .account-shelf {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    overscroll-behavior-inline: contain;
+    padding: 0.15rem 0 0.9rem;
+    scroll-padding-inline: 0;
   }
 
   .dashboard-filters {
@@ -484,6 +529,16 @@
     grid-column: 1 / -1;
   }
 
+  .transaction-account-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .transaction-account-options .ui-account-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -498,11 +553,16 @@
   }
 
   .transaction-main {
-    max-width: 62%;
+    max-width: none;
   }
 
   .transaction-meta {
-    max-width: 38%;
+    max-width: min(46vw, 12rem);
+  }
+
+  .transaction-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .account-filter-heading {
@@ -531,6 +591,10 @@
     border-radius: var(--radius-hero) var(--radius-hero) 0 0;
   }
 
+  .ui-overlay--sheet .ui-overlay__header {
+    padding-top: 1rem;
+  }
+
   @keyframes overlay-enter {
     from {
       opacity: 0;
@@ -545,7 +609,6 @@
 }
 
 @media (max-width: 30rem) {
-  .ui-page-header__actions,
   .dashboard-filters,
   .kpi-grid {
     grid-template-columns: 1fr;
@@ -562,14 +625,21 @@
 
   .transaction-main,
   .transaction-meta {
-    max-width: 56%;
+    max-width: none;
   }
 
   .transaction-meta {
-    max-width: 44%;
+    max-width: min(46vw, 10rem);
   }
 
   .category-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 22rem) {
+  .ui-page-header__actions,
+  .transaction-account-options {
     grid-template-columns: 1fr;
   }
 }

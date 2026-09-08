@@ -9,6 +9,7 @@ import { loadAccountFilter } from '../accounts/account-filter-storage'
 import { getAccounts } from '../accounts/accounts-api'
 import type { AccountSummary } from '../accounts/account-types'
 import { getCategories } from '../categories/categories-api'
+import { AccountChip } from '../../components/ui/Chips'
 import { Button, SegmentedControl } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
@@ -339,23 +340,30 @@ function AccountMultiSelector({
   selectedIds: string[]
 }) {
   return (
-    <FormField className="filter-field" label="Accounts">
-      <Select
-        multiple
-        onChange={(event) =>
-          onChange(
-            [...event.target.selectedOptions].map((option) => option.value),
-          )
-        }
-        value={selectedIds}
-      >
+    <fieldset className="transaction-account-filter">
+      <legend className="ui-field-label">Accounts</legend>
+      <div className="transaction-account-options">
+        <AccountChip
+          label="All accounts"
+          onClick={() => onChange([])}
+          selected={selectedIds.length === 0}
+        />
         {accounts.map((account) => (
-          <option key={account.id} value={account.id}>
-            {account.type} · {account.currency.code}
-          </option>
+          <AccountChip
+            key={account.id}
+            label={`${account.type.charAt(0).toUpperCase()}${account.type.slice(1)} · ${account.currency.code}`}
+            onClick={() =>
+              onChange(
+                selectedIds.includes(account.id)
+                  ? selectedIds.filter((id) => id !== account.id)
+                  : selectedIds.concat(account.id),
+              )
+            }
+            selected={selectedIds.includes(account.id)}
+          />
         ))}
-      </Select>
-    </FormField>
+      </div>
+    </fieldset>
   )
 }
 

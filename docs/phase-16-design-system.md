@@ -28,7 +28,8 @@ Pills are reserved for chips and true segmented selections. Actions remain round
 ## Responsive and accessible behavior
 
 - The page canvas is capped at `90rem` on desktop and uses asymmetric chart layouts where the content remains readable.
-- Below `48rem`, navigation moves to a safe-area-aware bottom bar and transaction details become a bottom sheet.
+- Below `48rem`, navigation moves to a safe-area-aware bottom bar, transaction details become a bottom sheet, transaction rows use a bounded two-column grid, and account filters use touch-friendly chips instead of a native multi-select.
+- The mobile shell is verified at `430px` for iPhone Pro Max and at `390px` and `320px` fallback widths without page-level horizontal overflow.
 - Controls retain at least a `44px` target, visible `:focus-visible` treatment, and semantic labels.
 - Dialogs use native modal behavior, Escape dismissal, backdrop dismissal, focus containment, scroll locking, and overscroll containment.
 - Motion is limited to overlay entry and skeleton opacity; `prefers-reduced-motion` disables both.

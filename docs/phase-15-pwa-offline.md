@@ -2,6 +2,8 @@
 
 Mono Finance is installable from supported browser controls on iPhone, Android, Windows, and macOS. The web manifest, Apple metadata, icon, and service worker are checked in under `public/` and are served by Vite/Cloudflare as static assets.
 
+The manifest has a stable same-origin app identity and scope. iOS uses `viewport-fit=cover` with translucent standalone status-bar integration; the application shell applies `safe-area-inset-top` below the Dynamic Island/status indicators and keeps fixed navigation and offline status above `safe-area-inset-bottom` and the home indicator.
+
 The service worker caches only the public application shell and static files. It explicitly bypasses `/api/*`, so sensitive API payloads are never stored in Cache Storage and offline reads cannot overwrite D1.
 
 Dashboard analytics and paginated transaction responses use a network-first encrypted IndexedDB cache. On a successful same-origin API response, the browser encrypts the payload using AES-GCM with a non-extractable, browser-generated `CryptoKey`; cache resource keys are SHA-256 hashes rather than readable URLs. On a `fetch` network failure only, the app may display the most recent decrypted snapshot and shows the time it was saved. HTTP failures such as an expired session never fall back to cached data.
