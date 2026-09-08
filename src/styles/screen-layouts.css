@@ -10,6 +10,7 @@
 .transaction-filters,
 .category-form,
 .category-list li,
+.category-source-list li,
 .account-tile {
   border-color: var(--color-border);
   border-radius: var(--radius-card);
@@ -379,6 +380,47 @@
   grid-template-columns: minmax(0, auto) minmax(4rem, 1fr) auto;
 }
 
+.category-source-management {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.category-source-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.category-source-list li {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+}
+
+.category-source-identity,
+.category-source-form {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.category-source-identity span,
+.category-source-effective {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.category-source-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.category-source-effective {
+  margin: 0;
+}
+
 .login-page,
 .session-loading {
   min-height: 100dvh;
@@ -635,6 +677,10 @@
   .category-list li {
     grid-template-columns: 1fr;
   }
+
+  .category-source-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 22rem) {
@@ -685,6 +731,7 @@
   .dashboard-filters,
   .category-form,
   .category-list li,
+  .category-source-list li,
   .account-tile,
   .login-card {
     border-color: var(--color-border);

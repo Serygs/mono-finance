@@ -13,6 +13,8 @@ interface TransactionRow {
   category_name: string | null
   custom_category_id: string | null
   custom_category_name: string | null
+  mapped_category_id: string | null
+  mapped_category_name: string | null
   effective_amount_minor: number
   has_adjustment: number
   has_compensation: number
@@ -69,7 +71,7 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
     }
     if (input.category !== null) {
       conditions.push(
-        'COALESCE(categories.name, transactions.original_category_name) = ?',
+        'COALESCE(override_categories.name, mapped_categories.name, transactions.original_category_name) = ?',
       )
       bindings.push(input.category)
     }
@@ -115,8 +117,10 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
            accounts.id AS account_id,
            accounts.type AS account_type,
            account_cards.masked_pan AS card_masked_pan,
-           categories.id AS custom_category_id,
-           categories.name AS custom_category_name
+           override_categories.id AS custom_category_id,
+           override_categories.name AS custom_category_name,
+           mapped_categories.id AS mapped_category_id,
+           mapped_categories.name AS mapped_category_name
          FROM transactions
          INNER JOIN accounts ON accounts.id = transactions.account_id
          INNER JOIN currencies ON currencies.code = transactions.original_currency_code
@@ -125,7 +129,13 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
          LEFT JOIN transaction_exclusions ON transaction_exclusions.transaction_id = transactions.id
          LEFT JOIN transaction_category_overrides
            ON transaction_category_overrides.transaction_id = transactions.id
-         LEFT JOIN categories ON categories.id = transaction_category_overrides.category_id
+         LEFT JOIN categories AS override_categories
+           ON override_categories.id = transaction_category_overrides.category_id
+         LEFT JOIN category_source_mappings
+           ON category_source_mappings.user_id = transactions.user_id
+          AND category_source_mappings.original_category_code = transactions.original_category_code
+         LEFT JOIN categories AS mapped_categories
+           ON mapped_categories.id = category_source_mappings.category_id
          WHERE ${conditions.join('\n           AND ')}
          ORDER BY transactions.original_timestamp DESC, transactions.id DESC
          LIMIT ?`,
@@ -148,6 +158,8 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
 function mapTransactionRow(row: TransactionRow): TransactionListItem {
   const hasCustomCategory =
     row.custom_category_id !== null && row.custom_category_name !== null
+  const hasMappedCategory =
+    row.mapped_category_id !== null && row.mapped_category_name !== null
   return {
     account: {
       id: row.account_id,
@@ -160,9 +172,19 @@ function mapTransactionRow(row: TransactionRow): TransactionListItem {
           name: row.custom_category_name,
           source: 'custom',
         }
-      : row.category_name === null
-        ? { id: null, name: null, source: null }
-        : { id: row.category_id, name: row.category_name, source: 'original' },
+      : hasMappedCategory
+        ? {
+            id: row.mapped_category_id,
+            name: row.mapped_category_name,
+            source: 'mapped',
+          }
+        : row.category_name === null
+          ? { id: null, name: null, source: null }
+          : {
+              id: row.category_id,
+              name: row.category_name,
+              source: 'original',
+            },
     originalCategory: { id: row.category_id, name: row.category_name },
     currencyCode: row.original_currency_code,
     currencyMinorUnit: row.currency_minor_unit,

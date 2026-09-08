@@ -3,15 +3,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CategoryChip } from '../../components/ui/Chips'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
-import { FormField } from '../../components/ui/FormControls'
+import { FormField, Select } from '../../components/ui/FormControls'
 import { Dialog } from '../../components/ui/Overlay'
 import {
   createCategory,
   deleteCategory,
   getCategories,
+  mergeCategories,
   type CategoryInput,
   updateCategory,
 } from './categories-api'
+import { CategorySourceManagement } from './CategorySourceManagement'
 
 const EMPTY: CategoryInput = { colorToken: null, icon: null, name: '' }
 
@@ -29,6 +31,11 @@ export function CategoryManagement() {
     id: string
     name: string
   } | null>(null)
+  const [pendingMerge, setPendingMerge] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [mergeTargetId, setMergeTargetId] = useState('')
   const mutation = useMutation({
     mutationFn: async (input: CategoryInput) =>
       editing === null
@@ -36,16 +43,36 @@ export function CategoryManagement() {
         : updateCategory(editing.id, input),
     onSuccess: () => {
       setEditing(null)
-      void client.invalidateQueries({ queryKey: ['categories'] })
+      void refreshCategoryData()
     },
   })
   const removal = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
       setPendingDelete(null)
-      void client.invalidateQueries({ queryKey: ['categories'] })
+      void refreshCategoryData()
     },
   })
+  const merge = useMutation({
+    mutationFn: (input: {
+      sourceCategoryId: string
+      targetCategoryId: string
+    }) => mergeCategories(input.sourceCategoryId, input.targetCategoryId),
+    onSuccess: () => {
+      setPendingMerge(null)
+      setMergeTargetId('')
+      void refreshCategoryData()
+    },
+  })
+  function refreshCategoryData(): Promise<unknown[]> {
+    return Promise.all([
+      client.invalidateQueries({ queryKey: ['categories'] }),
+      client.invalidateQueries({ queryKey: ['category-sources'] }),
+      client.invalidateQueries({ queryKey: ['transactions'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
+    ])
+  }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -163,6 +190,19 @@ export function CategoryManagement() {
                 Edit
               </Button>
               <Button
+                disabled={(categories.data?.length ?? 0) < 2}
+                size="small"
+                type="button"
+                onClick={() => {
+                  merge.reset()
+                  setMergeTargetId('')
+                  setPendingMerge({ id: category.id, name: category.name })
+                }}
+                variant="secondary"
+              >
+                Merge
+              </Button>
+              <Button
                 disabled={removal.isPending}
                 size="small"
                 type="button"
@@ -178,6 +218,7 @@ export function CategoryManagement() {
           </li>
         ))}
       </ul>
+      <CategorySourceManagement categories={categories.data ?? []} />
       <Dialog
         onClose={() => {
           if (!removal.isPending) {
@@ -213,6 +254,64 @@ export function CategoryManagement() {
             variant="danger"
           >
             Delete category
+          </Button>
+        </div>
+      </Dialog>
+      <Dialog
+        onClose={() => {
+          if (!merge.isPending) {
+            merge.reset()
+            setPendingMerge(null)
+            setMergeTargetId('')
+          }
+        }}
+        open={pendingMerge !== null}
+        title="Merge category?"
+      >
+        <p>
+          All transaction overrides and MCC mappings from{' '}
+          {pendingMerge?.name ?? 'this category'} will move to the selected
+          category. The source category will then be deleted.
+        </p>
+        <FormField label="Merge into">
+          <Select
+            onChange={(event) => setMergeTargetId(event.target.value)}
+            value={mergeTargetId}
+          >
+            <option value="">Select target category</option>
+            {(categories.data ?? [])
+              .filter((category) => category.id !== pendingMerge?.id)
+              .map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+          </Select>
+        </FormField>
+        {merge.isError ? (
+          <Alert tone="danger">Categories could not be merged.</Alert>
+        ) : null}
+        <div className="transaction-correction-actions">
+          <Button
+            disabled={merge.isPending}
+            onClick={() => setPendingMerge(null)}
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={mergeTargetId === ''}
+            loading={merge.isPending}
+            onClick={() => {
+              if (pendingMerge !== null && mergeTargetId !== '')
+                merge.mutate({
+                  sourceCategoryId: pendingMerge.id,
+                  targetCategoryId: mergeTargetId,
+                })
+            }}
+            variant="danger"
+          >
+            Merge categories
           </Button>
         </div>
       </Dialog>
