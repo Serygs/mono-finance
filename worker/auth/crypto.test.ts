@@ -7,6 +7,7 @@ describe('WebCryptoPasswordHasher', () => {
     const hasher = new WebCryptoPasswordHasher()
     const passwordHash = await hasher.hash('correct-password')
 
+    expect(passwordHash).toMatch(/^pbkdf2-sha256\$100000\$/u)
     await expect(hasher.verify('correct-password', passwordHash)).resolves.toBe(
       true,
     )

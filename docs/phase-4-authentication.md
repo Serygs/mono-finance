@@ -14,7 +14,7 @@ All other `/api/*` paths pass the session middleware before route matching. This
 
 ## Security decisions
 
-- Password hashes use Workers Web Crypto PBKDF2-HMAC-SHA-256 with a 16-byte per-password salt, 600,000 iterations, and a 32-byte derived key. Passwords are accepted only at the route boundary and are neither logged nor persisted in plaintext.
+- Password hashes use Workers Web Crypto PBKDF2-HMAC-SHA-256 with a 16-byte per-password salt, the production workerd maximum of 100,000 iterations, and a 32-byte derived key. Cloudflare rejects higher iteration counts in production even when local Web Crypto accepts them. Passwords are accepted only at the route boundary and are neither logged nor persisted in plaintext; use a long, unique password because this platform limit is below the current OWASP PBKDF2-SHA-256 recommendation.
 - Session cookies contain an opaque, cryptographically random 256-bit token. D1 stores only an HMAC-SHA-256 hash keyed by `SESSION_TOKEN_PEPPER`; sessions expire after eight hours and logout records a revocation timestamp.
 - Cookies are `HttpOnly`, `SameSite=Strict`, `Path=/`, and use `Secure` in production. Authenticated responses use `Cache-Control: no-store`.
 - Unsafe auth and protected requests reject an `Origin` that is not the request's own origin. Combined with the strict same-site cookie, this is the CSRF defense for this same-origin SPA; do not introduce cross-origin frontend hosting or external auth redirects without revisiting it.
