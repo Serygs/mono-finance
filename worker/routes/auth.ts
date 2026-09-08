@@ -15,6 +15,7 @@ import {
 import { assertSameOrigin, clientIdentifier } from '../auth/request-security'
 import { failure, success } from '../common/api-response'
 import type { MonobankEnvironment } from '../common/environment'
+import { logEvent, recordMetric } from '../common/observability'
 
 type AuthContext = Context<{
   Bindings: MonobankEnvironment
@@ -94,6 +95,16 @@ export async function currentSessionHandler(
 
 function authenticationFailure(context: AuthContext, error: unknown) {
   if (error instanceof AuthenticationError) {
+    logEvent('authentication_failure', {
+      code: error.code,
+      path: new URL(context.req.url).pathname,
+      status: error.status,
+    })
+    recordMetric(
+      context.env?.OBSERVABILITY,
+      'authentication_failure',
+      error.code,
+    )
     if (error.status === 429) {
       context.header('Retry-After', '900')
     }
