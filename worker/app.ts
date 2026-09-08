@@ -11,6 +11,13 @@ import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
 import { applyApiSecurityHeaders } from './common/security-headers'
+import {
+  logError,
+  logEvent,
+  recordMetric,
+  requestId,
+  REQUEST_ID_HEADER,
+} from './common/observability'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
 import type { TransactionSyncService } from './services/transaction-sync-service'
@@ -74,6 +81,7 @@ import {
   setCurrencyPreferencesHandler,
   synchronizeExchangeRatesHandler,
 } from './routes/currency-preferences'
+import { systemStatusHandler } from './routes/system-status'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -121,10 +129,26 @@ export function createApp(
   }>()
 
   app.use('/api/*', async (context, next) => {
+    const id = requestId(context.req.raw)
+    const startedAt = Date.now()
     try {
       await next()
     } finally {
       applyApiSecurityHeaders(context.res.headers, context.env)
+      context.res.headers.set(REQUEST_ID_HEADER, id)
+      logEvent('api_request_completed', {
+        durationMs: Date.now() - startedAt,
+        method: context.req.method,
+        path: new URL(context.req.url).pathname,
+        requestId: id,
+        status: context.res.status,
+      })
+      recordMetric(
+        context.env?.OBSERVABILITY,
+        'api_request',
+        `${Math.floor(context.res.status / 100)}xx`,
+        Date.now() - startedAt,
+      )
     }
   })
 
@@ -156,6 +180,16 @@ export function createApp(
       await next()
     } catch (error) {
       if (error instanceof AuthenticationError) {
+        logEvent('authentication_failure', {
+          code: error.code,
+          path: new URL(context.req.url).pathname,
+          status: error.status,
+        })
+        recordMetric(
+          context.env?.OBSERVABILITY,
+          'authentication_failure',
+          error.code,
+        )
         const response = context.json(
           failure(error.code, error.publicMessage),
           error.status,
@@ -168,6 +202,7 @@ export function createApp(
   })
 
   app.get('/api/health', healthHandler)
+  app.get('/api/system/status', systemStatusHandler)
   app.post('/api/auth/setup', (context) =>
     setupHandler(context, authServiceFactory(context.env)),
   )
@@ -301,13 +336,12 @@ export function createApp(
     context.json(failure('not_found', 'Resource not found.'), 404),
   )
 
-  app.onError((_error, context) => {
-    console.error(
-      JSON.stringify({
-        message: 'Unhandled API error',
-        path: new URL(context.req.url).pathname,
-      }),
-    )
+  app.onError((error, context) => {
+    const event = isD1Failure(error) ? 'd1_query_failed' : 'api_request_failed'
+    logError(event, {
+      path: new URL(context.req.url).pathname,
+    })
+    recordMetric(context.env?.OBSERVABILITY, event, 'internal_error')
     const response = context.json(
       failure('internal_error', 'An unexpected error occurred.'),
       500,
@@ -317,6 +351,10 @@ export function createApp(
   })
 
   return app
+}
+
+function isD1Failure(error: unknown): boolean {
+  return error instanceof Error && /\bD1(?:_|\b)/.test(error.message)
 }
 
 export const app = createApp()

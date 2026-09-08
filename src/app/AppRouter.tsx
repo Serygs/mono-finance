@@ -7,6 +7,7 @@ import { RequireAuthentication } from '../features/auth/RequireAuthentication'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { TransactionsPage } from '../features/transactions/TransactionsPage'
+import { SystemStatusPage } from '../features/system/SystemStatusPage'
 
 export function AppRouter() {
   return (
@@ -18,6 +19,7 @@ export function AppRouter() {
             <Route index element={<DashboardPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="system" element={<SystemStatusPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />

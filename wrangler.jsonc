@@ -12,6 +12,7 @@
   },
   "observability": {
     "enabled": true,
+    "logs": { "enabled": true },
     "traces": {
       "enabled": true,
     },
@@ -25,8 +26,10 @@
   },
   "env": {
     "development": {
+      "version_metadata": { "binding": "WORKER_VERSION" },
       "vars": {
         "APP_ENV": "development",
+        "APP_VERSION": "0.0.0",
       },
       "d1_databases": [
         {
@@ -35,17 +38,25 @@
           "migrations_dir": "migrations",
         },
       ],
+      "analytics_engine_datasets": [
+        { "binding": "OBSERVABILITY", "dataset": "mono-finance-observability" },
+      ],
       "secrets": {
         "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
       },
     },
     "production": {
+      "version_metadata": { "binding": "WORKER_VERSION" },
       "vars": {
         "APP_ENV": "production",
+        "APP_VERSION": "0.0.0",
       },
       // D1 bindings are non-inheritable. The deployment workflow replaces this
       // empty list in the production build artifact with a real, protected ID.
       "d1_databases": [],
+      "analytics_engine_datasets": [
+        { "binding": "OBSERVABILITY", "dataset": "mono-finance-observability" },
+      ],
       "secrets": {
         "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
       },

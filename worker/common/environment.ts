@@ -1,5 +1,7 @@
 export interface AppEnvironment extends Omit<Env, 'APP_ENV'> {
   APP_ENV: 'development' | 'production'
+  APP_VERSION: Env['APP_VERSION']
+  WORKER_VERSION: WorkerVersionMetadata
 }
 
 /**

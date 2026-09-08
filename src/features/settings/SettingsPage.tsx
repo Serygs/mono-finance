@@ -1,5 +1,7 @@
-import { CategoryManagement } from '../categories/CategoryManagement'
+import { Link } from 'react-router'
+
 import { PageHeader, PageSurface } from '../../components/ui/Page'
+import { CategoryManagement } from '../categories/CategoryManagement'
 import { CurrencyPreferences } from './CurrencyPreferences'
 
 export function SettingsPage() {
@@ -15,6 +17,12 @@ export function SettingsPage() {
       />
       <CurrencyPreferences />
       <CategoryManagement />
+      <Link
+        className="ui-button ui-button--secondary ui-button--medium"
+        to="/system"
+      >
+        System status
+      </Link>
     </PageSurface>
   )
 }
