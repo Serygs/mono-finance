@@ -46,11 +46,7 @@ export class SystemStatusService {
         frontendVersion: this.versions.frontend,
         lastAccountSyncAt: result?.last_account_sync_at ?? null,
         lastTransactionSyncAt: result?.last_transaction_sync_at ?? null,
-        monobankConnectivity:
-          result?.last_error_code === null ||
-          result?.last_error_code === undefined
-            ? 'healthy'
-            : 'degraded',
+        monobankConnectivity: monobankConnectivity(result),
         workerVersion: this.versions.worker,
       }
     } catch {
@@ -64,4 +60,18 @@ export class SystemStatusService {
       }
     }
   }
+}
+
+function monobankConnectivity(
+  status: SystemStatusRow | null | undefined,
+): SystemStatus['monobankConnectivity'] {
+  if (
+    status === null ||
+    status === undefined ||
+    (status.last_account_sync_at === null &&
+      status.last_transaction_sync_at === null)
+  ) {
+    return 'unknown'
+  }
+  return status.last_error_code === null ? 'healthy' : 'degraded'
 }

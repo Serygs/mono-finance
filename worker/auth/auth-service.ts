@@ -11,6 +11,11 @@ export interface AuthenticatedUser {
   id: string
 }
 
+export interface AuthenticatedSession {
+  expiresAt: number
+  user: AuthenticatedUser
+}
+
 interface UserRecord extends AuthenticatedUser {
   passwordHash: string
 }
@@ -186,17 +191,24 @@ export class AuthService {
 
     await this.repository.clearLoginAttempts(identifierHash)
     const token = this.sessionTokens.generate()
+    const expiresAt = now + SESSION_TTL_SECONDS
     await this.repository.createSession({
-      expiresAt: now + SESSION_TTL_SECONDS,
+      expiresAt,
       id: crypto.randomUUID(),
       tokenHash: await this.sessionTokens.hash(token),
       userId: user.id,
     })
 
-    return { token, user: { email: user.email, id: user.id } }
+    return { expiresAt, token, user: { email: user.email, id: user.id } }
   }
 
   async requireSession(token: string | undefined): Promise<AuthenticatedUser> {
+    return (await this.currentSession(token)).user
+  }
+
+  async currentSession(
+    token: string | undefined,
+  ): Promise<AuthenticatedSession> {
     if (token === undefined) {
       throw unauthenticated()
     }
@@ -217,7 +229,7 @@ export class AuthService {
       throw unauthenticated()
     }
 
-    return user
+    return { expiresAt: session.expiresAt, user }
   }
 
   async logout(token: string | undefined): Promise<void> {

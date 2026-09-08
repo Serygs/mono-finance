@@ -3,7 +3,6 @@ const DATABASE_VERSION = 1
 const CACHE_STORE = 'encrypted-records'
 const KEY_STORE = 'keys'
 const ENCRYPTION_KEY_ID = 'offline-cache-key'
-const SESSION_KEY = 'offline-session'
 
 interface EncryptedRecord {
   cachedAt: number
@@ -54,14 +53,6 @@ export async function readOfflineData<T>(
     cachedAt: record.cachedAt,
     value: await decryptValue<T>(record, encryptionKey),
   }
-}
-
-export function saveOfflineSession<T>(user: T): Promise<void> {
-  return cacheOfflineData(SESSION_KEY, user)
-}
-
-export function readOfflineSession<T>(): Promise<OfflineCacheEntry<T> | null> {
-  return readOfflineData<T>(SESSION_KEY)
 }
 
 export async function clearOfflineCache(): Promise<void> {

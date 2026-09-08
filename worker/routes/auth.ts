@@ -61,7 +61,11 @@ export async function loginHandler(context: AuthContext, service: AuthService) {
       'Set-Cookie',
       sessionCookie(context.env, session.token, SESSION_TTL_SECONDS),
     )
-    return noStore(context.json(success({ user: session.user })))
+    return noStore(
+      context.json(
+        success({ expiresAt: session.expiresAt, user: session.user }),
+      ),
+    )
   } catch (error) {
     return authenticationFailure(context, error)
   }
@@ -86,8 +90,14 @@ export async function currentSessionHandler(
   service: AuthService,
 ) {
   try {
-    const user = await service.requireSession(readSessionToken(context.req.raw))
-    return noStore(context.json(success({ user })))
+    const session = await service.currentSession(
+      readSessionToken(context.req.raw),
+    )
+    return noStore(
+      context.json(
+        success({ expiresAt: session.expiresAt, user: session.user }),
+      ),
+    )
   } catch (error) {
     return authenticationFailure(context, error)
   }
