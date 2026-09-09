@@ -123,6 +123,12 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
 
   const layout = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
+    dashboardRight: document
+      .querySelector('.dashboard-page')!
+      .getBoundingClientRect().right,
+    filtersRight: document
+      .querySelector('.dashboard-filters')!
+      .getBoundingClientRect().right,
     undersizedControls: Array.from(
       document.querySelectorAll('input, select, textarea'),
       (control) => ({
@@ -138,6 +144,8 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
 
   expect(layout.scrollWidth).toBe(layout.clientWidth)
   expect(layout.headerRight).toBe(layout.clientWidth)
+  expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
+  expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.undersizedControls).toEqual([])
 
   await page.setViewportSize({ width: 215, height: 932 })
