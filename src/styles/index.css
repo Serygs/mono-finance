@@ -42,14 +42,27 @@
   box-sizing: border-box;
 }
 
+html,
+#root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  background: var(--color-canvas);
+}
+
 body {
-  min-width: 320px;
-  min-height: 100vh;
+  min-width: 0;
+  min-height: 100dvh;
   margin: 0;
   overflow-x: hidden;
   background: var(--color-canvas);
   color: var(--color-text);
   -webkit-tap-highlight-color: rgb(0 110 219 / 14%);
+}
+
+#root {
+  min-height: 100dvh;
+  isolation: isolate;
 }
 
 button,
