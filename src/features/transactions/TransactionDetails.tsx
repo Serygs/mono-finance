@@ -295,7 +295,6 @@ function TransactionDetailsContent({
             <option value="">{t('Select a custom category')}</option>
             {(categoriesQuery.data ?? []).map((category) => (
               <option key={category.id} value={category.id}>
-                {category.icon ? `${category.icon} ` : ''}
                 {category.name}
               </option>
             ))}
