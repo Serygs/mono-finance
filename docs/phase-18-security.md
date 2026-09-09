@@ -21,6 +21,7 @@ This review covers the private financial-data boundary: browser-to-Worker API ca
 - D1 repositories use prepared statements and bound parameters. Imported Monobank data remains immutable.
 - Monobank credentials are accessed only through the Worker binding and are neither returned nor included in structured logs.
 - The service worker bypasses `/api/*`; recent financial snapshots use AES-GCM-encrypted IndexedDB records and logout deletes the database/key.
+- The Cloudflare development toolchain requires `@cloudflare/vite-plugin` 1.54.6 or newer and Wrangler 4.130.0 or newer. The root `sharp` override pins the patched 0.35.4 release because the current Miniflare package still declares vulnerable 0.35.2 exactly; remove the override after Miniflare adopts an equivalent or newer patched release.
 
 ## Accepted risks and follow-up
 
