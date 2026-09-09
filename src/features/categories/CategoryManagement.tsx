@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CategoryChip } from '../../components/ui/Chips'
+import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
@@ -15,6 +16,7 @@ import {
   updateCategory,
 } from './categories-api'
 import { CategorySourceManagement } from './CategorySourceManagement'
+import { CategoryAppearanceFields } from './CategoryAppearanceFields'
 
 const EMPTY: CategoryInput = { colorToken: null, icon: null, name: '' }
 
@@ -109,27 +111,11 @@ export function CategoryManagement() {
             required
           />
         </FormField>
-        <FormField label={t('Icon')} hint={t('Letters, numbers, or hyphen')}>
-          <input
-            autoComplete="off"
-            name="icon"
-            defaultValue={editing?.input.icon ?? ''}
-            maxLength={32}
-            pattern="[A-Za-z0-9-]+"
-          />
-        </FormField>
-        <FormField
-          label={t('Color token')}
-          hint={t('Letters, numbers, or hyphen')}
-        >
-          <input
-            autoComplete="off"
-            name="colorToken"
-            defaultValue={editing?.input.colorToken ?? ''}
-            maxLength={32}
-            pattern="[A-Za-z0-9-]+"
-          />
-        </FormField>
+        <CategoryAppearanceFields
+          colorToken={editing?.input.colorToken ?? EMPTY.colorToken}
+          icon={editing?.input.icon ?? EMPTY.icon}
+          translate={t}
+        />
         <div className="transaction-correction-actions">
           <Button loading={mutation.isPending} type="submit">
             {mutation.isPending
@@ -168,11 +154,8 @@ export function CategoryManagement() {
           <li key={category.id}>
             <CategoryChip
               color={category.colorToken}
-              label={
-                category.icon
-                  ? `${category.icon} ${category.name}`
-                  : category.name
-              }
+              icon={<CategoryIcon token={category.icon} />}
+              label={category.name}
             />
             <div>
               <span>{category.colorToken ?? t('Default color')}</span>
