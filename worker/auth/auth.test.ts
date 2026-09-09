@@ -6,6 +6,7 @@ import {
   AuthService,
   type Clock,
   type PasswordHasher,
+  SESSION_TTL_SECONDS,
   type SessionTokenService,
 } from './auth-service'
 
@@ -75,7 +76,10 @@ describe('authentication API', () => {
     expect(response.headers.get('Set-Cookie')).toContain('SameSite=Strict')
     expect(response.headers.get('Set-Cookie')).toContain('Secure')
     await expect(response.json()).resolves.toEqual({
-      data: { user: { email: fixture.user.email, id: fixture.user.id } },
+      data: {
+        expiresAt: NOW + SESSION_TTL_SECONDS,
+        user: { email: fixture.user.email, id: fixture.user.id },
+      },
     })
 
     const currentSession = await fixture.app.request(
@@ -87,7 +91,10 @@ describe('authentication API', () => {
     )
     expect(currentSession.status).toBe(200)
     await expect(currentSession.json()).resolves.toEqual({
-      data: { user: { email: fixture.user.email, id: fixture.user.id } },
+      data: {
+        expiresAt: NOW + SESSION_TTL_SECONDS,
+        user: { email: fixture.user.email, id: fixture.user.id },
+      },
     })
   })
 

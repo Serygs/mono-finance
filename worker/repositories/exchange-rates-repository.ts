@@ -43,7 +43,7 @@ export class D1ExchangeRatesRepository implements ExchangeRatesRepository {
             `INSERT INTO exchange_rates (id, source_currency_code, target_currency_code, rate_numerator, rate_denominator, rate_at, source)
           VALUES (?, ?, ?, ?, ?, ?, ?)
           ON CONFLICT(source_currency_code, target_currency_code, rate_at, source)
-          DO UPDATE SET rate_numerator = excluded.rate_numerator, rate_denominator = excluded.rate_denominator`,
+          DO NOTHING`,
           )
           .bind(
             crypto.randomUUID(),

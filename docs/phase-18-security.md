@@ -14,7 +14,7 @@ This review covers the private financial-data boundary: browser-to-Worker API ca
 
 ## Controls verified
 
-- Passwords use PBKDF2-SHA-256 with a per-password random salt and 600,000 iterations; session tokens are random and only an HMAC hash is persisted.
+- Passwords use PBKDF2-SHA-256 with a per-password random salt and Cloudflare workerd's maximum of 100,000 iterations; session tokens are random and only an HMAC hash is persisted.
 - Sessions have an eight-hour absolute expiry, revocation on logout, and private routes require the server-side session check.
 - Initial owner setup is protected by a constant-time setup-token comparison and can succeed only once.
 - Login failures are rate limited by a hashed client/email identifier; failures do not disclose whether the account or password was wrong.
@@ -24,6 +24,7 @@ This review covers the private financial-data boundary: browser-to-Worker API ca
 
 ## Accepted risks and follow-up
 
+- Cloudflare's production Web Crypto runtime rejects PBKDF2 requests above 100,000 iterations. This is below the current OWASP PBKDF2-SHA-256 recommendation, so the private owner must use a long, unique password; moving to a stronger Workers-compatible password KDF remains a future security improvement.
 - The encrypted offline cache is protected at rest within a browser profile, not against arbitrary script execution in that same origin. CSP and dependency hygiene reduce that exposure; users must log out on shared devices.
 - D1 behavior is tested with focused repository fakes and migration assertions, not a disposable Miniflare D1 integration environment.
 - Cloudflare Vite intentionally copies `.dev.vars` to `dist/mono_finance` for local `vite preview`; Cloudflare documents that this preview-only file is not deployed. The client asset directory is `dist/client`, and CI verifies it contains no secret binding names or `.dev.vars` paths.

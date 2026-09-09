@@ -91,7 +91,7 @@ describe('HttpMonobankClient successful requests', () => {
       maskedPans: ['537541******1234'],
       iban: 'UA733220010000026201234567890',
     })
-    expect(requestGate.acquiredScopes).toEqual(['client-info'])
+    expect(requestGate.acquiredScopes).toEqual(['personal-api'])
 
     const [request] = fetcher.mock.calls[0] ?? []
     expect(request).toBeInstanceOf(Request)
@@ -157,7 +157,7 @@ describe('HttpMonobankClient successful requests', () => {
     expect(result[0]?.providerTransactionId).toBe('transaction-1')
     expect(result[0]?.accountAmountMinor).toBe(-95_000)
     expect(result[0]?.operationAmountMinor).toBe(-95_000)
-    expect(requestGate.acquiredScopes).toEqual(['statement'])
+    expect(requestGate.acquiredScopes).toEqual(['personal-api'])
 
     const [request] = fetcher.mock.calls[0] ?? []
     expect((request as Request).url).toBe(
@@ -239,7 +239,7 @@ describe('HttpMonobankClient error handling', () => {
       status: 429,
     })
     expect(requestGate.deferrals).toEqual([
-      { scope: 'client-info', retryAfterSeconds: 120 },
+      { scope: 'personal-api', retryAfterSeconds: 120 },
     ])
   })
 
