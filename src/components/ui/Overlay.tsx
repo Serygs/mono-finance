@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 import { IconButton } from './Controls'
+import { useLocalization } from '../../features/localization/localization'
 
 interface OverlayProps {
   children: ReactNode
@@ -24,6 +25,7 @@ function OverlayFrame({
   open,
   title,
 }: OverlayProps & { kind: 'dialog' | 'sheet' }) {
+  const { t } = useLocalization()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
 
@@ -58,7 +60,7 @@ function OverlayFrame({
       <div className="ui-overlay__surface">
         <header className="ui-overlay__header">
           <h2 id={titleId}>{title}</h2>
-          <IconButton label="Close" onClick={onClose}>
+          <IconButton label={t('Close')} onClick={onClose}>
             ×
           </IconButton>
         </header>

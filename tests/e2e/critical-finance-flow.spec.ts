@@ -60,6 +60,7 @@ test('an owner can complete the critical private-finance workflow', async ({
     'Ivan reimbursement',
   )
 
+  await page.getByRole('button', { name: 'Close' }).click()
   await page.getByRole('link', { name: 'Overview' }).first().click()
   await expect(page.getByText('Recent adjusted transactions')).toBeVisible()
   await expect(page.getByText('Recent compensations')).toBeVisible()
@@ -70,6 +71,43 @@ test('an owner can complete the critical private-finance workflow', async ({
   ).toBeVisible()
 })
 
+test('language, category type mapping, and category chart interaction are accessible', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Language').selectOption('uk')
+  await expect(
+    page.getByRole('heading', { name: 'Ваші фінанси залишаються приватними.' }),
+  ).toBeVisible()
+  await page.getByLabel('Електронна пошта').fill('owner@example.com')
+  await page.getByLabel('Пароль').fill('correct-password')
+  await page.getByRole('button', { name: 'Увійти' }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
+  await expect(
+    page.getByRole('heading', { name: 'Ваші фінанси — у чіткому фокусі.' }),
+  ).toBeVisible()
+
+  const segment = page.locator('.donut-segment-group').first()
+  await segment.focus()
+  await expect(segment).toHaveClass(/is-active/)
+  await expect(page.locator('.donut-legend li').first()).toHaveClass(
+    /is-active/,
+  )
+
+  await page.getByRole('link', { name: 'Налаштування' }).first().click()
+  const sourceSelect = page.getByLabel('Категорія для mcc-5812')
+  await expect(sourceSelect).toBeVisible()
+  await sourceSelect.selectOption('category-dining')
+  await expect(sourceSelect).toHaveValue('category-dining')
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
+  await expect(
+    page.getByRole('heading', { name: 'Налаштування' }),
+  ).toBeVisible()
+})
+
 async function installFinanceApiMock(page: Page): Promise<void> {
   const state = {
     adjusted: false,
@@ -77,6 +115,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     compensated: false,
     excluded: false,
     signedIn: false,
+    sourceCategoryId: '',
   }
   const transaction = () => ({
     account: { id: 'account-1', maskedPan: '537541******1234', type: 'black' },
@@ -140,6 +179,37 @@ async function installFinanceApiMock(page: Page): Promise<void> {
       return void route.fulfill(json({ data: trends }))
     if (path === '/api/categories' && method === 'GET')
       return void route.fulfill(json({ data: { categories } }))
+    if (path === '/api/category-sources' && method === 'GET')
+      return void route.fulfill(
+        json({
+          data: {
+            sources: [
+              {
+                code: 'mcc-5812',
+                originalName: 'Food',
+                transactionCount: 1,
+                mappedCategory:
+                  state.sourceCategoryId === '' ? null : categories[0],
+              },
+            ],
+          },
+        }),
+      )
+    if (path === '/api/category-sources/mcc-5812' && method === 'PUT') {
+      state.sourceCategoryId = 'category-dining'
+      return void route.fulfill(
+        json({
+          data: {
+            source: {
+              code: 'mcc-5812',
+              originalName: 'Food',
+              transactionCount: 1,
+              mappedCategory: categories[0],
+            },
+          },
+        }),
+      )
+    }
     if (path === '/api/transactions' && method === 'GET')
       return void route.fulfill(
         json({ data: { nextCursor: null, transactions: [transaction()] } }),

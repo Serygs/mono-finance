@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -33,6 +34,7 @@ import {
   type CurrencyTotals,
 } from './analytics-api'
 import { getCurrencyPreferences } from '../settings/currency-preferences-api'
+import { useLocalization } from '../localization/localization'
 import {
   DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
@@ -58,6 +60,7 @@ const DATE_PRESETS: Array<{ label: string; value: DashboardDatePreset }> = [
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
+  const { t } = useLocalization()
   const queryClient = useQueryClient()
   const [accounts, setAccounts] = useState<AccountSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -205,7 +208,7 @@ export function DashboardPage() {
               type="button"
               variant="secondary"
             >
-              {isSynchronizing ? 'Syncing…' : 'Sync accounts'}
+              {t(isSynchronizing ? 'Syncing…' : 'Sync accounts')}
             </Button>
             <Button
               disabled={isTransactionSynchronizing || accounts === null}
@@ -215,35 +218,39 @@ export function DashboardPage() {
               type="button"
             >
               {isTransactionSynchronizing
-                ? 'Refreshing…'
-                : 'Refresh transactions'}
+                ? t('Refreshing…')
+                : t('Refresh transactions')}
             </Button>
           </>
         }
         description={
           <p>
-            Imported transactions, shaped by your adjustments and compensation
-            links.
+            {t(
+              'Imported transactions, shaped by your adjustments and compensation links.',
+            )}
           </p>
         }
-        eyebrow="Personal finance"
+        eyebrow={t('Personal finance')}
         id="dashboard-title"
-        title="Your money, in clear focus."
+        title={t('Your money, in clear focus.')}
       />
 
       {error === null ? null : (
-        <Alert tone="danger" title="Accounts could not be synchronized">
+        <Alert tone="danger" title={t('Accounts could not be synchronized')}>
           {error}
         </Alert>
       )}
       {syncStatusError === null ? null : (
-        <Alert tone="danger" title="Transaction sync is unavailable">
+        <Alert tone="danger" title={t('Transaction sync is unavailable')}>
           {syncStatusError}
         </Alert>
       )}
 
-      <section className="dashboard-filters" aria-label="Dashboard filters">
-        <FormField label="Period">
+      <section
+        className="dashboard-filters"
+        aria-label={t('Dashboard filters')}
+      >
+        <FormField label={t('Period')}>
           <Select
             onChange={(event) =>
               setDatePreset(event.target.value as DashboardDatePreset)
@@ -252,14 +259,14 @@ export function DashboardPage() {
           >
             {DATE_PRESETS.map((preset) => (
               <option key={preset.value} value={preset.value}>
-                {preset.label}
+                {t(preset.label)}
               </option>
             ))}
           </Select>
         </FormField>
         {datePreset === 'custom' ? (
           <>
-            <FormField label="From">
+            <FormField label={t('From')}>
               <input
                 autoComplete="off"
                 name="dashboard-from"
@@ -268,7 +275,7 @@ export function DashboardPage() {
                 value={customDateFrom}
               />
             </FormField>
-            <FormField label="To">
+            <FormField label={t('To')}>
               <input
                 autoComplete="off"
                 name="dashboard-to"
@@ -279,26 +286,28 @@ export function DashboardPage() {
             </FormField>
           </>
         ) : null}
-        <FormField label="Currency view">
+        <FormField label={t('Currency view')}>
           <Select
             onChange={(event) =>
               setCurrencyMode(event.target.value as 'base' | 'original')
             }
             value={currencyMode}
           >
-            <option value="original">Original currencies</option>
-            <option value="base">Base currency · {baseCurrencyCode}</option>
+            <option value="original">{t('Original currencies')}</option>
+            <option value="base">
+              {t('Base currency')} · {baseCurrencyCode}
+            </option>
           </Select>
         </FormField>
         {currencyMode === 'original' ? (
-          <FormField label="Original currency">
+          <FormField label={t('Original currency')}>
             <Select
               onChange={(event) =>
                 setDisplayCurrency(event.target.value || null)
               }
               value={displayCurrency ?? ''}
             >
-              <option value="">All original currencies</option>
+              <option value="">{t('All original currencies')}</option>
               {analyticsQuery.data === undefined
                 ? null
                 : availableCurrencies(analyticsQuery.data).map((currency) => (
@@ -312,15 +321,16 @@ export function DashboardPage() {
       </section>
 
       {syncStates?.some((state) => state.status === 'failed') ? (
-        <Alert tone="warning" title="Some accounts need attention">
-          Some accounts still need a transaction sync retry. The dashboard shows
-          transactions already stored in D1.
+        <Alert tone="warning" title={t('Some accounts need attention')}>
+          {t(
+            'Some accounts still need a transaction sync retry. The dashboard shows transactions already stored in D1.',
+          )}
         </Alert>
       ) : null}
 
       {range === null ? (
-        <Alert tone="danger" title="Date range is incomplete">
-          Enter a valid start and end date to view analytics.
+        <Alert tone="danger" title={t('Date range is incomplete')}>
+          {t('Enter a valid start and end date to view analytics.')}
         </Alert>
       ) : null}
       {analyticsQuery.isPending ? <DashboardSkeleton /> : null}
@@ -339,7 +349,7 @@ export function DashboardPage() {
       )}
 
       {accounts === null ? (
-        <Skeleton label="Loading accounts…" lines={2} />
+        <Skeleton label={t('Loading accounts…')} lines={2} />
       ) : (
         <AccountSelector
           accounts={accounts}
@@ -370,10 +380,27 @@ function DashboardAnalyticsView({
   recentTransactions: TransactionListItem[]
   recentTransactionsLoading: boolean
 }) {
+  const { t } = useLocalization()
+  const [searchParameters, setSearchParameters] = useSearchParams()
   const currencies = availableCurrencies(analytics)
   const chartCurrency = displayCurrency ?? currencies[0] ?? null
   const displayed = filterDashboardAnalytics(analytics, displayCurrency)
   const chartData = filterDashboardAnalytics(analytics, chartCurrency)
+  const categoryValues = chartData.breakdowns.expensesByCategory
+  const availableCategoryKeys = categoryValues.map(categoryKey)
+  const selectedCategoryKeys = searchParameters
+    .getAll('category')
+    .filter((key) => availableCategoryKeys.includes(key))
+  const hiddenCategoryKeys = new Set(
+    selectedCategoryKeys.length === 0
+      ? []
+      : availableCategoryKeys.filter(
+          (key) => !selectedCategoryKeys.includes(key),
+        ),
+  )
+  const visibleCategoryValues = categoryValues.filter(
+    (value) => !hiddenCategoryKeys.has(categoryKey(value)),
+  )
   const minorUnits = new Map(
     accounts.map((account) => [
       account.currency.code,
@@ -388,19 +415,25 @@ function DashboardAnalyticsView({
     .slice(0, 5)
   if (displayed.overview.totals.length === 0) {
     return (
-      <EmptyState title="No transactions in this view">
+      <EmptyState title={t('No transactions in this view')}>
         <p>
-          Change the filters or refresh transactions to build this dashboard.
+          {t(
+            'Change the filters or refresh transactions to build this dashboard.',
+          )}
         </p>
         {currencyMode === 'base' &&
         analytics.overview.currencyConversion.missingRateTransactionCounts
           .length > 0 ? (
           <p>
-            Historical rates are missing for{' '}
-            {analytics.overview.currencyConversion.missingRateTransactionCounts
-              .map((item) => `${item.count} ${item.currencyCode}`)
-              .join(', ')}{' '}
-            transaction(s). Switch to original currencies to view them.
+            {t(
+              'Historical rates are missing for {currencies}. Switch to original currencies to view them.',
+              {
+                currencies:
+                  analytics.overview.currencyConversion.missingRateTransactionCounts
+                    .map((item) => `${item.count} ${item.currencyCode}`)
+                    .join(', '),
+              },
+            )}
           </p>
         ) : null}
       </EmptyState>
@@ -409,61 +442,72 @@ function DashboardAnalyticsView({
   return (
     <div className="dashboard-content">
       {currencyMode === 'base' ? (
-        <Alert tone="warning" title="Historical currency conversion">
-          Base-currency values are converted from preserved original amounts
-          using rates stored at or before each transaction.
+        <Alert tone="warning" title={t('Historical currency conversion')}>
+          {t(
+            'Base-currency values are converted from preserved original amounts using rates stored at or before each transaction.',
+          )}
           {analytics.overview.currencyConversion.missingRateTransactionCounts
             .length > 0
-            ? ` ${analytics.overview.currencyConversion.missingRateTransactionCounts.map((item) => `${item.count} ${item.currencyCode}`).join(', ')} transaction(s) have no historical rate and are excluded from base totals.`
+            ? ` ${t('{currencies} transactions have no historical rate and are excluded from base totals.', { currencies: analytics.overview.currencyConversion.missingRateTransactionCounts.map((item) => `${item.count} ${item.currencyCode}`).join(', ') })}`
             : ''}
         </Alert>
       ) : null}
       <p className="dashboard-currency-note">
         {displayCurrency === null
-          ? 'Totals remain separated by original currency. Choose a currency for a focused chart view.'
-          : `Charts use ${displayCurrency}; no current-rate conversion is used.`}
+          ? t(
+              'Totals remain separated by original currency. Choose a currency for a focused chart view.',
+            )
+          : t('Charts use {currency}; no current-rate conversion is used.', {
+              currency: displayCurrency,
+            })}
       </p>
-      <section className="kpi-grid" aria-label="Period summary">
+      <section className="kpi-grid" aria-label={t('Period summary')}>
         <MetricCard
+          accent="cyan"
           minorUnits={minorUnits}
-          title="Total spent"
+          title={t('Total spent')}
           values={displayed.overview.totals.map((item) => ({
             amountMinor: item.expenseAmountMinor,
             currencyCode: item.currencyCode,
           }))}
         />
         <MetricCard
+          accent="blue"
           minorUnits={minorUnits}
-          title="Total income"
+          title={t('Total income')}
           values={displayed.overview.totals.map((item) => ({
             amountMinor: item.incomeAmountMinor,
             currencyCode: item.currencyCode,
           }))}
         />
         <MetricCard
+          accent="green"
           minorUnits={minorUnits}
-          title="Net cash flow"
+          title={t('Net cash flow')}
           values={displayed.overview.totals.map((item) => ({
             amountMinor: item.netAmountMinor,
             currencyCode: item.currencyCode,
           }))}
         />
         <MetricCard
+          accent="violet"
           minorUnits={minorUnits}
-          title="Available to save"
+          title={t('Available to save')}
           values={displayed.overview.totals.map((item) => ({
             amountMinor: Math.max(0, item.netAmountMinor),
             currencyCode: item.currencyCode,
           }))}
         />
         <MetricCard
+          accent="pink"
           minorUnits={minorUnits}
-          title="Average spend / day"
+          title={t('Average spend / day')}
           values={displayed.overview.averageExpensePerDay}
         />
         <MetricCard
+          accent="cyan"
           minorUnits={minorUnits}
-          title="Previous period change"
+          title={t('Previous period change')}
           values={displayed.overview.comparison.map((item) => ({
             amountMinor: item.changeAmountMinor,
             currencyCode: item.currencyCode,
@@ -473,54 +517,69 @@ function DashboardAnalyticsView({
       <section className="dashboard-chart-grid">
         <ChartCard
           className="dashboard-chart-primary"
-          title={`Expense timeline${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
+          title={`${t('Expense timeline')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
         >
           <LineChart
             currencyCode={chartCurrency}
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.daily, 'expenseAmountMinor')}
-            title="Daily expenses"
+            title={t('Daily expenses')}
           />
         </ChartCard>
-        <ChartCard title="Income vs expense">
+        <ChartCard title={t('Income vs expense')}>
           <IncomeExpenseChart
             minorUnits={minorUnits}
             totals={displayed.overview.totals}
           />
         </ChartCard>
-        <ChartCard title="Spending by category">
+        <ChartCard
+          className="dashboard-chart-primary"
+          title={t('Spending by category')}
+        >
+          <CategoryVisibilityFilter
+            hiddenKeys={hiddenCategoryKeys}
+            onChange={(nextHiddenKeys) => {
+              const next = new URLSearchParams(searchParameters)
+              next.delete('category')
+              const visibleKeys = categoryValues
+                .map(categoryKey)
+                .filter((key) => !nextHiddenKeys.has(key))
+              if (visibleKeys.length !== categoryValues.length) {
+                for (const key of visibleKeys) next.append('category', key)
+              }
+              setSearchParameters(next, { replace: true })
+            }}
+            values={categoryValues}
+          />
           <BarChart
             minorUnits={minorUnits}
-            values={chartData.breakdowns.expensesByCategory.map((item) => ({
+            values={visibleCategoryValues.map((item) => ({
               ...item,
               label: item.categoryName,
             }))}
           />
         </ChartCard>
-        <ChartCard title="Expense distribution">
-          <DonutChart
-            minorUnits={minorUnits}
-            values={chartData.breakdowns.expensesByCategory}
-          />
+        <ChartCard title={t('Expense distribution')}>
+          <DonutChart minorUnits={minorUnits} values={visibleCategoryValues} />
         </ChartCard>
         <ChartCard
-          title={`Monthly trend${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
+          title={`${t('Monthly trend')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
         >
           <LineChart
             currencyCode={chartCurrency}
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.monthly, 'expenseAmountMinor')}
-            title="Monthly expenses"
+            title={t('Monthly expenses')}
           />
         </ChartCard>
-        <ChartCard title="Month-end forecast">
+        <ChartCard title={t('Month-end forecast')}>
           <MetricValues
-            empty="No current-month expenses yet."
+            empty={t('No current-month expenses yet.')}
             minorUnits={minorUnits}
             values={displayed.overview.projectedMonthExpenses}
           />
         </ChartCard>
-        <ChartCard title="Account distribution">
+        <ChartCard title={t('Account distribution')}>
           <BarChart
             minorUnits={minorUnits}
             values={chartData.breakdowns.expensesByAccount.map((item) => ({
@@ -529,7 +588,7 @@ function DashboardAnalyticsView({
             }))}
           />
         </ChartCard>
-        <ChartCard title="Currency distribution">
+        <ChartCard title={t('Currency distribution')}>
           <BarChart
             minorUnits={minorUnits}
             values={analytics.breakdowns.expensesByCurrency.map((item) => ({
@@ -542,16 +601,16 @@ function DashboardAnalyticsView({
       <section className="dashboard-evidence-grid">
         <EvidenceList
           minorUnits={minorUnits}
-          title="Top merchants"
+          title={t('Top merchants')}
           values={chartData.breakdowns.topMerchants.map((item) => ({
             ...item,
-            detail: `${item.transactionCount} transaction${item.transactionCount === 1 ? '' : 's'}`,
+            detail: t('{count} transactions', { count: item.transactionCount }),
             label: item.description,
           }))}
         />
         <EvidenceList
           minorUnits={minorUnits}
-          title="Largest transactions"
+          title={t('Largest transactions')}
           values={chartData.breakdowns.largestTransactions.map((item) => ({
             ...item,
             detail: formatPeriod(item.timestamp, 'day'),
@@ -559,17 +618,17 @@ function DashboardAnalyticsView({
           }))}
         />
         <TransactionEvidence
-          empty="No adjusted transactions in this period."
+          empty={t('No adjusted transactions in this period.')}
           loading={recentTransactionsLoading}
           minorUnits={minorUnits}
-          title="Recent adjusted transactions"
+          title={t('Recent adjusted transactions')}
           transactions={adjusted}
         />
         <TransactionEvidence
-          empty="No compensation links in this period."
+          empty={t('No compensation links in this period.')}
           loading={recentTransactionsLoading}
           minorUnits={minorUnits}
-          title="Recent compensations"
+          title={t('Recent compensations')}
           transactions={compensated}
         />
       </section>
@@ -578,32 +637,36 @@ function DashboardAnalyticsView({
 }
 
 function DashboardSkeleton() {
-  return <Skeleton label="Loading dashboard…" lines={6} />
+  const { t } = useLocalization()
+  return <Skeleton label={t('Loading dashboard…')} lines={6} />
 }
 
 function DashboardError({ onRetry }: { onRetry(): void }) {
+  const { t } = useLocalization()
   return (
-    <Alert tone="danger" title="Analytics could not be loaded">
-      <p>Check the connection, then try again.</p>
+    <Alert tone="danger" title={t('Analytics could not be loaded')}>
+      <p>{t('Check the connection, then try again.')}</p>
       <Button onClick={onRetry} size="small" type="button">
-        Retry analytics
+        {t('Retry analytics')}
       </Button>
     </Alert>
   )
 }
 
 function MetricCard({
+  accent,
   minorUnits,
   title,
   values,
 }: {
+  accent: 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
   minorUnits: Map<string, number>
   title: string
   values: CurrencyAmount[]
 }) {
   return (
     <KpiCard
-      accent={metricAccent(title)}
+      accent={accent}
       label={title}
       value={<MetricValues empty="—" minorUnits={minorUnits} values={values} />}
     />
@@ -645,10 +708,11 @@ function ChartCard({
   className?: string
   title: string
 }) {
+  const { t } = useLocalization()
   return (
     <ChartContainer
       {...(className === undefined ? {} : { className })}
-      summary={`${title} for the selected period. Exact values are available in the chart content.`}
+      summary={t('Chart summary for {title}', { title })}
       title={title}
     >
       {children}
@@ -667,6 +731,7 @@ function LineChart({
   points: Array<{ periodStart: number; value: number }>
   title: string
 }) {
+  const { t } = useLocalization()
   if (points.length === 0 || currencyCode === null) return <EmptyChart />
   const width = 640
   const height = 220
@@ -703,7 +768,7 @@ function LineChart({
         ))}
       </svg>
       <details>
-        <summary>View chart values</summary>
+        <summary>{t('View chart values')}</summary>
         <table>
           <tbody>
             {points.map((point) => (
@@ -728,6 +793,7 @@ function IncomeExpenseChart({
   minorUnits: Map<string, number>
   totals: CurrencyTotals[]
 }) {
+  const { t } = useLocalization()
   if (totals.length === 0) return <EmptyChart />
   return (
     <div className="income-expense-chart">
@@ -746,14 +812,28 @@ function IncomeExpenseChart({
                 style={{
                   width: `${(total.incomeAmountMinor / maximum) * 100}%`,
                 }}
-                title={`Income: ${formatCurrencyAmount(total.incomeAmountMinor, total.currencyCode, minorUnits.get(total.currencyCode) ?? 2)}`}
+                title={[
+                  t('Income'),
+                  formatCurrencyAmount(
+                    total.incomeAmountMinor,
+                    total.currencyCode,
+                    minorUnits.get(total.currencyCode) ?? 2,
+                  ),
+                ].join(': ')}
               />
               <span
                 className="expense-bar"
                 style={{
                   width: `${(total.expenseAmountMinor / maximum) * 100}%`,
                 }}
-                title={`Expenses: ${formatCurrencyAmount(total.expenseAmountMinor, total.currencyCode, minorUnits.get(total.currencyCode) ?? 2)}`}
+                title={[
+                  t('Expenses'),
+                  formatCurrencyAmount(
+                    total.expenseAmountMinor,
+                    total.currencyCode,
+                    minorUnits.get(total.currencyCode) ?? 2,
+                  ),
+                ].join(': ')}
               />
             </div>
           </div>
@@ -771,7 +851,7 @@ function BarChart({
   values: Array<CurrencyAmount & { label: string }>
 }) {
   if (values.length === 0) return <EmptyChart />
-  const displayed = values.slice(0, 6)
+  const displayed = values
   const maximum = Math.max(...displayed.map((value) => value.amountMinor), 1)
   return (
     <ol className="bar-chart">
@@ -780,6 +860,7 @@ function BarChart({
           <span>{value.label}</span>
           <div>
             <i
+              className={`donut-segment-${chartAccentIndex(`${value.label}:${value.currencyCode}`)}`}
               style={{ width: `${(value.amountMinor / maximum) * 100}%` }}
               title={formatCurrencyAmount(
                 value.amountMinor,
@@ -801,6 +882,66 @@ function BarChart({
   )
 }
 
+function CategoryVisibilityFilter({
+  hiddenKeys,
+  onChange,
+  values,
+}: {
+  hiddenKeys: Set<string>
+  onChange(value: Set<string>): void
+  values: Array<
+    CurrencyAmount & { categoryId: string | null; categoryName: string }
+  >
+}) {
+  const { t } = useLocalization()
+  if (values.length === 0) return null
+  return (
+    <div className="category-visibility-filter">
+      <div className="category-visibility-filter__heading">
+        <strong>{t('Visible categories')}</strong>
+        <Button
+          disabled={hiddenKeys.size === 0}
+          onClick={() => onChange(new Set())}
+          size="small"
+          type="button"
+          variant="quiet"
+        >
+          {t('Show all')}
+        </Button>
+      </div>
+      <div
+        className="category-visibility-filter__options"
+        role="group"
+        aria-label={t('Visible categories')}
+      >
+        {values.map((value) => {
+          const key = categoryKey(value)
+          const visible = !hiddenKeys.has(key)
+          return (
+            <button
+              aria-pressed={visible}
+              key={key}
+              onClick={() => {
+                const next = new Set(hiddenKeys)
+                if (visible && values.length - next.size > 1) next.add(key)
+                else next.delete(key)
+                onChange(next)
+              }}
+              type="button"
+            >
+              <i
+                aria-hidden="true"
+                className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
+              />
+              {value.categoryName}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function DonutChart({
   minorUnits,
   values,
@@ -808,17 +949,10 @@ function DonutChart({
   minorUnits: Map<string, number>
   values: Array<CurrencyAmount & { categoryName: string }>
 }) {
+  const { t } = useLocalization()
+  const [activeKey, setActiveKey] = useState<string | null>(null)
   if (values.length === 0) return <EmptyChart />
-  const displayed =
-    values.length <= 5
-      ? values
-      : values.slice(0, 4).concat({
-          amountMinor: values
-            .slice(4)
-            .reduce((sum, value) => sum + value.amountMinor, 0),
-          categoryName: 'Other',
-          currencyCode: values[0]?.currencyCode ?? '',
-        })
+  const displayed = values
   const total = displayed.reduce((sum, value) => sum + value.amountMinor, 0)
   const segments = displayed.reduce<
     Array<{ offset: number; value: (typeof displayed)[number] }>
@@ -835,40 +969,62 @@ function DonutChart({
   return (
     <div className="donut-layout">
       <svg
-        aria-label="Expense distribution by category"
+        aria-label={t('Expense distribution by category')}
         className="donut-chart"
         role="img"
         viewBox="0 0 42 42"
       >
-        <title>Expense distribution by category</title>
+        <title>{t('Expense distribution by category')}</title>
         {segments.map(({ offset, value }) => {
           const accentIndex = chartAccentIndex(
             `${value.categoryName}:${value.currencyCode}`,
           )
+          const key = categoryKey(value)
+          const isActive = activeKey === key
           return (
-            <circle
-              className={`donut-segment donut-segment-${accentIndex}`}
-              cx="21"
-              cy="21"
-              fill="transparent"
-              key={`${value.categoryName}-${value.currencyCode}`}
-              r="15.9155"
-              strokeDasharray={`${(value.amountMinor / total) * 100} ${100 - (value.amountMinor / total) * 100}`}
-              strokeDashoffset={-offset}
-            />
+            <g
+              aria-label={`${value.categoryName}: ${formatCurrencyAmount(value.amountMinor, value.currencyCode, minorUnits.get(value.currencyCode) ?? 2)}`}
+              className={`donut-segment-group${isActive ? ' is-active' : ''}${activeKey !== null && !isActive ? ' is-muted' : ''}`}
+              key={key}
+              onBlur={() => setActiveKey(null)}
+              onFocus={() => setActiveKey(key)}
+              onPointerEnter={() => setActiveKey(key)}
+              onPointerLeave={() => setActiveKey(null)}
+              role="button"
+              tabIndex={0}
+            >
+              <circle
+                className={`donut-segment donut-segment-${accentIndex}`}
+                cx="21"
+                cy="21"
+                fill="transparent"
+                r="15.9155"
+                strokeDasharray={`${(value.amountMinor / total) * 100} ${100 - (value.amountMinor / total) * 100}`}
+                strokeDashoffset={-offset}
+              />
+            </g>
           )
         })}
       </svg>
       <ol className="donut-legend">
         {displayed.map((value) => (
-          <li key={`${value.categoryName}-${value.currencyCode}`}>
-            <span>
+          <li
+            className={activeKey === categoryKey(value) ? 'is-active' : ''}
+            key={categoryKey(value)}
+            onPointerEnter={() => setActiveKey(categoryKey(value))}
+            onPointerLeave={() => setActiveKey(null)}
+          >
+            <button
+              onBlur={() => setActiveKey(null)}
+              onFocus={() => setActiveKey(categoryKey(value))}
+              type="button"
+            >
               <i
                 aria-hidden="true"
                 className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
               />
-              {value.categoryName}
-            </span>
+              <span>{value.categoryName}</span>
+            </button>
             <strong>
               {formatCurrencyAmount(
                 value.amountMinor,
@@ -883,6 +1039,14 @@ function DonutChart({
   )
 }
 
+function categoryKey(value: {
+  categoryId?: string | null
+  categoryName: string
+  currencyCode: string
+}): string {
+  return `${value.categoryId ?? value.categoryName}:${value.currencyCode}`
+}
+
 function EvidenceList({
   minorUnits,
   title,
@@ -892,10 +1056,11 @@ function EvidenceList({
   title: string
   values: Array<CurrencyAmount & { detail: string; label: string }>
 }) {
+  const { t } = useLocalization()
   return (
     <Card className="evidence-card" title={title}>
       {values.length === 0 ? (
-        <p className="metric-empty">No data in this period.</p>
+        <p className="metric-empty">{t('No data in this period.')}</p>
       ) : (
         <ol className="evidence-list">
           {values.slice(0, 5).map((value) => (
@@ -932,10 +1097,11 @@ function TransactionEvidence({
   title: string
   transactions: TransactionListItem[]
 }) {
+  const { t } = useLocalization()
   return (
     <Card className="evidence-card" title={title}>
       {loading ? (
-        <p className="metric-empty">Loading…</p>
+        <p className="metric-empty">{t('Loading…')}</p>
       ) : transactions.length === 0 ? (
         <p className="metric-empty">{empty}</p>
       ) : (
@@ -965,23 +1131,10 @@ function TransactionEvidence({
 }
 
 function EmptyChart() {
-  return <p className="chart-empty">No data in this period.</p>
+  const { t } = useLocalization()
+  return <p className="chart-empty">{t('No data in this period.')}</p>
 }
 
-function metricAccent(
-  title: string,
-): 'cyan' | 'blue' | 'green' | 'violet' | 'pink' {
-  const accents = ['cyan', 'blue', 'green', 'violet', 'pink'] as const
-  const titles = [
-    'Total spent',
-    'Total income',
-    'Net cash flow',
-    'Available to save',
-    'Average spend / day',
-  ]
-  const index = titles.indexOf(title)
-  return accents[index < 0 ? 0 : index % accents.length] ?? 'cyan'
-}
 function accountName(accounts: AccountSummary[], accountId: string): string {
   const account = accounts.find((item) => item.id === accountId)
   return account === undefined

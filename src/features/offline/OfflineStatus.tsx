@@ -2,9 +2,11 @@ import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { getOfflineStatus, subscribeOfflineStatus } from './offline-api'
+import { useLocalization } from '../localization/localization'
 
 export function OfflineStatus() {
   const queryClient = useQueryClient()
+  const { locale, t } = useLocalization()
   const status = useSyncExternalStore(
     subscribeOfflineStatus,
     getOfflineStatus,
@@ -27,8 +29,10 @@ export function OfflineStatus() {
   return (
     <p className="offline-status" role="status">
       {online
-        ? 'Connection restored. Refreshing data from D1…'
-        : `Offline — showing encrypted data saved ${formatCachedAt(status.cachedAt)}.`}
+        ? t('Connection restored. Refreshing data from D1…')
+        : t('Offline — showing encrypted data saved {date}.', {
+            date: formatCachedAt(status.cachedAt, locale, t),
+          })}
     </p>
   )
 }
@@ -49,9 +53,13 @@ function useOnlineState(): boolean {
   )
 }
 
-function formatCachedAt(cachedAt: number | null): string {
-  if (cachedAt === null) return 'before this offline session'
-  return new Intl.DateTimeFormat(undefined, {
+function formatCachedAt(
+  cachedAt: number | null,
+  locale: string,
+  t: (key: string) => string,
+): string {
+  if (cachedAt === null) return t('before this offline session')
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(cachedAt)

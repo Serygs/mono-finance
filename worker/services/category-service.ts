@@ -9,11 +9,20 @@ export interface OwnedTransactionForCategory {
   id: string
   originalCategoryCode: string | null
   originalCategoryName: string | null
+  mappedCategory: CustomCategory | null
   overrideCategory: CustomCategory | null
+}
+
+export interface SourceCategory {
+  code: string
+  originalName: string
+  transactionCount: number
+  mappedCategory: CustomCategory | null
 }
 
 export interface CategoryRepository {
   countOverrides(categoryId: string, userId: string): Promise<number>
+  countSourceMappings(categoryId: string, userId: string): Promise<number>
   createCategory(
     input: CreateCategoryInput & { userId: string; now: number },
   ): Promise<CustomCategory>
@@ -26,13 +35,25 @@ export interface CategoryRepository {
     transactionId: string,
     userId: string,
   ): Promise<OwnedTransactionForCategory | null>
+  findSourceCategory(
+    sourceCode: string,
+    userId: string,
+  ): Promise<SourceCategory | null>
   listCategories(userId: string): Promise<CustomCategory[]>
+  listSourceCategories(userId: string): Promise<SourceCategory[]>
+  removeSourceMapping(sourceCode: string, userId: string): Promise<void>
   removeTransactionOverride(
     transactionId: string,
     userId: string,
   ): Promise<void>
   setTransactionOverride(
     transactionId: string,
+    categoryId: string,
+    userId: string,
+    now: number,
+  ): Promise<void>
+  setSourceMapping(
+    sourceCode: string,
     categoryId: string,
     userId: string,
     now: number,
@@ -84,6 +105,10 @@ export class CategoryService {
     return this.repository.listCategories(userId)
   }
 
+  listSources(userId: string): Promise<SourceCategory[]> {
+    return this.repository.listSourceCategories(userId)
+  }
+
   create(userId: string, input: CreateCategoryInput): Promise<CustomCategory> {
     assertCategoryInput(input)
     return this.repository.createCategory({ ...input, now: this.now(), userId })
@@ -106,7 +131,10 @@ export class CategoryService {
   async delete(userId: string, categoryId: string): Promise<void> {
     if ((await this.repository.findCategory(categoryId, userId)) === null)
       throw new CategoryError('category_not_found')
-    if ((await this.repository.countOverrides(categoryId, userId)) > 0)
+    if (
+      (await this.repository.countOverrides(categoryId, userId)) > 0 ||
+      (await this.repository.countSourceMappings(categoryId, userId)) > 0
+    )
       throw new CategoryError('category_referenced')
     await this.repository.deleteCategory(categoryId, userId)
   }
@@ -140,6 +168,38 @@ export class CategoryService {
     return resolveEffectiveCategory({ ...transaction, overrideCategory: null })
   }
 
+  async setSourceMapping(
+    userId: string,
+    sourceCode: string,
+    categoryId: string,
+  ): Promise<SourceCategory> {
+    assertSourceCode(sourceCode)
+    const [source, category] = await Promise.all([
+      this.repository.findSourceCategory(sourceCode, userId),
+      this.repository.findCategory(categoryId, userId),
+    ])
+    if (source === null) throw new CategoryError('category_not_found')
+    if (category === null) throw new CategoryError('category_not_found')
+    await this.repository.setSourceMapping(
+      sourceCode,
+      categoryId,
+      userId,
+      this.now(),
+    )
+    return { ...source, mappedCategory: category }
+  }
+
+  async resetSourceMapping(
+    userId: string,
+    sourceCode: string,
+  ): Promise<SourceCategory> {
+    assertSourceCode(sourceCode)
+    const source = await this.repository.findSourceCategory(sourceCode, userId)
+    if (source === null) throw new CategoryError('category_not_found')
+    await this.repository.removeSourceMapping(sourceCode, userId)
+    return { ...source, mappedCategory: null }
+  }
+
   resolveForAnalytics(
     transaction: OwnedTransactionForCategory,
   ): EffectiveCategoryResult {
@@ -160,7 +220,7 @@ export interface EffectiveCategoryResult {
   category: {
     id: string | null
     name: string | null
-    source: 'custom' | 'original' | null
+    source: 'custom' | 'mapped' | 'original' | null
   }
   originalCategory: { id: string | null; name: string | null }
 }
@@ -172,7 +232,9 @@ export function resolveEffectiveCategory(
     id: transaction.originalCategoryCode,
     name: transaction.originalCategoryName,
   }
-  return transaction.overrideCategory === null
+  const effectiveCategory =
+    transaction.overrideCategory ?? transaction.mappedCategory
+  return effectiveCategory === null
     ? {
         category:
           originalCategory.name === null
@@ -182,12 +244,17 @@ export function resolveEffectiveCategory(
       }
     : {
         category: {
-          id: transaction.overrideCategory.id,
-          name: transaction.overrideCategory.name,
-          source: 'custom',
+          id: effectiveCategory.id,
+          name: effectiveCategory.name,
+          source: transaction.overrideCategory === null ? 'mapped' : 'custom',
         },
         originalCategory,
       }
+}
+
+function assertSourceCode(value: string): void {
+  if (!value.trim() || value.length > 128)
+    throw new CategoryError('invalid_category')
 }
 
 function assertCategoryInput(input: CreateCategoryInput): void {
