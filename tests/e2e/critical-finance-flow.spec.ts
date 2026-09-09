@@ -151,13 +151,13 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     const method = request.method()
     if (path === '/api/auth/session') {
       await route.fulfill(
-        json(state.signedIn ? { data: { user: owner } } : unauthorized),
+        json(state.signedIn ? { data: authenticatedSession } : unauthorized),
       )
       return
     }
     if (path === '/api/auth/login' && method === 'POST') {
       state.signedIn = true
-      await route.fulfill(json({ data: { user: owner } }))
+      await route.fulfill(json({ data: authenticatedSession }))
       return
     }
     if (path === '/api/auth/logout' && method === 'POST') {
@@ -275,6 +275,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
 }
 
 const owner = { email: 'owner@example.com', id: 'owner-1' }
+const authenticatedSession = { expiresAt: 4_102_444_800, user: owner }
 const unauthorized = {
   error: { code: 'unauthenticated', message: 'Authentication is required.' },
 }
