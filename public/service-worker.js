@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'mono-finance-shell-v1'
+const SHELL_CACHE = 'mono-finance-shell-v2'
 const SHELL_URLS = ['/', '/manifest.webmanifest', '/icons/app-icon.svg']
 
 self.addEventListener('install', (event) => {
@@ -34,7 +34,23 @@ self.addEventListener('fetch', (event) => {
     return
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/')))
+    event.respondWith(
+      caches.open(SHELL_CACHE).then(async (cache) => {
+        try {
+          const response = await fetch(new URL('/', self.location.origin), {
+            cache: 'no-store',
+            credentials: 'same-origin',
+          })
+          if (!response.ok) {
+            return (await cache.match('/')) ?? response
+          }
+          await cache.put('/', response.clone())
+          return response
+        } catch {
+          return (await cache.match('/')) ?? Response.error()
+        }
+      }),
+    )
     return
   }
 

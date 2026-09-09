@@ -1,3 +1,6 @@
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
 /*
   Content-Security-Policy: base-uri 'none'; default-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; worker-src 'self'
   Cross-Origin-Opener-Policy: same-origin
