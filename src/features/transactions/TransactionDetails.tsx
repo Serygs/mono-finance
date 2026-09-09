@@ -28,6 +28,7 @@ import type {
   TransactionCorrection,
   TransactionListItem,
 } from './transaction-types'
+import { useLocalization } from '../localization/localization'
 
 interface TransactionDetailsProps {
   onTransactionUpdated(
@@ -63,6 +64,7 @@ function TransactionDetailsContent({
 }: Omit<TransactionDetailsProps, 'transaction'> & {
   transaction: TransactionListItem
 }) {
+  const { t } = useLocalization()
   const queryClient = useQueryClient()
   const [adjustmentAmount, setAdjustmentAmount] = useState(() =>
     toEditableAmount(
@@ -209,7 +211,9 @@ function TransactionDetailsContent({
     )
     if (adjustedAmountMinor === null) {
       setValidationMessage(
-        `Enter an amount with at most ${transaction.currencyMinorUnit} decimal places.`,
+        t('Enter an amount with at most {count} decimal places.', {
+          count: transaction.currencyMinorUnit,
+        }),
       )
       return
     }
@@ -218,7 +222,7 @@ function TransactionDetailsContent({
       (transaction.effectiveAmountMinor > 0 && adjustedAmountMinor < 0)
     ) {
       setValidationMessage(
-        'The adjusted amount must keep the transaction direction.',
+        t('The adjusted amount must keep the transaction direction.'),
       )
       return
     }
@@ -233,7 +237,7 @@ function TransactionDetailsContent({
     <div className="transaction-details">
       <div className="transaction-details-heading">
         <div>
-          <p className="eyebrow">Transaction details</p>
+          <p className="eyebrow">{t('Transaction details')}</p>
           <h2>{transaction.originalDescription}</h2>
         </div>
       </div>
@@ -243,28 +247,28 @@ function TransactionDetailsContent({
         </strong>
         {transaction.hasAdjustment ? (
           <span className="transaction-original-amount">
-            Original: {formatOriginalAmount(transaction)}
+            {t('Original')}: {formatOriginalAmount(transaction)}
           </span>
         ) : null}
       </div>
       <dl className="transaction-details-list">
         <div>
-          <dt>Date and time</dt>
+          <dt>{t('Date and time')}</dt>
           <dd>{formatTransactionTime(transaction.originalTimestamp)}</dd>
         </div>
         <div>
-          <dt>Account</dt>
+          <dt>{t('Account')}</dt>
           <dd>{accountLabel(transaction)}</dd>
         </div>
         <div>
-          <dt>Category</dt>
+          <dt>{t('Category')}</dt>
           <dd>
-            {transaction.category.name ?? 'Uncategorized'}
+            {transaction.category.name ?? t('Uncategorized')}
             {(transaction.category.source === 'custom' ||
               transaction.category.source === 'mapped') &&
             transaction.originalCategory.name !== null ? (
               <span className="transaction-original-amount">
-                Original: {transaction.originalCategory.name}
+                {t('Original')}: {transaction.originalCategory.name}
               </span>
             ) : null}
           </dd>
@@ -275,19 +279,20 @@ function TransactionDetailsContent({
         aria-labelledby="category-title"
       >
         <div>
-          <h3 id="category-title">Analytics category</h3>
+          <h3 id="category-title">{t('Analytics category')}</h3>
           <p>
-            Changes analytics classification only. The imported MCC category
-            stays preserved.
+            {t(
+              'Changes analytics classification only. The imported MCC category stays preserved.',
+            )}
           </p>
         </div>
-        <FormField label="Custom category">
+        <FormField label={t('Custom category')}>
           <Select
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
             disabled={isSaving || categoriesQuery.isPending}
           >
-            <option value="">Select a custom category</option>
+            <option value="">{t('Select a custom category')}</option>
             {(categoriesQuery.data ?? []).map((category) => (
               <option key={category.id} value={category.id}>
                 {category.icon ? `${category.icon} ` : ''}
@@ -304,7 +309,7 @@ function TransactionDetailsContent({
             size="small"
             type="button"
           >
-            {categoryMutation.isPending ? 'Saving…' : 'Save category'}
+            {t(categoryMutation.isPending ? 'Saving…' : 'Save category')}
           </Button>
           {transaction.category.source === 'custom' ? (
             <Button
@@ -314,7 +319,7 @@ function TransactionDetailsContent({
               type="button"
               variant="secondary"
             >
-              Reset to original
+              {t('Reset to original')}
             </Button>
           ) : null}
         </div>
@@ -325,17 +330,18 @@ function TransactionDetailsContent({
           aria-labelledby="compensation-title"
         >
           <div>
-            <h3 id="compensation-title">Compensations</h3>
+            <h3 id="compensation-title">{t('Compensations')}</h3>
             <p>
-              Link confirmed incoming transfers. Bank transactions remain
-              unchanged.
+              {t(
+                'Link confirmed incoming transfers. Bank transactions remain unchanged.',
+              )}
             </p>
           </div>
           {compensationQuery.data ? (
             <>
               <dl className="compensation-summary">
                 <div>
-                  <dt>Original expense</dt>
+                  <dt>{t('Original expense')}</dt>
                   <dd>
                     {formatMinor(
                       compensationQuery.data.summary.originalExpenseAmountMinor,
@@ -344,7 +350,7 @@ function TransactionDetailsContent({
                   </dd>
                 </div>
                 <div>
-                  <dt>Compensated</dt>
+                  <dt>{t('Compensated')}</dt>
                   <dd>
                     {formatMinor(
                       compensationQuery.data.summary.compensatedAmountMinor,
@@ -353,7 +359,7 @@ function TransactionDetailsContent({
                   </dd>
                 </div>
                 <div>
-                  <dt>Personal expense remaining</dt>
+                  <dt>{t('Personal expense remaining')}</dt>
                   <dd>
                     {formatMinor(
                       compensationQuery.data.summary
@@ -376,11 +382,11 @@ function TransactionDetailsContent({
                     type="button"
                     variant="quiet"
                   >
-                    Unlink
+                    {t('Unlink')}
                   </Button>
                 </div>
               ))}
-              <FormField label="Suggested incoming transaction">
+              <FormField label={t('Suggested incoming transaction')}>
                 <Select
                   value={compensationTransactionId}
                   onChange={(event) => {
@@ -402,7 +408,7 @@ function TransactionDetailsContent({
                     )
                   }}
                 >
-                  <option value="">Choose a suggestion</option>
+                  <option value="">{t('Choose a suggestion')}</option>
                   {compensationQuery.data.suggestions.map((candidate) => (
                     <option
                       key={candidate.transactionId}
@@ -414,7 +420,7 @@ function TransactionDetailsContent({
                 </Select>
               </FormField>
               <FormField
-                label={`Compensated amount (${transaction.currencyCode})`}
+                label={`${t('Compensated amount')} (${transaction.currencyCode})`}
               >
                 <input
                   autoComplete="off"
@@ -438,7 +444,7 @@ function TransactionDetailsContent({
                   )
                   if (amount === null || amount <= 0) {
                     setValidationMessage(
-                      'Enter a valid positive compensation amount.',
+                      t('Enter a valid positive compensation amount.'),
                     )
                     return
                   }
@@ -452,32 +458,35 @@ function TransactionDetailsContent({
                 type="button"
               >
                 {compensationMutation.isPending
-                  ? 'Linking…'
-                  : 'Link compensation'}
+                  ? t('Linking…')
+                  : t('Link compensation')}
               </Button>
             </>
           ) : null}
           {compensationQuery.isPending ? (
-            <Skeleton label="Loading compensation details…" lines={2} />
+            <Skeleton label={t('Loading compensation details…')} lines={2} />
           ) : null}
           {compensationQuery.isError ||
           compensationMutation.isError ||
           unlinkCompensationMutation.isError ? (
             <Alert tone="danger">
-              Compensation could not be saved. Try again later.
+              {t('Compensation could not be saved. Try again later.')}
             </Alert>
           ) : null}
         </section>
       ) : null}
       <form className="transaction-correction-form" onSubmit={submitAdjustment}>
         <div>
-          <h3>Analytics adjustment</h3>
+          <h3>{t('Analytics adjustment')}</h3>
           <p>
-            Changes only the effective amount. Imported bank data stays
-            unchanged.
+            {t(
+              'Changes only the effective amount. Imported bank data stays unchanged.',
+            )}
           </p>
         </div>
-        <FormField label={`Effective amount (${transaction.currencyCode})`}>
+        <FormField
+          label={`${t('Effective amount')} (${transaction.currencyCode})`}
+        >
           <input
             autoComplete="off"
             inputMode="decimal"
@@ -488,7 +497,7 @@ function TransactionDetailsContent({
             value={adjustmentAmount}
           />
         </FormField>
-        <FormField label="Note" hint="Optional">
+        <FormField label={t('Note')} hint={t('Optional')}>
           <textarea
             autoComplete="off"
             maxLength={1_000}
@@ -499,7 +508,7 @@ function TransactionDetailsContent({
         </FormField>
         <div className="transaction-correction-actions">
           <Button loading={adjustmentMutation.isPending} type="submit">
-            {adjustmentMutation.isPending ? 'Saving…' : 'Save adjustment'}
+            {t(adjustmentMutation.isPending ? 'Saving…' : 'Save adjustment')}
           </Button>
           {transaction.hasAdjustment ? (
             <Button
@@ -508,7 +517,7 @@ function TransactionDetailsContent({
               type="button"
               variant="secondary"
             >
-              Reset adjustment
+              {t('Reset adjustment')}
             </Button>
           ) : null}
         </div>
@@ -518,10 +527,11 @@ function TransactionDetailsContent({
         aria-labelledby="exclusion-title"
       >
         <div>
-          <h3 id="exclusion-title">Analytics exclusion</h3>
+          <h3 id="exclusion-title">{t('Analytics exclusion')}</h3>
           <p>
-            Excluded transactions stay in the ledger but are omitted from normal
-            analytics.
+            {t(
+              'Excluded transactions stay in the ledger but are omitted from normal analytics.',
+            )}
           </p>
         </div>
         {transaction.isExcluded ? (
@@ -532,11 +542,13 @@ function TransactionDetailsContent({
             type="button"
             variant="secondary"
           >
-            {restoreMutation.isPending ? 'Restoring…' : 'Restore to analytics'}
+            {t(
+              restoreMutation.isPending ? 'Restoring…' : 'Restore to analytics',
+            )}
           </Button>
         ) : (
           <>
-            <FormField label="Reason" hint="Optional">
+            <FormField label={t('Reason')} hint={t('Optional')}>
               <textarea
                 autoComplete="off"
                 maxLength={1_000}
@@ -555,8 +567,8 @@ function TransactionDetailsContent({
               variant="danger"
             >
               {exclusionMutation.isPending
-                ? 'Excluding…'
-                : 'Exclude from analytics'}
+                ? t('Excluding…')
+                : t('Exclude from analytics')}
             </Button>
           </>
         )}
@@ -566,22 +578,22 @@ function TransactionDetailsContent({
       ) : null}
       {mutationError !== null ? (
         <Alert tone="danger">
-          Transaction correction could not be saved. Try again later.
+          {t('Transaction correction could not be saved. Try again later.')}
         </Alert>
       ) : null}
       {transaction.hasAdjustment ? (
         <p className="transaction-detail-note">
-          Adjusted. Original imported data remains unchanged.
+          {t('Adjusted. Original imported data remains unchanged.')}
         </p>
       ) : null}
       {transaction.hasCompensation ? (
         <p className="transaction-detail-note">
-          This transaction participates in a compensation relationship.
+          {t('This transaction participates in a compensation relationship.')}
         </p>
       ) : null}
       {transaction.isExcluded ? (
         <p className="transaction-detail-note transaction-detail-excluded">
-          Excluded from normal analytics.
+          {t('Excluded from normal analytics.')}
         </p>
       ) : null}
     </div>

@@ -56,33 +56,43 @@ describe('category routes', () => {
     })
   })
 
-  it('maps an MCC source and merges custom categories for the authenticated owner', async () => {
+  it('lists and updates an imported category mapping for the owner', async () => {
     const service = new FakeCategoryService()
     const app = appFor(service)
-
-    const mapping = await app.request(
-      '/api/category-sources/5411',
-      request('PUT', { categoryId: 'category-1' }),
+    const list = await app.request(
+      '/api/category-sources',
+      request('GET'),
       environment,
     )
-    expect(mapping.status).toBe(200)
+    expect(list.status).toBe(200)
+
+    const update = await app.request(
+      '/api/category-sources/5411',
+      request('PUT', { categoryId: 'category-groceries' }),
+      environment,
+    )
+    expect(update.status).toBe(200)
     expect(service.received).toEqual({
-      categoryId: 'category-1',
-      operation: 'map-source',
+      categoryId: 'category-groceries',
+      operation: 'source',
       sourceCode: '5411',
       userId: 'owner-1',
     })
+  })
 
-    const merge = await app.request(
-      '/api/categories/category-1/merge',
-      request('POST', { targetCategoryId: 'category-2' }),
+  it('merges one owned category into another', async () => {
+    const service = new FakeCategoryService()
+    const response = await appFor(service).request(
+      '/api/categories/category-food/merge',
+      request('POST', { targetCategoryId: 'category-groceries' }),
       environment,
     )
-    expect(merge.status).toBe(200)
+
+    expect(response.status).toBe(200)
     expect(service.received).toEqual({
       operation: 'merge',
-      sourceCategoryId: 'category-1',
-      targetCategoryId: 'category-2',
+      sourceCategoryId: 'category-food',
+      targetCategoryId: 'category-groceries',
       userId: 'owner-1',
     })
   })
@@ -150,6 +160,20 @@ class FakeCategoryService {
       targetCategoryId,
       userId,
     }
+    return { id: targetCategoryId, name: 'Groceries' }
+  }
+  async setSourceMapping(
+    userId: string,
+    sourceCode: string,
+    categoryId: string,
+  ) {
+    this.received = { categoryId, operation: 'source', sourceCode, userId }
+    return {
+      code: sourceCode,
+      mappedCategory: null,
+      originalName: '',
+      transactionCount: 0,
+    }
   }
   async resetTransactionOverride(userId: string, transactionId: string) {
     this.received = { operation: 'reset', userId, transactionId }
@@ -161,22 +185,6 @@ class FakeCategoryService {
     categoryId: string,
   ) {
     this.received = { operation: 'override', userId, transactionId, categoryId }
-    return {}
-  }
-  async setSourceMapping(
-    userId: string,
-    sourceCode: string,
-    categoryId: string,
-  ) {
-    this.received = {
-      categoryId,
-      operation: 'map-source',
-      sourceCode,
-      userId,
-    }
-    return {}
-  }
-  async resetSourceMapping() {
     return {}
   }
   async update() {

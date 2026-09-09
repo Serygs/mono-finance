@@ -54,6 +54,13 @@ describe('category API client', () => {
       .mockResolvedValueOnce(
         Response.json({
           data: {
+            category: { id: 'groceries', name: 'Groceries' },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          data: {
             sourceCategory: {
               code: '5411',
               mappedCategory: null,
@@ -61,11 +68,6 @@ describe('category API client', () => {
               transactionCount: 12,
             },
           },
-        }),
-      )
-      .mockResolvedValueOnce(
-        Response.json({
-          data: { category: { id: 'groceries', name: 'Groceries' } },
         }),
       )
     vi.stubGlobal('fetch', fetcher)

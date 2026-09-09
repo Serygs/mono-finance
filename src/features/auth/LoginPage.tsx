@@ -4,10 +4,13 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { Button } from '../../components/ui/Controls'
 import { Alert } from '../../components/ui/Feedback'
 import { FormField } from '../../components/ui/FormControls'
+import { LanguageSwitcher } from '../localization/LanguageSwitcher'
+import { useLocalization } from '../localization/localization'
 import { useAuth } from './auth-context'
 
 export function LoginPage() {
   const { login, status } = useAuth()
+  const { t } = useLocalization()
   const location = useLocation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -32,7 +35,7 @@ export function LoginPage() {
       await login(email, password)
       navigate(returnPath(location.state), { replace: true })
     } catch {
-      setError('The email or password is not recognised.')
+      setError(t('The email or password is not recognised.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -41,13 +44,16 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-card" aria-labelledby="login-title">
-        <p className="login-brand">Mono Finance</p>
-        <h1 id="login-title">Your finances, kept private.</h1>
+        <div className="login-card__topline">
+          <p className="login-brand">Mono Finance</p>
+          <LanguageSwitcher />
+        </div>
+        <h1 id="login-title">{t('Your finances, kept private.')}</h1>
         <p className="login-copy">
-          Sign in to access your personal financial workspace.
+          {t('Sign in to access your personal financial workspace.')}
         </p>
         <form className="login-form" onSubmit={handleSubmit}>
-          <FormField label="Email">
+          <FormField label={t('Email')}>
             <input
               autoComplete="username"
               id="email"
@@ -59,7 +65,7 @@ export function LoginPage() {
               value={email}
             />
           </FormField>
-          <FormField label="Password">
+          <FormField label={t('Password')}>
             <input
               autoComplete="current-password"
               id="password"
@@ -71,7 +77,7 @@ export function LoginPage() {
           </FormField>
           {error === null ? null : <Alert tone="danger">{error}</Alert>}
           <Button loading={isSubmitting} size="large" type="submit">
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+            {isSubmitting ? t('Signing in…') : t('Sign in')}
           </Button>
         </form>
       </section>

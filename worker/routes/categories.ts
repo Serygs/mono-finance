@@ -32,8 +32,37 @@ export async function listSourceCategoriesHandler(
   return noStore(
     context.json(
       success({
-        sourceCategories: await service.listSources(
+        sources: await service.listSources(context.get('authenticatedUser').id),
+      }),
+    ),
+  )
+}
+export async function saveSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        source: await service.setSourceMapping(
           context.get('authenticatedUser').id,
+          sourceCode(context),
+          await readCategoryId(context.req.raw),
+        ),
+      }),
+    ),
+  )
+}
+export async function resetSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        source: await service.resetSourceMapping(
+          context.get('authenticatedUser').id,
+          sourceCode(context),
         ),
       }),
     ),
@@ -99,37 +128,6 @@ export async function mergeCategoryHandler(
     ),
   )
 }
-export async function saveSourceCategoryHandler(
-  context: CategoryContext,
-  service: CategoryService,
-) {
-  return categoryOperation(context, async () =>
-    context.json(
-      success({
-        sourceCategory: await service.setSourceMapping(
-          context.get('authenticatedUser').id,
-          sourceCode(context),
-          await readCategoryId(context.req.raw),
-        ),
-      }),
-    ),
-  )
-}
-export async function resetSourceCategoryHandler(
-  context: CategoryContext,
-  service: CategoryService,
-) {
-  return categoryOperation(context, async () =>
-    context.json(
-      success({
-        sourceCategory: await service.resetSourceMapping(
-          context.get('authenticatedUser').id,
-          sourceCode(context),
-        ),
-      }),
-    ),
-  )
-}
 export async function saveTransactionCategoryHandler(
   context: CategoryContext,
   service: CategoryService,
@@ -175,14 +173,13 @@ async function categoryOperation(
         context.json(
           failure(
             'category_referenced',
-            'Reset, reassign, or merge category references before deleting this category.',
+            'Reset or reassign transaction overrides and imported type mappings before deleting this category.',
           ),
           409,
         ),
       )
     if (
       error.code === 'category_not_found' ||
-      error.code === 'source_category_not_found' ||
       error.code === 'transaction_not_found'
     )
       return noStore(
@@ -255,12 +252,7 @@ function transactionId(context: CategoryContext): string {
 }
 function sourceCode(context: CategoryContext): string {
   const value = context.req.param('sourceCode')
-  if (
-    value === undefined ||
-    value.length === 0 ||
-    value.length > 64 ||
-    !/^[a-z0-9._:-]+$/i.test(value)
-  )
+  if (value === undefined || value.length === 0 || value.length > 128)
     throw new CategoryError('invalid_category')
   return value
 }

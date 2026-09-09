@@ -71,7 +71,7 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
     }
     if (input.category !== null) {
       conditions.push(
-        'COALESCE(override_categories.name, mapped_categories.name, transactions.original_category_name) = ?',
+        'COALESCE(categories.name, mapped_categories.name, transactions.original_category_name) = ?',
       )
       bindings.push(input.category)
     }
@@ -117,8 +117,8 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
            accounts.id AS account_id,
            accounts.type AS account_type,
            account_cards.masked_pan AS card_masked_pan,
-           override_categories.id AS custom_category_id,
-           override_categories.name AS custom_category_name,
+           categories.id AS custom_category_id,
+           categories.name AS custom_category_name,
            mapped_categories.id AS mapped_category_id,
            mapped_categories.name AS mapped_category_name
          FROM transactions
@@ -129,8 +129,7 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
          LEFT JOIN transaction_exclusions ON transaction_exclusions.transaction_id = transactions.id
          LEFT JOIN transaction_category_overrides
            ON transaction_category_overrides.transaction_id = transactions.id
-         LEFT JOIN categories AS override_categories
-           ON override_categories.id = transaction_category_overrides.category_id
+         LEFT JOIN categories ON categories.id = transaction_category_overrides.category_id
          LEFT JOIN category_source_mappings
            ON category_source_mappings.user_id = transactions.user_id
           AND category_source_mappings.original_category_code = transactions.original_category_code

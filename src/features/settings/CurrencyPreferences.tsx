@@ -9,9 +9,11 @@ import {
   saveCurrencyPreferences,
   synchronizeExchangeRates,
 } from './currency-preferences-api'
+import { useLocalization } from '../localization/localization'
 
 export function CurrencyPreferences() {
   const client = useQueryClient()
+  const { t } = useLocalization()
   const preferences = useQuery({
     queryFn: getCurrencyPreferences,
     queryKey: ['currency-preferences'],
@@ -38,10 +40,11 @@ export function CurrencyPreferences() {
       className="category-management"
     >
       <header className="section-heading">
-        <h2 id="currency-settings-title">Base currency</h2>
+        <h2 id="currency-settings-title">{t('Base currency')}</h2>
         <p>
-          Base-currency totals use saved historical rates. Original transaction
-          amounts always remain unchanged.
+          {t(
+            'Base-currency totals use saved historical rates. Original transaction amounts always remain unchanged.',
+          )}
         </p>
       </header>
       <form
@@ -49,7 +52,7 @@ export function CurrencyPreferences() {
         key={preferences.data?.baseCurrencyCode ?? 'UAH'}
         onSubmit={submit}
       >
-        <FormField label="Base currency (ISO 4217)">
+        <FormField label={t('Base currency (ISO 4217)')}>
           <input
             autoComplete="off"
             defaultValue={preferences.data?.baseCurrencyCode ?? 'UAH'}
@@ -61,7 +64,7 @@ export function CurrencyPreferences() {
         </FormField>
         <div className="transaction-correction-actions">
           <Button loading={save.isPending} type="submit">
-            {save.isPending ? 'Saving…' : 'Save base currency'}
+            {save.isPending ? t('Saving…') : t('Save base currency')}
           </Button>
           <Button
             disabled={rates.isPending}
@@ -70,11 +73,13 @@ export function CurrencyPreferences() {
             type="button"
             variant="secondary"
           >
-            {rates.isPending ? 'Updating…' : 'Update exchange rates'}
+            {rates.isPending ? t('Updating…') : t('Update exchange rates')}
           </Button>
         </div>
         {save.isError || rates.isError ? (
-          <Alert tone="danger">Currency settings could not be updated.</Alert>
+          <Alert tone="danger">
+            {t('Currency settings could not be updated.')}
+          </Alert>
         ) : null}
       </form>
     </section>

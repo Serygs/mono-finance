@@ -10,15 +10,8 @@ import { readCookie, SESSION_COOKIE_NAME } from './auth/cookies'
 import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
+import { logError, requestId, safeErrorLogFields } from './common/observability'
 import { applyApiSecurityHeaders } from './common/security-headers'
-import {
-  logError,
-  logEvent,
-  recordMetric,
-  requestId,
-  REQUEST_ID_HEADER,
-  safeErrorLogFields,
-} from './common/observability'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
 import type { TransactionSyncService } from './services/transaction-sync-service'
@@ -65,10 +58,10 @@ import {
   listCategoriesHandler,
   listSourceCategoriesHandler,
   mergeCategoryHandler,
-  resetTransactionCategoryHandler,
   resetSourceCategoryHandler,
-  saveSourceCategoryHandler,
+  resetTransactionCategoryHandler,
   saveTransactionCategoryHandler,
+  saveSourceCategoryHandler,
   updateCategoryHandler,
 } from './routes/categories'
 import {
@@ -86,7 +79,6 @@ import {
   setCurrencyPreferencesHandler,
   synchronizeExchangeRatesHandler,
 } from './routes/currency-preferences'
-import { systemStatusHandler } from './routes/system-status'
 
 const publicApiPaths = new Set([
   '/api/auth/login',
@@ -130,31 +122,14 @@ export function createApp(
 ) {
   const app = new Hono<{
     Bindings: MonobankEnvironment
-    Variables: { authenticatedUser: AuthenticatedUser; requestId?: string }
+    Variables: { authenticatedUser: AuthenticatedUser }
   }>()
 
   app.use('/api/*', async (context, next) => {
-    const id = requestId(context.req.raw)
-    context.set('requestId', id)
-    const startedAt = Date.now()
     try {
       await next()
     } finally {
       applyApiSecurityHeaders(context.res.headers, context.env)
-      context.res.headers.set(REQUEST_ID_HEADER, id)
-      logEvent('api_request_completed', {
-        durationMs: Date.now() - startedAt,
-        method: context.req.method,
-        path: new URL(context.req.url).pathname,
-        requestId: id,
-        status: context.res.status,
-      })
-      recordMetric(
-        context.env?.OBSERVABILITY,
-        'api_request',
-        `${Math.floor(context.res.status / 100)}xx`,
-        Date.now() - startedAt,
-      )
     }
   })
 
@@ -186,16 +161,6 @@ export function createApp(
       await next()
     } catch (error) {
       if (error instanceof AuthenticationError) {
-        logEvent('authentication_failure', {
-          code: error.code,
-          path: new URL(context.req.url).pathname,
-          status: error.status,
-        })
-        recordMetric(
-          context.env?.OBSERVABILITY,
-          'authentication_failure',
-          error.code,
-        )
         const response = context.json(
           failure(error.code, error.publicMessage),
           error.status,
@@ -208,7 +173,6 @@ export function createApp(
   })
 
   app.get('/api/health', healthHandler)
-  app.get('/api/system/status', systemStatusHandler)
   app.post('/api/auth/setup', (context) =>
     setupHandler(context, authServiceFactory(context.env)),
   )
@@ -260,9 +224,6 @@ export function createApp(
   app.get('/api/categories', (context) =>
     listCategoriesHandler(context, categoryServiceFactory(context.env)),
   )
-  app.post('/api/categories', (context) =>
-    createCategoryHandler(context, categoryServiceFactory(context.env)),
-  )
   app.get('/api/category-sources', (context) =>
     listSourceCategoriesHandler(context, categoryServiceFactory(context.env)),
   )
@@ -272,14 +233,17 @@ export function createApp(
   app.delete('/api/category-sources/:sourceCode', (context) =>
     resetSourceCategoryHandler(context, categoryServiceFactory(context.env)),
   )
-  app.post('/api/categories/:categoryId/merge', (context) =>
-    mergeCategoryHandler(context, categoryServiceFactory(context.env)),
+  app.post('/api/categories', (context) =>
+    createCategoryHandler(context, categoryServiceFactory(context.env)),
   )
   app.put('/api/categories/:categoryId', (context) =>
     updateCategoryHandler(context, categoryServiceFactory(context.env)),
   )
   app.delete('/api/categories/:categoryId', (context) =>
     deleteCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.post('/api/categories/:categoryId/merge', (context) =>
+    mergeCategoryHandler(context, categoryServiceFactory(context.env)),
   )
   app.put('/api/transactions/:transactionId/category', (context) =>
     saveTransactionCategoryHandler(
@@ -355,16 +319,14 @@ export function createApp(
   )
 
   app.onError((error, context) => {
-    const event = isD1Failure(error) ? 'd1_query_failed' : 'api_request_failed'
-    logError(event, {
-      ...safeErrorLogFields(error, {
-        includeMessage: event !== 'd1_query_failed',
-      }),
+    const path = new URL(context.req.url).pathname
+    const isD1Failure = isD1Error(error)
+    logError(isD1Failure ? 'd1_query_failed' : 'api_request_failed', {
       method: context.req.method,
-      path: new URL(context.req.url).pathname,
-      requestId: context.get('requestId') ?? 'unavailable',
+      path,
+      requestId: requestId(context.req.raw),
+      ...safeErrorLogFields(error, { includeMessage: !isD1Failure }),
     })
-    recordMetric(context.env?.OBSERVABILITY, event, 'internal_error')
     const response = context.json(
       failure('internal_error', 'An unexpected error occurred.'),
       500,
@@ -376,8 +338,13 @@ export function createApp(
   return app
 }
 
-function isD1Failure(error: unknown): boolean {
-  return error instanceof Error && /\bD1(?:_|\b)/.test(error.message)
+function isD1Error(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const code = (error as Error & { code?: unknown }).code
+  return (
+    (typeof code === 'string' && code.startsWith('SQLITE_')) ||
+    error.message.startsWith('D1_ERROR:')
+  )
 }
 
 export const app = createApp()
