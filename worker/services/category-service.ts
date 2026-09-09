@@ -9,15 +9,15 @@ export interface OwnedTransactionForCategory {
   id: string
   originalCategoryCode: string | null
   originalCategoryName: string | null
+  mappedCategory: CustomCategory | null
   overrideCategory: CustomCategory | null
-  sourceCategory: CustomCategory | null
 }
 
 export interface SourceCategory {
   code: string
-  mappedCategory: CustomCategory | null
-  originalName: string | null
+  originalName: string
   transactionCount: number
+  mappedCategory: CustomCategory | null
 }
 
 export interface CategoryRepository {
@@ -41,25 +41,25 @@ export interface CategoryRepository {
   ): Promise<SourceCategory | null>
   listCategories(userId: string): Promise<CustomCategory[]>
   listSourceCategories(userId: string): Promise<SourceCategory[]>
-  mergeCategories(input: {
-    now: number
-    sourceCategoryId: string
-    targetCategoryId: string
-    userId: string
-  }): Promise<void>
+  mergeCategories(
+    sourceCategoryId: string,
+    targetCategoryId: string,
+    userId: string,
+    now: number,
+  ): Promise<void>
+  removeSourceMapping(sourceCode: string, userId: string): Promise<void>
   removeTransactionOverride(
     transactionId: string,
     userId: string,
   ): Promise<void>
-  removeSourceMapping(sourceCode: string, userId: string): Promise<void>
-  setSourceMapping(
-    sourceCode: string,
+  setTransactionOverride(
+    transactionId: string,
     categoryId: string,
     userId: string,
     now: number,
   ): Promise<void>
-  setTransactionOverride(
-    transactionId: string,
+  setSourceMapping(
+    sourceCode: string,
     categoryId: string,
     userId: string,
     now: number,
@@ -83,14 +83,12 @@ export class CategoryError extends Error {
     | 'category_not_found'
     | 'category_referenced'
     | 'invalid_category'
-    | 'source_category_not_found'
     | 'transaction_not_found'
   constructor(
     code:
       | 'category_not_found'
       | 'category_referenced'
       | 'invalid_category'
-      | 'source_category_not_found'
       | 'transaction_not_found',
   ) {
     super(code)
@@ -160,45 +158,13 @@ export class CategoryService {
     ])
     if (source === null || target === null)
       throw new CategoryError('category_not_found')
-    await this.repository.mergeCategories({
-      now: this.now(),
+    await this.repository.mergeCategories(
       sourceCategoryId,
       targetCategoryId,
       userId,
-    })
-    return target
-  }
-
-  async setSourceMapping(
-    userId: string,
-    sourceCode: string,
-    categoryId: string,
-  ): Promise<SourceCategory> {
-    assertSourceCode(sourceCode)
-    const [source, category] = await Promise.all([
-      this.repository.findSourceCategory(sourceCode, userId),
-      this.repository.findCategory(categoryId, userId),
-    ])
-    if (source === null) throw new CategoryError('source_category_not_found')
-    if (category === null) throw new CategoryError('category_not_found')
-    await this.repository.setSourceMapping(
-      sourceCode,
-      categoryId,
-      userId,
       this.now(),
     )
-    return { ...source, mappedCategory: category }
-  }
-
-  async resetSourceMapping(
-    userId: string,
-    sourceCode: string,
-  ): Promise<SourceCategory> {
-    assertSourceCode(sourceCode)
-    const source = await this.repository.findSourceCategory(sourceCode, userId)
-    if (source === null) throw new CategoryError('source_category_not_found')
-    await this.repository.removeSourceMapping(sourceCode, userId)
-    return { ...source, mappedCategory: null }
+    return target
   }
 
   async setTransactionOverride(
@@ -228,6 +194,38 @@ export class CategoryService {
     const transaction = await this.requiredTransaction(transactionId, userId)
     await this.repository.removeTransactionOverride(transactionId, userId)
     return resolveEffectiveCategory({ ...transaction, overrideCategory: null })
+  }
+
+  async setSourceMapping(
+    userId: string,
+    sourceCode: string,
+    categoryId: string,
+  ): Promise<SourceCategory> {
+    assertSourceCode(sourceCode)
+    const [source, category] = await Promise.all([
+      this.repository.findSourceCategory(sourceCode, userId),
+      this.repository.findCategory(categoryId, userId),
+    ])
+    if (source === null) throw new CategoryError('category_not_found')
+    if (category === null) throw new CategoryError('category_not_found')
+    await this.repository.setSourceMapping(
+      sourceCode,
+      categoryId,
+      userId,
+      this.now(),
+    )
+    return { ...source, mappedCategory: category }
+  }
+
+  async resetSourceMapping(
+    userId: string,
+    sourceCode: string,
+  ): Promise<SourceCategory> {
+    assertSourceCode(sourceCode)
+    const source = await this.repository.findSourceCategory(sourceCode, userId)
+    if (source === null) throw new CategoryError('category_not_found')
+    await this.repository.removeSourceMapping(sourceCode, userId)
+    return { ...source, mappedCategory: null }
   }
 
   resolveForAnalytics(
@@ -262,33 +260,29 @@ export function resolveEffectiveCategory(
     id: transaction.originalCategoryCode,
     name: transaction.originalCategoryName,
   }
-  if (transaction.overrideCategory !== null) {
-    return {
-      category: {
-        id: transaction.overrideCategory.id,
-        name: transaction.overrideCategory.name,
-        source: 'custom',
-      },
-      originalCategory,
-    }
-  }
-  if (transaction.sourceCategory !== null) {
-    return {
-      category: {
-        id: transaction.sourceCategory.id,
-        name: transaction.sourceCategory.name,
-        source: 'mapped',
-      },
-      originalCategory,
-    }
-  }
-  return {
-    category:
-      originalCategory.name === null
-        ? { ...originalCategory, source: null }
-        : { ...originalCategory, source: 'original' },
-    originalCategory,
-  }
+  const effectiveCategory =
+    transaction.overrideCategory ?? transaction.mappedCategory
+  return effectiveCategory === null
+    ? {
+        category:
+          originalCategory.name === null
+            ? { ...originalCategory, source: null }
+            : { ...originalCategory, source: 'original' },
+        originalCategory,
+      }
+    : {
+        category: {
+          id: effectiveCategory.id,
+          name: effectiveCategory.name,
+          source: transaction.overrideCategory === null ? 'mapped' : 'custom',
+        },
+        originalCategory,
+      }
+}
+
+function assertSourceCode(value: string): void {
+  if (!value.trim() || value.length > 128)
+    throw new CategoryError('invalid_category')
 }
 
 function assertCategoryInput(input: CreateCategoryInput): void {
@@ -307,9 +301,4 @@ function isOptionalToken(value: string | null, max: number): boolean {
       value.length <= max &&
       /^[a-z0-9-]+$/i.test(value))
   )
-}
-
-function assertSourceCode(value: string): void {
-  if (!value || value.length > 64 || !/^[a-z0-9._:-]+$/i.test(value))
-    throw new CategoryError('invalid_category')
 }

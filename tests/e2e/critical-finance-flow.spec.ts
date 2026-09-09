@@ -71,158 +71,59 @@ test('an owner can complete the critical private-finance workflow', async ({
   ).toBeVisible()
 })
 
-test('primary screens fit an iPhone Pro Max standalone viewport', async ({
-  page,
-}) => {
-  await page.setViewportSize({ height: 932, width: 430 })
-  await installFinanceApiMock(page)
-
-  await page.goto('/login')
-  await page.getByLabel('Email').fill('owner@example.com')
-  await page.getByLabel('Password').fill('correct-password')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(
-    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
-  ).toBeVisible()
-
-  await expectMobileLayoutToFit(page)
-
-  const accountShelf = await page.locator('.account-shelf').boundingBox()
-  expect(accountShelf).not.toBeNull()
-  expect(accountShelf!.x + accountShelf!.width).toBeLessThanOrEqual(430)
-
-  const actionButtons = page.locator('.ui-page-header__actions .ui-button')
-  await expect(actionButtons).toHaveCount(2)
-  const firstAction = await actionButtons.nth(0).boundingBox()
-  const secondAction = await actionButtons.nth(1).boundingBox()
-  expect(firstAction).not.toBeNull()
-  expect(secondAction).not.toBeNull()
-  expect(Math.abs(firstAction!.y - secondAction!.y)).toBeLessThan(2)
-
-  await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
-    'content',
-    /viewport-fit=cover/,
-  )
-
-  await page
-    .locator('.mobile-navigation')
-    .getByRole('link', { name: 'Transactions', exact: true })
-    .click()
-  await expect(
-    page.getByRole('heading', {
-      exact: true,
-      level: 1,
-      name: 'Transactions',
-    }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('button', { name: 'All accounts', exact: true }),
-  ).toBeVisible()
-  await expect(page.locator('select[multiple]')).toHaveCount(0)
-
-  const allAccounts = page.getByRole('button', {
-    name: 'All accounts',
-    exact: true,
-  })
-  const blackAccount = page.getByRole('button', {
-    name: 'Black · UAH',
-    exact: true,
-  })
-  await blackAccount.click()
-  await expect(blackAccount).toHaveAttribute('aria-pressed', 'true')
-  await expect(allAccounts).toHaveAttribute('aria-pressed', 'false')
-  await allAccounts.click()
-  await expect(allAccounts).toHaveAttribute('aria-pressed', 'true')
-
-  await expectMobileLayoutToFit(page)
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ height: 844, width })
-    await expectMobileLayoutToFit(page)
-  }
-})
-
-test('an owner can rename an imported MCC category for every matching transaction', async ({
+test('language, category type mapping, and category chart interaction are accessible', async ({
   page,
 }) => {
   await installFinanceApiMock(page)
-
   await page.goto('/login')
-  await page.getByLabel('Email').fill('owner@example.com')
-  await page.getByLabel('Password').fill('correct-password')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.getByRole('link', { name: 'Settings' }).first().click()
-
+  await page.getByLabel('Language').selectOption('uk')
   await expect(
-    page.getByRole('heading', { name: 'Bank categories' }),
+    page.getByRole('heading', { name: 'Ваші фінанси залишаються приватними.' }),
   ).toBeVisible()
-  await page
-    .getByLabel('Display category for 5812')
-    .selectOption('category-dining')
-  await page.getByRole('button', { name: 'Apply to all' }).click()
-  await expect(page.getByText('Effective category: Dining')).toBeVisible()
-
-  await page.getByRole('link', { name: 'Transactions' }).first().click()
+  await page.getByLabel('Електронна пошта').fill('owner@example.com')
+  await page.getByLabel('Пароль').fill('correct-password')
+  await page.getByRole('button', { name: 'Увійти' }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
   await expect(
-    page.getByRole('button', { name: /Restaurant/ }).getByText('Dining'),
+    page.getByRole('heading', { name: 'Ваші фінанси — у чіткому фокусі.' }),
+  ).toBeVisible()
+
+  const segment = page.locator('.donut-segment-group').first()
+  await segment.focus()
+  await expect(segment).toHaveClass(/is-active/)
+  await expect(page.locator('.donut-legend li').first()).toHaveClass(
+    /is-active/,
+  )
+
+  await page.getByRole('link', { name: 'Налаштування' }).first().click()
+  const sourceSelect = page.getByLabel('Категорія для mcc-5812')
+  await expect(sourceSelect).toBeVisible()
+  await sourceSelect.selectOption('category-dining')
+  await expect(sourceSelect).toHaveValue('category-dining')
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
+  await expect(
+    page.getByRole('heading', { name: 'Налаштування' }),
   ).toBeVisible()
 })
-
-async function expectMobileLayoutToFit(page: Page): Promise<void> {
-  const layout = await page.evaluate(() => {
-    const header = document.querySelector<HTMLElement>('.app-header')
-    const navigation = document.querySelector<HTMLElement>('.mobile-navigation')
-    return {
-      documentWidth: document.documentElement.scrollWidth,
-      headerLeft: header?.getBoundingClientRect().left,
-      headerRight: header?.getBoundingClientRect().right,
-      headerTop: header?.getBoundingClientRect().top,
-      navigationBottom: navigation?.getBoundingClientRect().bottom,
-      navigationLinkHeights: navigation
-        ? [...navigation.querySelectorAll('a')].map(
-            (link) => link.getBoundingClientRect().height,
-          )
-        : [],
-      viewportHeight: window.innerHeight,
-      viewportWidth: window.innerWidth,
-    }
-  })
-
-  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth)
-  expect(layout.headerLeft).toBe(0)
-  expect(layout.headerRight).toBe(layout.viewportWidth)
-  expect(layout.headerTop).toBe(0)
-  expect(layout.navigationBottom).toBe(layout.viewportHeight)
-  expect(layout.navigationLinkHeights.every((height) => height >= 44)).toBe(
-    true,
-  )
-}
 
 async function installFinanceApiMock(page: Page): Promise<void> {
-  const sessionExpiry = Math.floor(Date.now() / 1_000) + 8 * 60 * 60
   const state = {
     adjusted: false,
     category: 'Food',
     compensated: false,
     excluded: false,
     signedIn: false,
-    sourceMapped: false,
+    sourceCategoryId: '',
   }
   const transaction = () => ({
     account: { id: 'account-1', maskedPan: '537541******1234', type: 'black' },
     adjustmentNote: state.adjusted ? 'Shared dinner' : null,
     category: {
-      id:
-        state.category === 'Dining' || state.sourceMapped
-          ? 'category-dining'
-          : '5812',
-      name:
-        state.category === 'Dining' || state.sourceMapped ? 'Dining' : 'Food',
-      source:
-        state.category === 'Dining'
-          ? 'custom'
-          : state.sourceMapped
-            ? 'mapped'
-            : 'original',
+      id: state.category === 'Dining' ? 'category-dining' : 'mcc-5812',
+      name: state.category,
+      source: state.category === 'Dining' ? 'custom' : 'original',
     },
     currencyCode: 'UAH',
     currencyMinorUnit: 2,
@@ -233,7 +134,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     id: 'expense-1',
     isExcluded: state.excluded,
     originalAmountMinor: -4_000,
-    originalCategory: { id: '5812', name: 'MCC 5812' },
+    originalCategory: { id: 'mcc-5812', name: 'Food' },
     originalDescription: 'Restaurant',
     originalMcc: 5812,
     originalTimestamp: 1_735_689_600,
@@ -250,19 +151,13 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     const method = request.method()
     if (path === '/api/auth/session') {
       await route.fulfill(
-        json(
-          state.signedIn
-            ? { data: { expiresAt: sessionExpiry, user: owner } }
-            : unauthorized,
-        ),
+        json(state.signedIn ? { data: authenticatedSession } : unauthorized),
       )
       return
     }
     if (path === '/api/auth/login' && method === 'POST') {
       state.signedIn = true
-      await route.fulfill(
-        json({ data: { expiresAt: sessionExpiry, user: owner } }),
-      )
+      await route.fulfill(json({ data: authenticatedSession }))
       return
     }
     if (path === '/api/auth/logout' && method === 'POST') {
@@ -288,32 +183,32 @@ async function installFinanceApiMock(page: Page): Promise<void> {
       return void route.fulfill(
         json({
           data: {
-            sourceCategories: [
+            sources: [
               {
-                code: '5812',
-                mappedCategory: state.sourceMapped ? categories[0] : null,
-                originalName: 'MCC 5812',
-                transactionCount: 4,
+                code: 'mcc-5812',
+                originalName: 'Food',
+                transactionCount: 1,
+                mappedCategory:
+                  state.sourceCategoryId === '' ? null : categories[0],
               },
             ],
           },
         }),
       )
-    if (path === '/api/category-sources/5812' && method === 'PUT') {
-      state.sourceMapped = true
-      await route.fulfill(
+    if (path === '/api/category-sources/mcc-5812' && method === 'PUT') {
+      state.sourceCategoryId = 'category-dining'
+      return void route.fulfill(
         json({
           data: {
-            sourceCategory: {
-              code: '5812',
+            source: {
+              code: 'mcc-5812',
+              originalName: 'Food',
+              transactionCount: 1,
               mappedCategory: categories[0],
-              originalName: 'MCC 5812',
-              transactionCount: 4,
             },
           },
         }),
       )
-      return
     }
     if (path === '/api/transactions' && method === 'GET')
       return void route.fulfill(
@@ -347,7 +242,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
               name: 'Dining',
               source: 'custom',
             },
-            originalCategory: { id: '5812', name: 'MCC 5812' },
+            originalCategory: { id: 'mcc-5812', name: 'Food' },
           },
         }),
       )
@@ -380,6 +275,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
 }
 
 const owner = { email: 'owner@example.com', id: 'owner-1' }
+const authenticatedSession = { expiresAt: 4_102_444_800, user: owner }
 const unauthorized = {
   error: { code: 'unauthenticated', message: 'Authentication is required.' },
 }

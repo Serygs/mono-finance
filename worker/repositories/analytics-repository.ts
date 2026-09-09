@@ -91,7 +91,8 @@ export class D1AnalyticsRepository implements AnalyticsRepository {
          LEFT JOIN category_source_mappings
            ON category_source_mappings.user_id = transactions.user_id
           AND category_source_mappings.original_category_code = transactions.original_category_code
-         LEFT JOIN categories AS mapped_categories ON mapped_categories.id = category_source_mappings.category_id
+         LEFT JOIN categories AS mapped_categories
+           ON mapped_categories.id = category_source_mappings.category_id
          WHERE ${conditions.join(' AND ')}`,
       )
       .bind(...bindings)
