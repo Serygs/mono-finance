@@ -32,4 +32,3 @@ dist-ssr
 !.dev.vars.example
 .env*
 !.env.example
-/prompts.md

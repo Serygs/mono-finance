@@ -1,69 +1,330 @@
 # Mono Finance
 
-Private personal-finance application built as a React SPA and Cloudflare Worker API. The current phase synchronizes Monobank accounts, cards, and bounded transaction-history windows into D1, then exposes those immutable records through a paginated transaction browser.
-
-## Development
-
-```sh
-npm run dev
-npm run format:check
-npm run lint
-npm run typecheck
-npm test
-npm run test:coverage
-npm run test:e2e
-npm run build
-npm run security:client-bundle
-npm run audit:dependencies
-npm run db:migrate:local
-```
-
-Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local secrets, then run `npm run db:migrate:local` before starting the app. The local application is available at `http://localhost:5173`; use the one-time setup endpoint documented in [Phase 4 authentication](docs/phase-4-authentication.md) before signing in. Configure the server-only Monobank token as documented in [Phase 5 Monobank API](docs/phase-5-monobank-api.md), synchronize accounts as described in [Phase 6 account sync](docs/phase-6-account-sync.md), then import statements as described in [Phase 7 transaction sync](docs/phase-7-transaction-sync.md). Browse imported records through the [Phase 8 transactions](docs/phase-8-transactions.md) screen, manage analytics-only changes through [Phase 9 transaction corrections](docs/phase-9-transaction-corrections.md), manage effective categories via [Phase 10 custom categories](docs/phase-10-custom-categories.md), link reimbursements through [Phase 11 compensations](docs/phase-11-compensations.md), consume aggregate reports through [Phase 12 analytics](docs/phase-12-analytics.md), use the [Phase 13 dashboard](docs/phase-13-dashboard.md) for the financial overview, configure reproducible base-currency analytics in [Phase 14 multi-currency](docs/phase-14-multi-currency.md), install the encrypted offline shell described in [Phase 15 PWA/offline](docs/phase-15-pwa-offline.md), and follow the reusable UI contracts in the [Phase 16 design system](docs/phase-16-design-system.md). The public health endpoint is `GET /api/health` and returns `{ "data": { "status": "ok" } }`.
+Mono Finance is a private, single-user personal-finance application that imports Monobank accounts and transactions into Cloudflare D1. It provides authenticated transaction browsing, corrections, exclusions, custom categories, compensation links, multi-currency analytics, dashboard visualizations, and encrypted offline read access.
 
 ## Architecture
 
-- `src/` contains the React application, organized by feature.
-- `worker/` contains the Hono API and server-only integration boundaries.
-- `migrations/` contains ordered D1 migrations; see [migrations/README.md](migrations/README.md) for local and remote workflows.
-- `AGENTS.md` defines mandatory project-specific transaction integrity, security, and architecture rules.
+```text
+React + TypeScript + Vite PWA
+              |
+              | same-origin /api/*
+              v
+Cloudflare Worker + Hono
+        |             |
+        v             v
+Cloudflare D1    Monobank APIs
+```
 
-`wrangler.jsonc` provides an explicit local-only D1 binding for the `development` environment and declares the Worker-only authentication and Monobank secrets. Production uses a build-time generated, ignored config alongside the Vite Worker artifact, populated from the protected GitHub `production` environment; do not add a placeholder database ID or application secret to committed configuration. See [Phase 19 CI/CD and deployment](docs/phase-19-deployment.md) before deploying.
+- `src/app/` owns routing and the application shell.
+- `src/features/` contains feature-owned React components, hooks, and API adapters.
+- `src/components/ui/` contains reusable, domain-neutral UI primitives.
+- `src/lib/`, `src/styles/`, and `src/types/` contain shared browser infrastructure, styling, and types.
+- `worker/routes/` maps HTTP requests and responses only.
+- `worker/services/` owns use-case orchestration and transactional rules.
+- `worker/repositories/` owns parameterized D1 access.
+- `worker/auth/` owns password hashing, sessions, cookies, and same-origin protection.
+- `worker/monobank/` owns provider DTOs, validation, mapping, request limits, and the server-only Personal API client.
+- `worker/analytics/` owns aggregate financial queries.
+- `worker/common/` contains shared Worker contracts, environment types, logging, and errors.
+- `migrations/` contains ordered, additive D1 migrations.
 
-## Testing and quality gates
+The browser never receives D1 bindings, password or session hashes, provider payloads, or the Monobank token. Successful API responses use `{ "data": ... }`; failures use `{ "error": { "code": "...", "message": "..." } }`.
 
-The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
+## Financial data rules
 
-Production monitoring, alerts, recovery, and backup guidance are in [the Phase 20 production-readiness notes](docs/phase-20-production-readiness.md).
+- D1 is the source of truth. IndexedDB is an encrypted, read-only cache.
+- Imported Monobank transaction IDs, amounts, currencies, descriptions, MCC values, and timestamps are immutable.
+- Adjustments, exclusions, category overrides, source-category mappings, and compensation links are stored separately.
+- Effective amount is `adjustedAmountMinor ?? originalAmountMinor`.
+- Excluded transactions remain browseable but are omitted from normal analytics.
+- Effective category precedence is transaction override, source-category mapping, then imported MCC category.
+- Money is stored and calculated as signed integer minor units; floating-point monetary storage is prohibited.
+- Exchange rates are stored as reproducible integer numerator/denominator values with their source and timestamp.
+- An expense may link to multiple same-currency incoming compensations without modifying either imported transaction.
 
-The final architecture review, resolved high-priority findings, and accepted operational limitations are documented in [Phase 21](docs/phase-21-final-architecture-review.md).
+## Features
 
-The security findings, remediations, and accepted risks are documented in [Phase 18 security hardening](docs/phase-18-security.md). The client bundle check must follow `npm run build`; it verifies the deployable browser asset directory only, because Cloudflare Vite copies `.dev.vars` into its separate preview-only Worker output by design.
+- Password-protected owner account with no public registration.
+- Monobank account/card synchronization and resumable transaction backfill.
+- Account, date, direction, currency, category, exclusion, and description filters.
+- Separate effective-amount adjustments and reversible analytics exclusions.
+- Custom category creation, rename, merge, per-transaction overrides, and global MCC/source mappings.
+- Deterministic compensation suggestions and manually confirmed reimbursement links.
+- Expense, income, net cash flow, trends, categories, accounts, currencies, merchants, largest transactions, comparisons, and projections.
+- Original-currency and reproducible base-currency analytics, initially configured for UAH.
+- English and Ukrainian UI, responsive desktop/mobile layouts, dark mode, and accessible chart interactions.
+- Installable PWA with safe-area support for iPhone, Android, Windows, and macOS.
 
-## Deployment
+## Prerequisites
 
-GitHub Actions runs quality checks for each pull request and deploys only a successful `main` workflow after the GitHub `production` environment approval. The deployment applies pending D1 migrations, deploys the Worker, and calls `GET /api/health` over HTTPS. See [the production runbook](docs/phase-19-deployment.md) for one-time setup, secret handling, rollback, and recovery instructions.
+- Node.js 24
+- npm
+- A Monobank Personal API token
+- A Cloudflare account and authenticated Wrangler session for production deployment
+- Playwright Chromium for browser tests
+
+## Local development
+
+Install dependencies and create the ignored local secret file:
+
+```powershell
+npm ci
+Copy-Item .dev.vars.example .dev.vars
+```
+
+Set all three values in `.dev.vars`:
+
+```dotenv
+MONOBANK_TOKEN=your-personal-monobank-api-token
+SESSION_TOKEN_PEPPER=a-long-random-secret
+SETUP_TOKEN=a-different-long-random-secret
+```
+
+Generate the two random application secrets independently:
+
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
+
+Never prefix these bindings with `VITE_`, place them in Wrangler `vars`, commit `.dev.vars`, or reuse the setup token as the session pepper.
+
+Create the local schema and start the application:
+
+```powershell
+npm run db:migrate:local
+npm run dev
+```
+
+The application is available at `http://localhost:5173`. Local D1 state is stored in `.wrangler/state`; use the provided migration commands so Wrangler and Vite access the same database.
+
+### Create the owner
+
+Owner creation is a one-time controlled operation. Replace the placeholder token, email, and password:
+
+```powershell
+curl.exe --request POST "http://localhost:5173/api/auth/setup" `
+  --header "Content-Type: application/json" `
+  --header "X-Setup-Token: your-setup-token" `
+  --data '{"email":"you@example.com","password":"use-a-long-unique-password"}'
+```
+
+The endpoint returns `409` after an owner already exists. Rotate or remove the production setup token after successful owner creation.
+
+## Authentication and security
+
+- Passwords use PBKDF2-HMAC-SHA-256 with a random 16-byte salt, 100,000 iterations, and a 32-byte derived key. Use a long, unique password because the Cloudflare runtime limit is below the current OWASP recommendation.
+- Session cookies contain a random 256-bit opaque token. D1 stores only its HMAC-SHA-256 hash using `SESSION_TOKEN_PEPPER`.
+- Sessions expire after eight hours and are revoked on logout.
+- Cookies are `HttpOnly`, `SameSite=Strict`, `Path=/`, and `Secure` in production.
+- Five failed logins per hashed client/email identifier within fifteen minutes trigger a fifteen-minute lockout.
+- Unsafe authenticated requests enforce same-origin checks; the API intentionally emits no CORS allow-origin header.
+- All API responses use `Cache-Control: no-store` and security headers. Static assets use the policy in `public/_headers`.
+- D1 access uses prepared statements and bound parameters.
+- Logs omit credentials, cookies, request bodies, balances, provider payloads, SQL messages, and stack traces from client responses.
+- `npm run security:client-bundle` verifies that Worker secret binding names and `.dev.vars` paths are absent from `dist/client`.
+- The root `sharp` override pins a patched release required by the current Miniflare dependency graph; remove it only after the upstream dependency adopts an equivalent or newer patched version.
+
+Public endpoints are limited to health and the authentication lifecycle. All financial endpoints require the authenticated owner session.
+
+## API
+
+### Public and authentication
+
+| Method | Path                | Purpose                                                                |
+| ------ | ------------------- | ---------------------------------------------------------------------- |
+| `GET`  | `/api/health`       | Liveness check returning `{ "data": { "status": "ok" } }`.             |
+| `POST` | `/api/auth/setup`   | Create the only owner using `X-Setup-Token`; disabled after first use. |
+| `POST` | `/api/auth/login`   | Validate credentials and issue the session cookie.                     |
+| `POST` | `/api/auth/logout`  | Revoke the session and clear the cookie.                               |
+| `GET`  | `/api/auth/session` | Return the current authenticated user or `401`.                        |
+
+### Accounts, transactions, and synchronization
+
+| Method | Path                            | Purpose                                                           |
+| ------ | ------------------------------- | ----------------------------------------------------------------- |
+| `GET`  | `/api/accounts`                 | Return safe D1-backed account/card data.                          |
+| `POST` | `/api/sync/accounts`            | Idempotently synchronize account and card metadata from Monobank. |
+| `GET`  | `/api/transactions`             | Return cursor-paginated D1 transactions with filters.             |
+| `POST` | `/api/sync/transactions`        | Execute one bounded, resumable statement synchronization step.    |
+| `GET`  | `/api/sync/transactions/status` | Return safe per-account synchronization state.                    |
+
+`GET /api/transactions` accepts repeated `accountId`, inclusive UTC epoch-second `dateFrom` and `dateTo`, `direction=income|expense`, three-letter `currency`, exact effective `category`, `excluded=true|false`, literal case-insensitive `search`, an opaque `cursor`, and `limit` from 1 to 100.
+
+### Transaction metadata
+
+| Method           | Path                                                     | Purpose                                                |
+| ---------------- | -------------------------------------------------------- | ------------------------------------------------------ |
+| `PUT` / `DELETE` | `/api/transactions/:transactionId/adjustment`            | Save or reset the effective amount and optional note.  |
+| `PUT` / `DELETE` | `/api/transactions/:transactionId/exclusion`             | Exclude from or restore to normal analytics.           |
+| `PUT` / `DELETE` | `/api/transactions/:transactionId/category`              | Save or reset a per-transaction category override.     |
+| `GET` / `POST`   | `/api/transactions/:transactionId/compensations`         | Read suggestions/links or confirm a compensation link. |
+| `DELETE`         | `/api/transactions/:transactionId/compensations/:linkId` | Remove a compensation relationship.                    |
+
+Adjustments cannot reverse transaction direction. Compensation links require opposite directions, compatible currencies, unallocated incoming amounts, and explicit owner confirmation.
+
+### Categories and currencies
+
+| Method           | Path                                | Purpose                                                                 |
+| ---------------- | ----------------------------------- | ----------------------------------------------------------------------- |
+| `GET` / `POST`   | `/api/categories`                   | List or create owner categories.                                        |
+| `PUT` / `DELETE` | `/api/categories/:categoryId`       | Rename/update or delete an unreferenced category.                       |
+| `POST`           | `/api/categories/:categoryId/merge` | Atomically move references into another category and delete the source. |
+| `GET`            | `/api/category-sources`             | List imported MCC/source category values.                               |
+| `PUT` / `DELETE` | `/api/category-sources/:sourceCode` | Assign or reset a global source-category mapping.                       |
+| `GET` / `PUT`    | `/api/preferences/currency`         | Read or update the analytics base currency.                             |
+| `POST`           | `/api/exchange-rates/sync`          | Store the latest public Monobank exchange-rate snapshot.                |
+
+Direct category deletion returns `409 category_referenced` while overrides or source mappings still reference it. Merge or reset those references first.
+
+### Analytics
+
+| Method | Path                        | Purpose                                                                                  |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET`  | `/api/analytics/overview`   | Totals, cash flow, daily average, comparison, compensations, exclusions, and projection. |
+| `GET`  | `/api/analytics/breakdowns` | Category, account, currency, merchant, and largest-transaction aggregates.               |
+| `GET`  | `/api/analytics/trends`     | Daily/monthly income, expense, net, and spending-trend series.                           |
+
+Analytics accept repeated `accountId`, `dateFrom`, and `dateTo`; the required date range is capped at 366 days. Optional `baseCurrency` requests a reproducible converted view. Aggregate responses do not send the complete transaction ledger.
+
+## Synchronization behavior
+
+Account synchronization upserts provider metadata using stable Monobank identities. Missing accounts/cards are marked inactive rather than deleted, preserving historical transactions and application IDs.
+
+Transaction synchronization performs exactly one provider statement request per manual or scheduled execution. Windows are limited to the provider-supported 31 days plus one hour. Initial backfill covers up to 365 days, moves backward using a persisted cursor, then switches to incremental synchronization with a one-day overlap. A short D1 lease prevents concurrent cron/manual imports; failed attempts leave the cursor replayable. `monobank_transaction_id` uniqueness and `ON CONFLICT DO NOTHING` make overlap and resume idempotent.
+
+The Worker cron runs every five minutes and selects the least recently attempted active account. Monobank Personal API requests share a D1-backed one-request-per-60-seconds gate and are not automatically retried. Dashboard reads always use D1 and never call Monobank directly.
+
+Provider failures map to safe error categories: unauthorized token, rate limit with `Retry-After`, timeout, malformed response, or unavailable upstream service. Provider bodies and identifiers are not returned to the browser.
+
+## Multi-currency analytics
+
+The original-currency view keeps currencies separate. Base-currency analytics use only a stored rate whose timestamp is at or before the transaction timestamp and may compose a cross-rate through UAH. Missing historical rates cause affected transactions to be omitted from the converted aggregate and reported by original currency; the application never silently applies a newer rate.
+
+The Monobank public rate feed supplies current snapshots, not historical backfill. Consequently, older imported transactions remain available in original-currency analytics until an appropriate historical rate source is configured.
+
+## PWA and offline behavior
+
+The manifest, icons, Apple metadata, static headers, and service worker live in `public/`. The shell uses `viewport-fit=cover` and safe-area insets for the iPhone status area, Dynamic Island, home indicator, and mobile navigation.
+
+The service worker caches only the public application shell and static assets; `/api/*` is always bypassed. Dashboard and transaction snapshots use network-first reads and AES-GCM-encrypted IndexedDB records with a non-extractable browser-generated key. Cache keys are SHA-256 hashes rather than readable URLs.
+
+Offline snapshots are readable only within a browser session already verified through `/api/auth/session`. A refresh or new launch requires connectivity to validate the server session before decrypting cached data. HTTP authentication failures never fall back to cached responses. Reconnection reloads authoritative D1 data, and logout deletes the IndexedDB database and encryption key.
+
+Known limitation: a browser restarted while offline cannot reopen financial data until it reconnects and verifies the session.
+
+## UI conventions
+
+Mono Finance uses an original Apple-inspired visual system without copying Apple assets. Financial legibility takes priority over decoration.
+
+- Role tokens are defined in `src/styles/index.css`; reusable primitive styles are in `src/styles/design-system.css`; screen composition is in `src/styles/screen-layouts.css`.
+- Use reusable components from `src/components/ui/` before adding feature-specific primitives.
+- Keep content surfaces mostly opaque; reserve restrained blur for shell chrome and modal backdrops.
+- Use tabular numerals and show immutable original values secondarily when an effective value differs.
+- Maintain at least 44px touch targets, visible keyboard focus, semantic labels, dark-mode contrast, and reduced-motion support.
+- Mobile layouts must respect safe-area insets and avoid page-level horizontal overflow at 430px, 390px, and 320px.
+- Desktop content is capped at 90rem and should use available space without appearing like a stretched phone layout.
+
+## D1 migrations
+
+Migrations are plain SQL and use UTC Unix timestamps in seconds, integer minor-unit money, stable text IDs, rational exchange rates, and database constraints protecting imported transaction integrity.
+
+```powershell
+# Create remote databases once
+npm run db:create -- mono-finance-development
+npm run db:create -- mono-finance-production
+
+# Inspect and apply the local schema
+npm run db:migrations:local
+npm run db:migrate:local
+npm run db:execute:local -- --command "SELECT name FROM d1_migrations"
+```
+
+Wrangler records applied migration filenames, so normal apply commands are repeatable. Never edit a migration that may already have been applied; add the next ordered `.sql` file. Production migrations must remain backward-compatible because a Worker rollback does not roll back D1. `.gitattributes` enforces LF endings for SQL files to avoid Wrangler parsing failures with Windows CRLF and SQLite triggers.
+
+If a completely empty remote database returns `incomplete input: SQLITE_ERROR` for a trigger migration, first verify that `d1_migrations` and application tables are empty. Only then apply each migration using `wrangler d1 execute --remote --file` and record its filename in `d1_migrations`. Never use this workaround on a populated or partially migrated database; create a forward migration instead.
+
+## Commands and testing
+
+| Command                          | Purpose                                                          |
+| -------------------------------- | ---------------------------------------------------------------- |
+| `npm run dev`                    | Start the local Vite/Worker development server.                  |
+| `npm run format:check`           | Verify Prettier formatting.                                      |
+| `npm run lint`                   | Run ESLint.                                                      |
+| `npm run typecheck`              | Run strict TypeScript project checks.                            |
+| `npm test`                       | Run Vitest unit, repository, migration, API, and frontend tests. |
+| `npm run test:coverage`          | Run coverage-gated tests.                                        |
+| `npm run test:e2e`               | Run Playwright critical browser flows.                           |
+| `npm run build`                  | Build the frontend and Worker.                                   |
+| `npm run security:client-bundle` | Scan the browser artifact for secret leakage.                    |
+| `npm run audit:dependencies`     | Fail on high or critical dependency advisories.                  |
+
+Install Chromium once before local browser testing:
+
+```powershell
+npx playwright install chromium
+```
+
+Coverage floors are 65% statements, 60% branches, 62% functions, and 67% lines. Do not reduce them to accept a regression.
+
+Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
+
+## CI/CD and production deployment
+
+`.github/workflows/quality.yml` runs formatting, linting, type checking, coverage, build, client-bundle security scanning, dependency audit, and Playwright tests on pull requests and `main`. A successful push to `main` deploys through the protected GitHub `production` environment. GitHub Actions is the only deployment authority so migrations, artifact verification, deployment, and health checking remain one ordered workflow.
+
+### One-time Cloudflare and GitHub setup
+
+1. Create the production D1 database with `npm run db:create -- mono-finance-production`.
+2. In GitHub **Settings → Environments → production**, restrict deployments to `main` and configure required reviewers.
+3. Add environment variables:
+   - `CLOUDFLARE_D1_DATABASE_ID`: the D1 UUID.
+   - `PRODUCTION_HEALTH_URL`: the full HTTPS URL ending in `/api/health`.
+4. Add environment secrets:
+   - `CLOUDFLARE_ACCOUNT_ID`.
+   - `CLOUDFLARE_API_TOKEN`, scoped only for Worker script and D1 edits plus route/zone edits if Wrangler manages a custom route.
+5. Configure `MONOBANK_TOKEN`, `SESSION_TOKEN_PEPPER`, and `SETUP_TOKEN` directly as encrypted secrets on the production Worker. Do not store these application secrets in GitHub or committed configuration.
+6. Protect `main` with pull-request reviews and required `Quality gates` checks.
+
+Production D1 configuration is generated into the ignored `dist/mono_finance/wrangler.production.json`; `wrangler.jsonc` intentionally contains no production database UUID.
+
+For a trusted workstation deployment, set `CLOUDFLARE_D1_DATABASE_ID` and `PRODUCTION_HEALTH_URL` only in the current process, then run:
+
+```powershell
+npm run build
+npm run prepare:production
+npm run db:migrate:production
+npm run deploy:production
+npm run healthcheck:production
+```
+
+The GitHub workflow is the preferred release path. After deployment, verify the HTTPS health endpoint, authentication, a read-only dashboard request, synchronization status, and installed PWA behavior.
+
+### Rollback
+
+Roll back Worker code from Cloudflare Workers deployments and rerun the health check. Code rollback does not revert D1 migrations, secrets, or Monobank effects. Fix schema problems with a new forward migration; never modify or manually reverse an applied production migration.
+
+## Observability and recovery
+
+The Worker emits structured JSON logs with request ID, safe route, status, duration, error name/code, and sanitized bounded messages. D1 failures omit exception messages that might include SQL. Workers logs/traces are enabled, and aggregate request, authentication-failure, and internal-error metrics are written to the `mono-finance-observability` Analytics Engine dataset.
+
+- Use the `X-Request-Id` response header to find the matching event in Workers Logs or `wrangler tail`.
+- Monitor `api_request_failed`, `d1_query_failed`, `scheduled_transaction_sync_failed`, and elevated `authentication_failure` events.
+- Configure Cloudflare notifications for sustained Worker 5xx errors, D1 quota limits, scheduled-sync failures, and an external HTTPS health check.
+- For failed synchronization, resolve token/rate-limit/connectivity problems and use the normal manual refresh. Transaction uniqueness makes replay safe.
+- For D1 failures, inspect D1 Metrics and `wrangler d1 insights`; do not retry writes outside idempotent synchronization paths.
+
+D1 is authoritative. Before destructive recovery, use Cloudflare D1 backups/time travel according to account policy. Export only through a trusted authenticated workstation using read-only parameterized queries, encrypt exported financial data at rest, and exclude secrets, password/session hashes, and raw operational logs. Periodically test restoration into a separate database.
 
 ## Codex project skills
 
-Repository-scoped Codex skills live in [`.agents/skills`](.agents/skills). Codex automatically discovers each immediate child directory containing `SKILL.md` while working from this repository. Invoke a skill explicitly as `$<skill-name>` when its workflow should be mandatory; otherwise Codex can select it from its description. Restart Codex if a newly added skill does not appear in the skill picker.
+Repository-scoped skills live in `.agents/skills/` and are automatically discovered when Codex works from this repository. Invoke `$mono-finance-dev` for changes to application code, schema, APIs, analytics, integrations, offline behavior, or customer-facing UI.
 
-| Skill                                                                                                         | Source                                                                                                                       | Intended use                                          |
-| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `cloudflare`, `workers-best-practices`, `wrangler`                                                            | [cloudflare/skills](https://github.com/cloudflare/skills)                                                                    | Cloudflare Workers, D1, bindings, and Wrangler work.  |
-| `spec-driven-development`, `incremental-implementation`, `test-driven-development`, `code-review-and-quality` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)                                                        | Feature specification, delivery, testing, and review. |
-| `vercel-react-best-practices` (installed from `react-best-practices`), `web-design-guidelines`                | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)                                                      | React performance and UI/accessibility reviews.       |
-| `frontend-design`                                                                                             | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design)                                   | Production frontend and dashboard UI work.            |
-| `data-visualization`                                                                                          | [openai/plugins](https://github.com/openai/plugins/tree/main/plugins/build-web-data-visualization/skills/data-visualization) | Financial analytics and chart design.                 |
-| `yafa-ui-dashboard`                                                                                           | [rejourneyco/yafa-ui-dashboard](https://github.com/rejourneyco/yafa-ui-dashboard)                                            | Responsive, accessible analytics dashboard UX.        |
-| `mono-finance-dev`                                                                                            | This repository                                                                                                              | Mandatory Mono Finance domain and architecture rules. |
+Installed skill groups:
 
-The skills were installed as source snapshots with the Codex skill installer; they are documentation/workflow assets only and add no runtime or build dependencies.
+- Cloudflare platform, Workers, and Wrangler guidance.
+- Specification, incremental implementation, test-driven development, and code review workflows.
+- React performance, frontend design, web design, dashboard UX, and data visualization guidance.
+- The project-specific `mono-finance-dev` domain and architecture rules.
 
-### Mono Finance project skill
-
-Use `$mono-finance-dev` in every future prompt that changes Mono Finance application code, schema, API, analytics, integrations, offline behavior, or customer-facing UI. It is located at [`.agents/skills/mono-finance-dev/SKILL.md`](.agents/skills/mono-finance-dev/SKILL.md), is automatically discoverable from this repository, and routes each task to the relevant domain reference. It adds no runtime dependency and does not authorize work outside the prompt's stated phase.
-
-### Sources not installed
-
-- **OWASP Secure Agent Playbook:** its skills are packaged as a Claude plugin and depend on sibling plugin plays and reference data. The Codex installer only installs self-contained directories with `SKILL.md`, so copying individual OWASP skills would leave their required references unresolved. Use the upstream playbook as a review reference until it provides a self-contained Codex package, or adapt the required plays into a project skill deliberately.
-- **`web-pwa-offline-first`:** the supplied skill requires IndexedDB to be the authoritative data store. That conflicts with this project’s stated rule that D1 remains the source of truth and IndexedDB is an encrypted cache, so it was intentionally not installed.
+These skills are repository-local workflow assets and add no runtime dependency. The OWASP Secure Agent Playbook was not installed because its skills depend on unresolved Claude-plugin resources. The requested generic offline-first skill was not installed because it treats IndexedDB as authoritative, conflicting with this application's D1 source-of-truth and encrypted-cache rules.

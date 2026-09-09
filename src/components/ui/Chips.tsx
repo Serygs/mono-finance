@@ -33,10 +33,11 @@ export function AccountChip({
 
 interface CategoryChipProps {
   color?: string | null
+  icon?: ReactNode
   label: string
 }
 
-export function CategoryChip({ color, label }: CategoryChipProps) {
+export function CategoryChip({ color, icon, label }: CategoryChipProps) {
   return (
     <span
       className={[
@@ -48,6 +49,11 @@ export function CategoryChip({ color, label }: CategoryChipProps) {
         .join(' ')}
     >
       <span aria-hidden="true" className="ui-category-chip__dot" />
+      {icon === undefined ? null : (
+        <span aria-hidden="true" className="ui-category-chip__icon">
+          {icon}
+        </span>
+      )}
       {label}
     </span>
   )
