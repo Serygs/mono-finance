@@ -14,7 +14,7 @@
 - Keep Worker routes thin. `worker/routes/` maps HTTP only; use cases belong in `services/`; parameterized D1 access belongs in `repositories/`.
 - Keep Monobank DTOs and client code isolated in `worker/monobank/`. Do not expose provider response shapes to the frontend.
 - Use the shared `{ data }` and `{ error: { code, message } }` response contract. Do not expose stack traces, SQL errors, upstream payloads, tokens, or internal messages.
-- Do not add a D1 binding with a placeholder database ID. Provision it in Phase 3 and configure matching development and production bindings together.
+- Do not add a D1 binding with a placeholder database ID. Keep local D1 configuration explicit and inject the real production ID through the protected deployment configuration.
 
 ## Security
 
@@ -28,4 +28,3 @@
 - Add a focused test for each behavioral change. Test Worker routes through exported Hono apps before adding broader runtime tests.
 - Run `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before handoff when the change affects application code.
 - After every completed implementation, include exactly one concise, one-sentence commit message in the handoff.
-- Do not add Monobank synchronization, D1 schema, authentication, analytics, or offline persistence ahead of their dedicated phases in `prompts.md`.

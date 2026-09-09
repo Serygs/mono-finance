@@ -5,7 +5,7 @@ description: Apply Mono Finance's immutable transaction, money, security, Cloudf
 
 # Mono Finance development
 
-Use this skill for any Mono Finance application, schema, API, analytics, integration, offline, or product UI task. It records repository-specific decisions; follow the user's current phase and do not implement future phases early.
+Use this skill for any Mono Finance application, schema, API, analytics, integration, offline, or product UI task. It records repository-specific decisions; follow the user's current task and do not expand the requested product scope.
 
 ## Required reading
 

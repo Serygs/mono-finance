@@ -1,4 +1,4 @@
-/* Phase 16 design-system layer. Feature styles above remain layout-specific;
+/* Shared design-system layer. Feature styles remain layout-specific;
    these role-based primitives own shared color, type, geometry, and states. */
 
 .sr-only {
