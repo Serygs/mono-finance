@@ -25,6 +25,49 @@ export async function listCategoriesHandler(
     ),
   )
 }
+export async function listSourceCategoriesHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return noStore(
+    context.json(
+      success({
+        sources: await service.listSources(context.get('authenticatedUser').id),
+      }),
+    ),
+  )
+}
+export async function saveSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        source: await service.setSourceMapping(
+          context.get('authenticatedUser').id,
+          sourceCode(context),
+          await readCategoryId(context.req.raw),
+        ),
+      }),
+    ),
+  )
+}
+export async function resetSourceCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        source: await service.resetSourceMapping(
+          context.get('authenticatedUser').id,
+          sourceCode(context),
+        ),
+      }),
+    ),
+  )
+}
 export async function createCategoryHandler(
   context: CategoryContext,
   service: CategoryService,
@@ -114,7 +157,7 @@ async function categoryOperation(
         context.json(
           failure(
             'category_referenced',
-            'Reset or reassign transaction category overrides before deleting this category.',
+            'Reset or reassign transaction overrides and imported type mappings before deleting this category.',
           ),
           409,
         ),
@@ -181,6 +224,12 @@ function categoryId(context: CategoryContext): string {
 }
 function transactionId(context: CategoryContext): string {
   const value = context.req.param('transactionId')
+  if (value === undefined || value.length === 0 || value.length > 128)
+    throw new CategoryError('invalid_category')
+  return value
+}
+function sourceCode(context: CategoryContext): string {
+  const value = context.req.param('sourceCode')
   if (value === undefined || value.length === 0 || value.length > 128)
     throw new CategoryError('invalid_category')
   return value

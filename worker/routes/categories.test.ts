@@ -55,6 +55,30 @@ describe('category routes', () => {
       error: { code: 'category_referenced' },
     })
   })
+
+  it('lists and updates an imported category mapping for the owner', async () => {
+    const service = new FakeCategoryService()
+    const app = appFor(service)
+    const list = await app.request(
+      '/api/category-sources',
+      request('GET'),
+      environment,
+    )
+    expect(list.status).toBe(200)
+
+    const update = await app.request(
+      '/api/category-sources/5411',
+      request('PUT', { categoryId: 'category-groceries' }),
+      environment,
+    )
+    expect(update.status).toBe(200)
+    expect(service.received).toEqual({
+      categoryId: 'category-groceries',
+      operation: 'source',
+      sourceCode: '5411',
+      userId: 'owner-1',
+    })
+  })
 })
 
 function appFor(service: FakeCategoryService) {
@@ -104,6 +128,22 @@ class FakeCategoryService {
   }
   async list() {
     return []
+  }
+  async listSources() {
+    return []
+  }
+  async setSourceMapping(
+    userId: string,
+    sourceCode: string,
+    categoryId: string,
+  ) {
+    this.received = { categoryId, operation: 'source', sourceCode, userId }
+    return {
+      code: sourceCode,
+      mappedCategory: null,
+      originalName: '',
+      transactionCount: 0,
+    }
   }
   async resetTransactionOverride(userId: string, transactionId: string) {
     this.received = { operation: 'reset', userId, transactionId }

@@ -55,8 +55,11 @@ import {
   createCategoryHandler,
   deleteCategoryHandler,
   listCategoriesHandler,
+  listSourceCategoriesHandler,
+  resetSourceCategoryHandler,
   resetTransactionCategoryHandler,
   saveTransactionCategoryHandler,
+  saveSourceCategoryHandler,
   updateCategoryHandler,
 } from './routes/categories'
 import {
@@ -218,6 +221,15 @@ export function createApp(
   )
   app.get('/api/categories', (context) =>
     listCategoriesHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.get('/api/category-sources', (context) =>
+    listSourceCategoriesHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.put('/api/category-sources/:sourceCode', (context) =>
+    saveSourceCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
+  app.delete('/api/category-sources/:sourceCode', (context) =>
+    resetSourceCategoryHandler(context, categoryServiceFactory(context.env)),
   )
   app.post('/api/categories', (context) =>
     createCategoryHandler(context, categoryServiceFactory(context.env)),

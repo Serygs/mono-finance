@@ -7,21 +7,24 @@ import { RequireAuthentication } from '../features/auth/RequireAuthentication'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { TransactionsPage } from '../features/transactions/TransactionsPage'
+import { LocalizationProvider } from '../features/localization/localization'
 
 export function AppRouter() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="login" element={<LoginPage />} />
-        <Route element={<RequireAuthentication />}>
-          <Route element={<AppShell />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="transactions" element={<TransactionsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+    <LocalizationProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="login" element={<LoginPage />} />
+          <Route element={<RequireAuthentication />}>
+            <Route element={<AppShell />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="transactions" element={<TransactionsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
           </Route>
-        </Route>
-        <Route path="*" element={<Navigate replace to="/" />} />
-      </Routes>
-    </AuthProvider>
+          <Route path="*" element={<Navigate replace to="/" />} />
+        </Routes>
+      </AuthProvider>
+    </LocalizationProvider>
   )
 }

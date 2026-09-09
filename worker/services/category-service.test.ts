@@ -41,10 +41,24 @@ describe('CategoryService', () => {
       originalCategory: { id: '5812', name: 'Restaurants' },
     })
   })
+
+  it('maps an immutable source category for every matching transaction', async () => {
+    const repository = new FakeCategoryRepository()
+    const service = new CategoryService(repository, () => 1_700_000_000)
+
+    await expect(
+      service.setSourceMapping('owner-1', '5812', 'category-1'),
+    ).resolves.toMatchObject({
+      code: '5812',
+      mappedCategory: { id: 'category-1', name: 'Shared meals' },
+    })
+    expect(repository.sourceCategoryName).toBe('Restaurants')
+  })
 })
 
 class FakeCategoryRepository implements CategoryRepository {
   overrideCategoryId: string | null = null
+  sourceCategoryName = 'Restaurants'
   readonly category = {
     colorToken: 'mint',
     icon: 'leaf',
@@ -53,6 +67,7 @@ class FakeCategoryRepository implements CategoryRepository {
   }
   readonly transaction = {
     id: 'transaction-1',
+    mappedCategory: null as typeof this.category | null,
     originalCategoryCode: '5812',
     originalCategoryName: 'Restaurants',
     overrideCategory: null as typeof this.category | null,
@@ -60,6 +75,9 @@ class FakeCategoryRepository implements CategoryRepository {
 
   async countOverrides() {
     return this.overrideCategoryId === null ? 0 : 1
+  }
+  async countSourceMappings() {
+    return 0
   }
   async createCategory(input: {
     colorToken: string | null
@@ -78,15 +96,28 @@ class FakeCategoryRepository implements CategoryRepository {
       overrideCategory: this.overrideCategoryId === null ? null : this.category,
     }
   }
+  async findSourceCategory(sourceCode: string) {
+    return {
+      code: sourceCode,
+      mappedCategory: null,
+      originalName: this.sourceCategoryName,
+      transactionCount: 2,
+    }
+  }
   async listCategories() {
     return [this.category]
   }
+  async listSourceCategories() {
+    return []
+  }
+  async removeSourceMapping() {}
   async removeTransactionOverride() {
     this.overrideCategoryId = null
   }
   async setTransactionOverride(_transactionId: string, categoryId: string) {
     this.overrideCategoryId = categoryId
   }
+  async setSourceMapping() {}
   async updateCategory(
     _categoryId: string,
     _userId: string,

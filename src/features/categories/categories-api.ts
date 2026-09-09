@@ -10,9 +10,15 @@ export interface EffectiveCategory {
   category: {
     id: string | null
     name: string | null
-    source: 'custom' | 'original' | null
+    source: 'custom' | 'mapped' | 'original' | null
   }
   originalCategory: { id: string | null; name: string | null }
+}
+export interface SourceCategory {
+  code: string
+  originalName: string
+  transactionCount: number
+  mappedCategory: CustomCategory | null
 }
 export interface CategoryInput {
   colorToken: string | null
@@ -25,6 +31,34 @@ export async function getCategories(): Promise<CustomCategory[]> {
     '/api/categories',
   )
   return payload.categories
+}
+export async function getSourceCategories(): Promise<SourceCategory[]> {
+  const payload = await request<{ sources: SourceCategory[] }>(
+    '/api/category-sources',
+  )
+  return payload.sources
+}
+export async function saveSourceCategory(
+  sourceCode: string,
+  categoryId: string,
+): Promise<SourceCategory> {
+  return (
+    await request<{ source: SourceCategory }>(
+      `/api/category-sources/${encodeURIComponent(sourceCode)}`,
+      'PUT',
+      { categoryId },
+    )
+  ).source
+}
+export async function resetSourceCategory(
+  sourceCode: string,
+): Promise<SourceCategory> {
+  return (
+    await request<{ source: SourceCategory }>(
+      `/api/category-sources/${encodeURIComponent(sourceCode)}`,
+      'DELETE',
+    )
+  ).source
 }
 export async function createCategory(
   input: CategoryInput,

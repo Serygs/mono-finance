@@ -27,6 +27,7 @@ import type {
   TransactionListItem,
   TransactionPage,
 } from './transaction-types'
+import { useLocalization } from '../localization/localization'
 
 type DatePreset =
   | '7d'
@@ -54,6 +55,7 @@ const DIRECTION_OPTIONS = [
 ] as const
 
 export function TransactionsPage() {
+  const { t } = useLocalization()
   const [datePreset, setDatePreset] = useState<DatePreset>('30d')
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
@@ -119,30 +121,34 @@ export function TransactionsPage() {
       <PageHeader
         description={
           <p>
-            Your imported bank records, in order. Adjustments and relationships
-            remain visible without rewriting the original entry.
+            {t(
+              'Your imported bank records, in order. Adjustments and relationships remain visible without rewriting the original entry.',
+            )}
           </p>
         }
-        eyebrow="Ledger"
+        eyebrow={t('Ledger')}
         id="transactions-title"
-        title="Transactions"
+        title={t('Transactions')}
       />
 
-      <section className="transaction-filters" aria-label="Transaction filters">
+      <section
+        className="transaction-filters"
+        aria-label={t('Transaction filters')}
+      >
         <FormField
           className="transaction-search"
-          label="Search merchant or description"
+          label={t('Search merchant or description')}
         >
           <input
             autoComplete="off"
             name="transaction-search"
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search transactions…"
+            placeholder={t('Search transactions…')}
             type="search"
             value={search}
           />
         </FormField>
-        <FormField className="filter-field" label="Date range">
+        <FormField className="filter-field" label={t('Date range')}>
           <Select
             onChange={(event) =>
               setDatePreset(event.target.value as DatePreset)
@@ -151,14 +157,14 @@ export function TransactionsPage() {
           >
             {DATE_PRESETS.map((preset) => (
               <option key={preset.value} value={preset.value}>
-                {preset.label}
+                {t(preset.label)}
               </option>
             ))}
           </Select>
         </FormField>
         {datePreset === 'custom' ? (
           <div className="custom-date-fields">
-            <FormField label="From">
+            <FormField label={t('From')}>
               <input
                 autoComplete="off"
                 name="transactions-from"
@@ -167,7 +173,7 @@ export function TransactionsPage() {
                 value={customDateFrom}
               />
             </FormField>
-            <FormField label="To">
+            <FormField label={t('To')}>
               <input
                 autoComplete="off"
                 name="transactions-to"
@@ -179,17 +185,20 @@ export function TransactionsPage() {
           </div>
         ) : null}
         <SegmentedControl
-          label="Direction"
+          label={t('Direction')}
           onChange={(value) => setDirection(value === 'all' ? null : value)}
-          options={DIRECTION_OPTIONS}
+          options={DIRECTION_OPTIONS.map((option) => ({
+            ...option,
+            label: t(option.label),
+          }))}
           value={direction ?? 'all'}
         />
-        <FormField className="filter-field" label="Category">
+        <FormField className="filter-field" label={t('Category')}>
           <Select
             onChange={(event) => setCategory(event.target.value || null)}
             value={category ?? ''}
           >
-            <option value="">All categories</option>
+            <option value="">{t('All categories')}</option>
             {categories.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -205,25 +214,25 @@ export function TransactionsPage() {
       </section>
 
       {transactionsQuery.isPending ? (
-        <Skeleton label="Loading transactions…" lines={5} />
+        <Skeleton label={t('Loading transactions…')} lines={5} />
       ) : null}
       {transactionsQuery.isError ? (
-        <Alert tone="danger" title="Transactions could not be loaded">
-          Try again when the connection is available.
+        <Alert tone="danger" title={t('Transactions could not be loaded')}>
+          {t('Try again when the connection is available.')}
         </Alert>
       ) : null}
       {!transactionsQuery.isPending &&
       !transactionsQuery.isError &&
       transactions.length === 0 ? (
-        <EmptyState title="No matching transactions">
-          <p>Import a transaction window or broaden the filters.</p>
+        <EmptyState title={t('No matching transactions')}>
+          <p>{t('Import a transaction window or broaden the filters.')}</p>
         </EmptyState>
       ) : null}
       {transactions.length > 0 ? (
         <div className="transaction-layout">
           <ol
             className="transaction-list"
-            aria-label="Transactions in chronological order"
+            aria-label={t('Transactions in chronological order')}
           >
             {transactions.map((transaction) => (
               <li key={transaction.id}>
@@ -251,7 +260,7 @@ export function TransactionsPage() {
                       {formatTransactionAmount(transaction)}
                     </span>
                     <span className="transaction-category">
-                      {transaction.category.name ?? 'Uncategorized'}
+                      {transaction.category.name ?? t('Uncategorized')}
                     </span>
                     <TransactionIndicators transaction={transaction} />
                   </span>
@@ -263,7 +272,8 @@ export function TransactionsPage() {
             onClose={() => setSelectedTransaction(null)}
             open={selectedTransaction !== null}
             title={
-              selectedTransaction?.originalDescription ?? 'Transaction details'
+              selectedTransaction?.originalDescription ??
+              t('Transaction details')
             }
           >
             <TransactionDetails
@@ -303,7 +313,7 @@ export function TransactionsPage() {
           type="button"
           variant="secondary"
         >
-          {transactionsQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
+          {t(transactionsQuery.isFetchingNextPage ? 'Loading…' : 'Load more')}
         </Button>
       ) : null}
     </PageSurface>
@@ -315,6 +325,7 @@ function TransactionIndicators({
 }: {
   transaction: TransactionListItem
 }) {
+  const { t } = useLocalization()
   const labels = [
     transaction.hasAdjustment ? 'Adjusted' : null,
     transaction.hasCompensation ? 'Compensated' : null,
@@ -323,7 +334,7 @@ function TransactionIndicators({
   return labels.length === 0 ? null : (
     <span className="transaction-indicators">
       {labels.map((label) => (
-        <span key={label}>{label}</span>
+        <span key={label}>{t(label)}</span>
       ))}
     </span>
   )
@@ -338,8 +349,9 @@ function AccountMultiSelector({
   onChange(ids: string[]): void
   selectedIds: string[]
 }) {
+  const { t } = useLocalization()
   return (
-    <FormField className="filter-field" label="Accounts">
+    <FormField className="filter-field" label={t('Accounts')}>
       <Select
         multiple
         onChange={(event) =>

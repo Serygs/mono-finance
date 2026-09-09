@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField } from '../../components/ui/FormControls'
 import { Dialog } from '../../components/ui/Overlay'
+import { useLocalization } from '../localization/localization'
 import {
   createCategory,
   deleteCategory,
@@ -16,6 +17,7 @@ import {
 const EMPTY: CategoryInput = { colorToken: null, icon: null, name: '' }
 
 export function CategoryManagement() {
+  const { t } = useLocalization()
   const client = useQueryClient()
   const categories = useQuery({
     queryFn: getCategories,
@@ -58,10 +60,11 @@ export function CategoryManagement() {
   return (
     <section className="category-management" aria-labelledby="categories-title">
       <header className="section-heading">
-        <h2 id="categories-title">Custom categories</h2>
+        <h2 id="categories-title">{t('Custom categories')}</h2>
         <p>
-          Use these for personal analytics. Imported Monobank and MCC categories
-          remain unchanged.
+          {t(
+            'Use these for personal analytics. Imported Monobank and MCC categories remain unchanged.',
+          )}
         </p>
       </header>
       <form
@@ -69,8 +72,8 @@ export function CategoryManagement() {
         key={editing?.id ?? 'new'}
         onSubmit={submit}
       >
-        <h3>{editing === null ? 'Add category' : 'Edit category'}</h3>
-        <FormField label="Name">
+        <h3>{t(editing === null ? 'Add category' : 'Edit category')}</h3>
+        <FormField label={t('Name')}>
           <input
             autoComplete="off"
             name="name"
@@ -79,7 +82,7 @@ export function CategoryManagement() {
             required
           />
         </FormField>
-        <FormField label="Icon" hint="Letters, numbers, or hyphen">
+        <FormField label={t('Icon')} hint={t('Letters, numbers, or hyphen')}>
           <input
             autoComplete="off"
             name="icon"
@@ -88,7 +91,10 @@ export function CategoryManagement() {
             pattern="[A-Za-z0-9-]+"
           />
         </FormField>
-        <FormField label="Color token" hint="Letters, numbers, or hyphen">
+        <FormField
+          label={t('Color token')}
+          hint={t('Letters, numbers, or hyphen')}
+        >
           <input
             autoComplete="off"
             name="colorToken"
@@ -100,10 +106,10 @@ export function CategoryManagement() {
         <div className="transaction-correction-actions">
           <Button loading={mutation.isPending} type="submit">
             {mutation.isPending
-              ? 'Saving…'
+              ? t('Saving…')
               : editing === null
-                ? 'Add category'
-                : 'Save category'}
+                ? t('Add category')
+                : t('Save category')}
           </Button>
           {editing !== null ? (
             <Button
@@ -111,23 +117,23 @@ export function CategoryManagement() {
               onClick={() => setEditing(null)}
               variant="secondary"
             >
-              Cancel
+              {t('Cancel')}
             </Button>
           ) : null}
         </div>
         {mutation.isError ? (
-          <Alert tone="danger">Category could not be saved.</Alert>
+          <Alert tone="danger">{t('Category could not be saved.')}</Alert>
         ) : null}
       </form>
       {categories.isPending ? (
-        <Skeleton label="Loading categories…" lines={2} />
+        <Skeleton label={t('Loading categories…')} lines={2} />
       ) : null}
       {categories.isError ? (
-        <Alert tone="danger">Categories could not be loaded.</Alert>
+        <Alert tone="danger">{t('Categories could not be loaded.')}</Alert>
       ) : null}
       {categories.data?.length === 0 ? (
-        <EmptyState title="No custom categories">
-          <p>Add a category to personalize transaction analytics.</p>
+        <EmptyState title={t('No custom categories')}>
+          <p>{t('Add a category to personalize transaction analytics.')}</p>
         </EmptyState>
       ) : null}
       <ul className="category-list">
@@ -142,7 +148,7 @@ export function CategoryManagement() {
               }
             />
             <div>
-              <span>{category.colorToken ?? 'Default color'}</span>
+              <span>{category.colorToken ?? t('Default color')}</span>
             </div>
             <div className="transaction-correction-actions">
               <Button
@@ -160,7 +166,7 @@ export function CategoryManagement() {
                 }
                 variant="secondary"
               >
-                Edit
+                {t('Edit')}
               </Button>
               <Button
                 disabled={removal.isPending}
@@ -172,7 +178,7 @@ export function CategoryManagement() {
                 }}
                 variant="danger"
               >
-                Delete
+                {t('Delete')}
               </Button>
             </div>
           </li>
@@ -186,15 +192,19 @@ export function CategoryManagement() {
           }
         }}
         open={pendingDelete !== null}
-        title="Delete category?"
+        title={t('Delete category?')}
       >
         <p>
-          {pendingDelete?.name ?? 'This category'} will be permanently removed.
-          Categories currently used by transactions cannot be deleted.
+          {t(
+            '{name} will be permanently removed. Categories currently used by transactions cannot be deleted.',
+            { name: pendingDelete?.name ?? t('This category') },
+          )}
         </p>
         {removal.isError ? (
-          <Alert tone="danger" title="Category is still in use">
-            Reset or reassign its transaction overrides first.
+          <Alert tone="danger" title={t('Category is still in use')}>
+            {t(
+              'Reset or reassign its transaction overrides and imported type mappings first.',
+            )}
           </Alert>
         ) : null}
         <div className="transaction-correction-actions">
@@ -203,7 +213,7 @@ export function CategoryManagement() {
             onClick={() => setPendingDelete(null)}
             variant="secondary"
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button
             loading={removal.isPending}
@@ -212,7 +222,7 @@ export function CategoryManagement() {
             }}
             variant="danger"
           >
-            Delete category
+            {t('Delete category')}
           </Button>
         </div>
       </Dialog>
