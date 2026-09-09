@@ -595,6 +595,16 @@
 }
 
 @media (max-width: 48rem) {
+  .language-switcher select,
+  .ui-field .ui-select,
+  .ui-field input,
+  .ui-field textarea,
+  .transaction-search input,
+  .filter-field select,
+  .custom-date-fields input {
+    font-size: 1rem;
+  }
+
   .category-source-list li {
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -633,7 +643,7 @@
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.25rem;
     border-top: 1px solid var(--color-border);
     background: var(--color-glass);
@@ -645,9 +655,12 @@
   }
 
   .mobile-navigation a {
+    min-width: 0;
     min-height: 2.75rem;
     justify-content: center;
+    overflow-wrap: anywhere;
     padding-inline: 0.35rem;
+    text-align: center;
   }
 
   .page-content {
@@ -819,6 +832,19 @@
 }
 
 @media (max-width: 22rem) {
+  .app-header {
+    flex-wrap: wrap;
+  }
+
+  .brand-lockup,
+  .app-header-actions {
+    width: 100%;
+  }
+
+  .app-header-actions {
+    justify-content: space-between;
+  }
+
   .ui-page-header__actions,
   .transaction-account-options {
     grid-template-columns: 1fr;

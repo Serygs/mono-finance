@@ -108,6 +108,46 @@ test('language, category type mapping, and category chart interaction are access
   ).toBeVisible()
 })
 
+test('overview stays within the iPhone Pro Max viewport without form-control zoom', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 430, height: 932 })
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+  ).toBeVisible()
+
+  const layout = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    undersizedControls: Array.from(
+      document.querySelectorAll('input, select, textarea'),
+      (control) => ({
+        className: control.className,
+        fontSize: Number.parseFloat(getComputedStyle(control).fontSize),
+        tagName: control.tagName,
+      }),
+    ).filter((control) => control.fontSize < 16),
+    headerRight: document.querySelector('.app-header')!.getBoundingClientRect()
+      .right,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+
+  expect(layout.scrollWidth).toBe(layout.clientWidth)
+  expect(layout.headerRight).toBe(layout.clientWidth)
+  expect(layout.undersizedControls).toEqual([])
+
+  await page.setViewportSize({ width: 215, height: 932 })
+  const zoomedLayout = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  expect(zoomedLayout.scrollWidth).toBe(zoomedLayout.clientWidth)
+})
+
 async function installFinanceApiMock(page: Page): Promise<void> {
   const state = {
     adjusted: false,
