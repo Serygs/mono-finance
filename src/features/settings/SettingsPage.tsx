@@ -1,5 +1,4 @@
 import { CategoryManagement } from '../categories/CategoryManagement'
-import { CategorySourceManagement } from '../categories/CategorySourceManagement'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { CurrencyPreferences } from './CurrencyPreferences'
 import { useLocalization } from '../localization/localization'
@@ -22,7 +21,6 @@ export function SettingsPage() {
       />
       <CurrencyPreferences />
       <CategoryManagement />
-      <CategorySourceManagement />
     </PageSurface>
   )
 }

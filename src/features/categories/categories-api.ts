@@ -32,33 +32,43 @@ export async function getCategories(): Promise<CustomCategory[]> {
   )
   return payload.categories
 }
-export async function getSourceCategories(): Promise<SourceCategory[]> {
-  const payload = await request<{ sources: SourceCategory[] }>(
-    '/api/category-sources',
-  )
-  return payload.sources
+export async function getCategorySources(): Promise<SourceCategory[]> {
+  const payload = await request<{
+    sourceCategories?: SourceCategory[]
+    sources?: SourceCategory[]
+  }>('/api/category-sources')
+  return payload.sourceCategories ?? payload.sources ?? []
 }
-export async function saveSourceCategory(
+export async function saveCategorySourceMapping(
   sourceCode: string,
   categoryId: string,
-): Promise<SourceCategory> {
-  return (
-    await request<{ source: SourceCategory }>(
-      `/api/category-sources/${encodeURIComponent(sourceCode)}`,
-      'PUT',
-      { categoryId },
-    )
-  ).source
+): Promise<void> {
+  await request(
+    `/api/category-sources/${encodeURIComponent(sourceCode)}`,
+    'PUT',
+    {
+      categoryId,
+    },
+  )
 }
-export async function resetSourceCategory(
+export async function resetCategorySourceMapping(
   sourceCode: string,
-): Promise<SourceCategory> {
-  return (
-    await request<{ source: SourceCategory }>(
-      `/api/category-sources/${encodeURIComponent(sourceCode)}`,
-      'DELETE',
-    )
-  ).source
+): Promise<void> {
+  await request(
+    `/api/category-sources/${encodeURIComponent(sourceCode)}`,
+    'DELETE',
+  )
+}
+export async function mergeCategories(
+  sourceCategoryId: string,
+  targetCategoryId: string,
+): Promise<CustomCategory> {
+  const payload = await request<{ category: CustomCategory }>(
+    `/api/categories/${encodeURIComponent(sourceCategoryId)}/merge`,
+    'POST',
+    { targetCategoryId },
+  )
+  return payload.category
 }
 export async function createCategory(
   input: CategoryInput,

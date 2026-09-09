@@ -79,6 +79,23 @@ describe('category routes', () => {
       userId: 'owner-1',
     })
   })
+
+  it('merges one owned category into another', async () => {
+    const service = new FakeCategoryService()
+    const response = await appFor(service).request(
+      '/api/categories/category-food/merge',
+      request('POST', { targetCategoryId: 'category-groceries' }),
+      environment,
+    )
+
+    expect(response.status).toBe(200)
+    expect(service.received).toEqual({
+      operation: 'merge',
+      sourceCategoryId: 'category-food',
+      targetCategoryId: 'category-groceries',
+      userId: 'owner-1',
+    })
+  })
 })
 
 function appFor(service: FakeCategoryService) {
@@ -131,6 +148,19 @@ class FakeCategoryService {
   }
   async listSources() {
     return []
+  }
+  async merge(
+    userId: string,
+    sourceCategoryId: string,
+    targetCategoryId: string,
+  ) {
+    this.received = {
+      operation: 'merge',
+      sourceCategoryId,
+      targetCategoryId,
+      userId,
+    }
+    return { id: targetCategoryId, name: 'Groceries' }
   }
   async setSourceMapping(
     userId: string,

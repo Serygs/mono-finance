@@ -112,6 +112,22 @@ export async function deleteCategoryHandler(
     return context.json(success({}))
   })
 }
+export async function mergeCategoryHandler(
+  context: CategoryContext,
+  service: CategoryService,
+) {
+  return categoryOperation(context, async () =>
+    context.json(
+      success({
+        category: await service.merge(
+          context.get('authenticatedUser').id,
+          categoryId(context),
+          await readTargetCategoryId(context.req.raw),
+        ),
+      }),
+    ),
+  )
+}
 export async function saveTransactionCategoryHandler(
   context: CategoryContext,
   service: CategoryService,
@@ -186,6 +202,12 @@ async function readCategory(request: Request): Promise<CreateCategoryInput> {
 async function readCategoryId(request: Request): Promise<string> {
   const input = await json(request)
   const value = text(input['categoryId'], 128)
+  if (value === null) throw new CategoryError('invalid_category')
+  return value
+}
+async function readTargetCategoryId(request: Request): Promise<string> {
+  const input = await json(request)
+  const value = text(input['targetCategoryId'], 128)
   if (value === null) throw new CategoryError('invalid_category')
   return value
 }
