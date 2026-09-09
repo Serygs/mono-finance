@@ -219,7 +219,8 @@ describe('D1TransactionSyncRepository', () => {
       sqlite
         .prepare(
           `SELECT original_amount_minor, original_currency_code, original_description,
-             original_mcc, original_timestamp, monobank_transaction_id
+             original_mcc, original_timestamp, original_category_code,
+             original_category_name, monobank_transaction_id
            FROM transactions`,
         )
         .get(),
@@ -228,8 +229,10 @@ describe('D1TransactionSyncRepository', () => {
       original_amount_minor: -500,
       original_currency_code: 'UAH',
       original_description: 'Coffee',
-      original_mcc: 5812,
+      original_mcc: 5732,
       original_timestamp: 2_000,
+      original_category_code: '5732',
+      original_category_name: 'Продаж електронного обладнання',
     })
     expect(
       sqlite
@@ -242,6 +245,28 @@ describe('D1TransactionSyncRepository', () => {
       last_successful_sync_at: 3_000_000,
       last_synced_transaction_at: 2_000,
       status: 'idle',
+    })
+  })
+
+  it('keeps the raw category fallback when importing an unknown MCC', async () => {
+    const claimed = await repository.claimNext('owner-1', 3_000_000, 1_000)
+
+    await repository.importTransactions({
+      accountId: claimed!.accountId,
+      currencyCode: claimed!.currencyCode,
+      transactions: [statementTransaction({ mcc: 9998, originalMcc: 9998 })],
+      userId: 'owner-1',
+    })
+
+    expect(
+      sqlite
+        .prepare(
+          'SELECT original_category_code, original_category_name FROM transactions',
+        )
+        .get(),
+    ).toEqual({
+      original_category_code: '9998',
+      original_category_name: 'MCC 9998',
     })
   })
 })
@@ -321,7 +346,11 @@ class SqliteD1Statement {
   }
 }
 
-function statementTransaction(): import('../worker/monobank/internal-dtos').TransactionSourceRecord {
+function statementTransaction(
+  overrides: Partial<
+    import('../worker/monobank/internal-dtos').TransactionSourceRecord
+  > = {},
+): import('../worker/monobank/internal-dtos').TransactionSourceRecord {
   return {
     accountAmountMinor: -500,
     balanceAfterMinor: 2_500,
@@ -330,11 +359,12 @@ function statementTransaction(): import('../worker/monobank/internal-dtos').Tran
     description: 'Coffee',
     direction: 'expense',
     isHold: false,
-    mcc: 5812,
+    mcc: 5732,
     occurredAtEpochSeconds: 2_000,
     operationAmountMinor: -500,
     operationCurrencyNumericCode: '980',
-    originalMcc: 5812,
+    originalMcc: 5732,
     providerTransactionId: 'mono-transaction-1',
+    ...overrides,
   }
 }

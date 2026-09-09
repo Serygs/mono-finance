@@ -3,28 +3,95 @@
 ## Product boundaries
 
 - This is a private, single-user financial application. Treat all account and transaction data as sensitive.
-- The browser communicates only with same-origin `/api/*` endpoints. Keep Monobank calls, D1 access, secrets, and authentication decisions in `worker/`.
-- Imported Monobank transactions are immutable source records. Future corrections, exclusions, category overrides, and compensation links must use separate records; never overwrite original provider fields.
+- The browser communicates only with same-origin `/api/*` endpoints.
+- Keep Monobank calls, D1 access, secrets, and authentication decisions in `worker/`.
+- Imported Monobank transactions are immutable source records.
+- Corrections, exclusions, category overrides, and compensation links must use separate records; never overwrite original provider fields.
 - Monetary storage and calculations use integer minor units. Never introduce floating-point money values.
-- D1 is the authoritative database. IndexedDB may become an encrypted offline cache, never a competing source of truth.
+- D1 is the authoritative database. IndexedDB may be used only as an encrypted offline cache, never as a competing source of truth.
 
 ## Architecture
 
-- Keep React code feature-oriented: feature-owned UI and hooks stay in `src/features/<feature>/`; reusable UI belongs in `src/components/`; API and browser infrastructure belongs in `src/lib/`.
-- Keep Worker routes thin. `worker/routes/` maps HTTP only; use cases belong in `services/`; parameterized D1 access belongs in `repositories/`.
-- Keep Monobank DTOs and client code isolated in `worker/monobank/`. Do not expose provider response shapes to the frontend.
-- Use the shared `{ data }` and `{ error: { code, message } }` response contract. Do not expose stack traces, SQL errors, upstream payloads, tokens, or internal messages.
-- Do not add a D1 binding with a placeholder database ID. Keep local D1 configuration explicit and inject the real production ID through the protected deployment configuration.
+- Keep React code feature-oriented:
+    - feature-owned UI and hooks → `src/features/<feature>/`
+    - reusable UI → `src/components/`
+    - API/browser infrastructure → `src/lib/`
+- Keep Worker routes thin:
+    - HTTP mapping → `worker/routes/`
+    - business/use-case logic → `services/`
+    - parameterized D1 access → `repositories/`
+- Keep Monobank DTOs and client code isolated in `worker/monobank/`.
+- Do not expose Monobank/provider response shapes directly to the frontend.
+- Use the shared response contract:
+    - success: `{ data }`
+    - failure: `{ error: { code, message } }`
+- Never expose stack traces, SQL errors, upstream payloads, tokens, secrets, or internal error messages.
+- Do not add a D1 binding with a placeholder database ID.
+- Keep local D1 configuration explicit and inject the real production ID through protected deployment configuration.
 
 ## Security
 
-- Never place Monobank tokens, passwords, session identifiers, or secrets in `src/`, committed configuration, logs, tests, or error responses.
+- Never place Monobank tokens, passwords, session identifiers, or secrets in:
+    - `src/`
+    - committed configuration
+    - logs
+    - tests
+    - error responses
 - Keep secret bindings server-side and configure them with Wrangler secrets, not `vars`.
-- Every private API route added after authentication must be protected by the authentication boundary; only explicitly public endpoints may bypass it.
+- Every private API route must be protected by the authentication boundary.
+- Only explicitly public endpoints may bypass authentication.
 
-## Delivery checks
+## Agent execution rules
 
-- Before changing a feature, load the applicable skill from `.agents/skills` and inspect the affected frontend and Worker boundaries.
-- Add a focused test for each behavioral change. Test Worker routes through exported Hono apps before adding broader runtime tests.
-- Run `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before handoff when the change affects application code.
-- After every completed implementation, include exactly one concise, one-sentence commit message in the handoff.
+### Scope
+
+- Keep the implementation strictly limited to the requested task.
+- Do not refactor, rename, move, or redesign unrelated code.
+- Do not add features that were not requested.
+- Do not introduce new dependencies unless the task cannot reasonably be implemented with the existing stack.
+- Preserve existing behavior unless the task explicitly requests a behavior change.
+- Prefer the smallest correct implementation.
+
+### Repository inspection
+
+- Load the applicable skill from `.agents/skills` before implementation.
+- Do not scan or read the entire repository.
+- Use code search first to locate the relevant implementation.
+- Read only:
+    - files directly affected by the task;
+    - their immediate dependencies;
+    - relevant tests.
+- Inspect only the boundaries required by the task.
+    - Frontend-only task → do not inspect Worker/D1 unless required by an existing contract.
+    - Worker-only task → do not inspect unrelated frontend code.
+    - Styling/layout task → do not inspect backend/database implementation.
+- Do not reread unchanged files unless new information makes it necessary.
+- If an unrelated issue is discovered, report it instead of fixing it.
+
+### Implementation
+
+- Before coding, identify the small set of files expected to change.
+- Reuse existing components, utilities, styles, services, and patterns.
+- Avoid speculative abstractions.
+- Do not create generic infrastructure for a single simple use case unless the repository already follows that pattern.
+- Add or update focused tests only when behavior changes.
+- Pure visual/CSS changes do not require new behavioral tests unless existing tests need adjustment.
+
+## Validation
+
+Validate proportionally to the change.
+
+### During implementation
+
+- Do not run the full validation suite after every edit.
+- Implement the change first.
+- Use targeted tests or targeted checks while iterating when practical.
+- Do not repeatedly rerun a command that already passed unless subsequent changes could affect it.
+
+### Frontend-only UI/style changes
+
+Run relevant lightweight validation first:
+
+```bash
+npm run typecheck
+npm run lint
