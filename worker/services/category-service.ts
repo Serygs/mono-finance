@@ -41,6 +41,12 @@ export interface CategoryRepository {
   ): Promise<SourceCategory | null>
   listCategories(userId: string): Promise<CustomCategory[]>
   listSourceCategories(userId: string): Promise<SourceCategory[]>
+  mergeCategories(
+    sourceCategoryId: string,
+    targetCategoryId: string,
+    userId: string,
+    now: number,
+  ): Promise<void>
   removeSourceMapping(sourceCode: string, userId: string): Promise<void>
   removeTransactionOverride(
     transactionId: string,
@@ -137,6 +143,28 @@ export class CategoryService {
     )
       throw new CategoryError('category_referenced')
     await this.repository.deleteCategory(categoryId, userId)
+  }
+
+  async merge(
+    userId: string,
+    sourceCategoryId: string,
+    targetCategoryId: string,
+  ): Promise<CustomCategory> {
+    if (sourceCategoryId === targetCategoryId)
+      throw new CategoryError('invalid_category')
+    const [source, target] = await Promise.all([
+      this.repository.findCategory(sourceCategoryId, userId),
+      this.repository.findCategory(targetCategoryId, userId),
+    ])
+    if (source === null || target === null)
+      throw new CategoryError('category_not_found')
+    await this.repository.mergeCategories(
+      sourceCategoryId,
+      targetCategoryId,
+      userId,
+      this.now(),
+    )
+    return target
   }
 
   async setTransactionOverride(

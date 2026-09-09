@@ -10,6 +10,7 @@ import { readCookie, SESSION_COOKIE_NAME } from './auth/cookies'
 import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
+import { logError, requestId, safeErrorLogFields } from './common/observability'
 import { applyApiSecurityHeaders } from './common/security-headers'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
@@ -56,6 +57,7 @@ import {
   deleteCategoryHandler,
   listCategoriesHandler,
   listSourceCategoriesHandler,
+  mergeCategoryHandler,
   resetSourceCategoryHandler,
   resetTransactionCategoryHandler,
   saveTransactionCategoryHandler,
@@ -240,6 +242,9 @@ export function createApp(
   app.delete('/api/categories/:categoryId', (context) =>
     deleteCategoryHandler(context, categoryServiceFactory(context.env)),
   )
+  app.post('/api/categories/:categoryId/merge', (context) =>
+    mergeCategoryHandler(context, categoryServiceFactory(context.env)),
+  )
   app.put('/api/transactions/:transactionId/category', (context) =>
     saveTransactionCategoryHandler(
       context,
@@ -313,13 +318,15 @@ export function createApp(
     context.json(failure('not_found', 'Resource not found.'), 404),
   )
 
-  app.onError((_error, context) => {
-    console.error(
-      JSON.stringify({
-        message: 'Unhandled API error',
-        path: new URL(context.req.url).pathname,
-      }),
-    )
+  app.onError((error, context) => {
+    const path = new URL(context.req.url).pathname
+    const isD1Failure = isD1Error(error)
+    logError(isD1Failure ? 'd1_query_failed' : 'api_request_failed', {
+      method: context.req.method,
+      path,
+      requestId: requestId(context.req.raw),
+      ...safeErrorLogFields(error, { includeMessage: !isD1Failure }),
+    })
     const response = context.json(
       failure('internal_error', 'An unexpected error occurred.'),
       500,
@@ -329,6 +336,15 @@ export function createApp(
   })
 
   return app
+}
+
+function isD1Error(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const code = (error as Error & { code?: unknown }).code
+  return (
+    (typeof code === 'string' && code.startsWith('SQLITE_')) ||
+    error.message.startsWith('D1_ERROR:')
+  )
 }
 
 export const app = createApp()

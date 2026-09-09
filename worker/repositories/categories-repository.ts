@@ -176,6 +176,29 @@ export class D1CategoryRepository implements CategoryRepository {
     return rows.map(mapSourceCategory)
   }
 
+  async mergeCategories(
+    sourceCategoryId: string,
+    targetCategoryId: string,
+    userId: string,
+    now: number,
+  ): Promise<void> {
+    await this.database.batch([
+      this.database
+        .prepare(
+          'UPDATE transaction_category_overrides SET category_id = ?, updated_at = ? WHERE category_id = ? AND user_id = ?',
+        )
+        .bind(targetCategoryId, now, sourceCategoryId, userId),
+      this.database
+        .prepare(
+          'UPDATE category_source_mappings SET category_id = ?, updated_at = ? WHERE category_id = ? AND user_id = ?',
+        )
+        .bind(targetCategoryId, now, sourceCategoryId, userId),
+      this.database
+        .prepare('DELETE FROM categories WHERE id = ? AND user_id = ?')
+        .bind(sourceCategoryId, userId),
+    ])
+  }
+
   async findSourceCategory(
     sourceCode: string,
     userId: string,

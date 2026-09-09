@@ -3,21 +3,21 @@ import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
 import {
-  getCategories,
-  getSourceCategories,
-  resetSourceCategory,
-  saveSourceCategory,
+  getCategorySources,
+  resetCategorySourceMapping,
+  saveCategorySourceMapping,
+  type CustomCategory,
 } from './categories-api'
 
-export function CategorySourceManagement() {
+export function CategorySourceManagement({
+  categories,
+}: {
+  categories: CustomCategory[]
+}) {
   const { t } = useLocalization()
   const client = useQueryClient()
-  const categories = useQuery({
-    queryFn: getCategories,
-    queryKey: ['categories'],
-  })
   const sources = useQuery({
-    queryFn: getSourceCategories,
+    queryFn: getCategorySources,
     queryKey: ['category-sources'],
   })
   const save = useMutation({
@@ -29,8 +29,8 @@ export function CategorySourceManagement() {
       sourceCode: string
     }) =>
       categoryId === ''
-        ? resetSourceCategory(sourceCode)
-        : saveSourceCategory(sourceCode, categoryId),
+        ? resetCategorySourceMapping(sourceCode)
+        : saveCategorySourceMapping(sourceCode, categoryId),
     onSuccess: async () => {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['category-sources'] }),
@@ -53,10 +53,10 @@ export function CategorySourceManagement() {
           )}
         </p>
       </header>
-      {sources.isPending || categories.isPending ? (
+      {sources.isPending ? (
         <Skeleton label={t('Loading transaction types…')} lines={3} />
       ) : null}
-      {sources.isError || categories.isError ? (
+      {sources.isError ? (
         <Alert tone="danger">
           {t('Transaction types could not be loaded.')}
         </Alert>
@@ -98,7 +98,7 @@ export function CategorySourceManagement() {
                   value={source.mappedCategory?.id ?? ''}
                 >
                   <option value="">{t('Use imported name')}</option>
-                  {categories.data?.map((category) => (
+                  {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -109,7 +109,7 @@ export function CategorySourceManagement() {
           )
         })}
       </ul>
-      {categories.data?.length === 0 && (sources.data?.length ?? 0) > 0 ? (
+      {categories.length === 0 && (sources.data?.length ?? 0) > 0 ? (
         <Alert tone="warning">
           {t(
             'Create personal categories first, then assign an imported transaction type to one of them.',

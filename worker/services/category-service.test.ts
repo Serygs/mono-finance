@@ -54,9 +54,25 @@ describe('CategoryService', () => {
     })
     expect(repository.sourceCategoryName).toBe('Restaurants')
   })
+
+  it('merges category references into another owned category', async () => {
+    const repository = new FakeCategoryRepository()
+    const service = new CategoryService(repository, () => 1_700_000_000)
+
+    await expect(
+      service.merge('owner-1', 'category-1', 'category-2'),
+    ).resolves.toMatchObject({ id: 'category-2' })
+    expect(repository.merged).toEqual({
+      now: 1_700_000_000,
+      sourceCategoryId: 'category-1',
+      targetCategoryId: 'category-2',
+      userId: 'owner-1',
+    })
+  })
 })
 
 class FakeCategoryRepository implements CategoryRepository {
+  merged: Record<string, unknown> | null = null
   overrideCategoryId: string | null = null
   sourceCategoryName = 'Restaurants'
   readonly category = {
@@ -87,8 +103,8 @@ class FakeCategoryRepository implements CategoryRepository {
     return { ...this.category, ...input }
   }
   async deleteCategory() {}
-  async findCategory() {
-    return this.category
+  async findCategory(categoryId: string) {
+    return { ...this.category, id: categoryId }
   }
   async findOwnedTransaction() {
     return {
@@ -109,6 +125,14 @@ class FakeCategoryRepository implements CategoryRepository {
   }
   async listSourceCategories() {
     return []
+  }
+  async mergeCategories(
+    sourceCategoryId: string,
+    targetCategoryId: string,
+    userId: string,
+    now: number,
+  ) {
+    this.merged = { now, sourceCategoryId, targetCategoryId, userId }
   }
   async removeSourceMapping() {}
   async removeTransactionOverride() {
