@@ -4,11 +4,16 @@ export const LOGIN_WINDOW_SECONDS = 15 * 60
 export const SESSION_TTL_SECONDS = 8 * 60 * 60
 
 const DUMMY_PASSWORD_HASH =
-  'pbkdf2-sha256$600000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+  'pbkdf2-sha256$100000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 export interface AuthenticatedUser {
   email: string
   id: string
+}
+
+export interface AuthenticatedSession {
+  expiresAt: number
+  user: AuthenticatedUser
 }
 
 interface UserRecord extends AuthenticatedUser {
@@ -186,17 +191,24 @@ export class AuthService {
 
     await this.repository.clearLoginAttempts(identifierHash)
     const token = this.sessionTokens.generate()
+    const expiresAt = now + SESSION_TTL_SECONDS
     await this.repository.createSession({
-      expiresAt: now + SESSION_TTL_SECONDS,
+      expiresAt,
       id: crypto.randomUUID(),
       tokenHash: await this.sessionTokens.hash(token),
       userId: user.id,
     })
 
-    return { token, user: { email: user.email, id: user.id } }
+    return { expiresAt, token, user: { email: user.email, id: user.id } }
   }
 
   async requireSession(token: string | undefined): Promise<AuthenticatedUser> {
+    return (await this.currentSession(token)).user
+  }
+
+  async currentSession(
+    token: string | undefined,
+  ): Promise<AuthenticatedSession> {
     if (token === undefined) {
       throw unauthenticated()
     }
@@ -217,7 +229,7 @@ export class AuthService {
       throw unauthenticated()
     }
 
-    return user
+    return { expiresAt: session.expiresAt, user }
   }
 
   async logout(token: string | undefined): Promise<void> {

@@ -33,6 +33,10 @@ Copy [`.dev.vars.example`](.dev.vars.example) to `.dev.vars`, add real local sec
 
 The test pyramid, coverage floors, Playwright setup, CI workflow, and current limitations are documented in [the testing strategy](docs/testing-strategy.md). Run `npm run test:coverage` before a backend or frontend change, and `npm run test:e2e` for a critical-flow UI change.
 
+Production monitoring, alerts, recovery, and backup guidance are in [the Phase 20 production-readiness notes](docs/phase-20-production-readiness.md).
+
+The final architecture review, resolved high-priority findings, and accepted operational limitations are documented in [Phase 21](docs/phase-21-final-architecture-review.md).
+
 The security findings, remediations, and accepted risks are documented in [Phase 18 security hardening](docs/phase-18-security.md). The client bundle check must follow `npm run build`; it verifies the deployable browser asset directory only, because Cloudflare Vite copies `.dev.vars` into its separate preview-only Worker output by design.
 
 ## Deployment

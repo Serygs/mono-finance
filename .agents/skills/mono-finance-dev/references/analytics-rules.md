@@ -8,7 +8,7 @@ For normal analytics:
 
 - use `effectiveAmount = adjustedAmount ?? originalAmount`;
 - exclude transactions marked excluded by default;
-- resolve the effective category from an override when present, otherwise the preserved original category;
+- resolve the effective category from a per-transaction override when present, then a global source-category mapping, otherwise the preserved original category;
 - respect requested account and date filters;
 - keep currency treatment explicit.
 

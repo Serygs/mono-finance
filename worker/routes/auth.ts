@@ -15,6 +15,7 @@ import {
 import { assertSameOrigin, clientIdentifier } from '../auth/request-security'
 import { failure, success } from '../common/api-response'
 import type { MonobankEnvironment } from '../common/environment'
+import { logEvent, recordMetric } from '../common/observability'
 
 type AuthContext = Context<{
   Bindings: MonobankEnvironment
@@ -60,7 +61,11 @@ export async function loginHandler(context: AuthContext, service: AuthService) {
       'Set-Cookie',
       sessionCookie(context.env, session.token, SESSION_TTL_SECONDS),
     )
-    return noStore(context.json(success({ user: session.user })))
+    return noStore(
+      context.json(
+        success({ expiresAt: session.expiresAt, user: session.user }),
+      ),
+    )
   } catch (error) {
     return authenticationFailure(context, error)
   }
@@ -85,8 +90,14 @@ export async function currentSessionHandler(
   service: AuthService,
 ) {
   try {
-    const user = await service.requireSession(readSessionToken(context.req.raw))
-    return noStore(context.json(success({ user })))
+    const session = await service.currentSession(
+      readSessionToken(context.req.raw),
+    )
+    return noStore(
+      context.json(
+        success({ expiresAt: session.expiresAt, user: session.user }),
+      ),
+    )
   } catch (error) {
     return authenticationFailure(context, error)
   }
@@ -94,6 +105,16 @@ export async function currentSessionHandler(
 
 function authenticationFailure(context: AuthContext, error: unknown) {
   if (error instanceof AuthenticationError) {
+    logEvent('authentication_failure', {
+      code: error.code,
+      path: new URL(context.req.url).pathname,
+      status: error.status,
+    })
+    recordMetric(
+      context.env?.OBSERVABILITY,
+      'authentication_failure',
+      error.code,
+    )
     if (error.status === 429) {
       context.header('Retry-After', '900')
     }

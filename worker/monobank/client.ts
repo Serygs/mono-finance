@@ -13,8 +13,10 @@ import { parseProviderClientInfo, parseProviderStatement } from './validation'
 const MONOBANK_API_BASE_URL = 'https://api.monobank.ua'
 const DEFAULT_TIMEOUT_MILLISECONDS = 10_000
 const MAXIMUM_STATEMENT_PERIOD_SECONDS = 2_682_000
-const CLIENT_INFO_SCOPE = 'client-info'
-const STATEMENT_SCOPE = 'statement'
+// Monobank applies the Personal API interval to the token, not to an
+// individual endpoint. A single durable scope prevents an account refresh
+// followed by a statement request from exceeding that shared limit.
+const PERSONAL_API_SCOPE = 'personal-api'
 
 export interface StatementRequest {
   accountId: string
@@ -107,12 +109,12 @@ export class HttpMonobankClient implements MonobankClient {
 
   async getClientInfo(): Promise<ClientAccountSnapshot> {
     await this.requestGate.acquire(
-      CLIENT_INFO_SCOPE,
+      PERSONAL_API_SCOPE,
       MONOBANK_MINIMUM_REQUEST_INTERVAL_SECONDS,
     )
     const payload = await this.requestJson(
       '/personal/client-info',
-      CLIENT_INFO_SCOPE,
+      PERSONAL_API_SCOPE,
     )
     return mapProviderClientInfo(parseProviderClientInfo(payload))
   }
@@ -122,7 +124,7 @@ export class HttpMonobankClient implements MonobankClient {
   ): Promise<TransactionSourceRecord[]> {
     validateStatementRequest(request)
     await this.requestGate.acquire(
-      STATEMENT_SCOPE,
+      PERSONAL_API_SCOPE,
       MONOBANK_MINIMUM_REQUEST_INTERVAL_SECONDS,
     )
 
@@ -137,7 +139,7 @@ export class HttpMonobankClient implements MonobankClient {
 
     const payload = await this.requestJson(
       pathSegments.join('/'),
-      STATEMENT_SCOPE,
+      PERSONAL_API_SCOPE,
     )
     return mapProviderStatement(parseProviderStatement(payload))
   }
