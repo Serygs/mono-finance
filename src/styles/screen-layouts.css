@@ -602,7 +602,7 @@
   .transaction-search input,
   .filter-field select,
   .custom-date-fields input {
-    font-size: 1rem;
+    font-size: 16px;
   }
 
   .category-source-list li {
