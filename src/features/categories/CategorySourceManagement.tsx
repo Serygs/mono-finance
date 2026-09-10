@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
+import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
@@ -10,10 +11,7 @@ import {
   saveCategorySourceMapping,
   type CustomCategory,
 } from './categories-api'
-import {
-  filterCategorySources,
-  type MappingFilter,
-} from './category-source-filtering'
+import type { MappingFilter } from './category-source-filtering'
 
 export function CategorySourceManagement({
   categories,
@@ -24,9 +22,17 @@ export function CategorySourceManagement({
   const client = useQueryClient()
   const [query, setQuery] = useState('')
   const [mappingFilter, setMappingFilter] = useState<MappingFilter>('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
   const sources = useQuery({
-    queryFn: getCategorySources,
-    queryKey: ['category-sources'],
+    queryFn: () =>
+      getCategorySources({
+        mapping: mappingFilter,
+        page,
+        pageSize,
+        query,
+      }),
+    queryKey: ['category-sources', { mappingFilter, page, query }],
   })
   const save = useMutation({
     mutationFn: ({
@@ -47,9 +53,9 @@ export function CategorySourceManagement({
       ])
     },
   })
-  const visibleSources = useMemo(
-    () => filterCategorySources(sources.data ?? [], query, mappingFilter),
-    [mappingFilter, query, sources.data],
+  const totalPages = Math.max(
+    1,
+    Math.ceil((sources.data?.totalItems ?? 0) / pageSize),
   )
 
   return (
@@ -73,7 +79,9 @@ export function CategorySourceManagement({
           {t('Transaction types could not be loaded.')}
         </Alert>
       ) : null}
-      {sources.data?.length === 0 ? (
+      {sources.data?.totalItems === 0 &&
+      query === '' &&
+      mappingFilter === 'all' ? (
         <EmptyState title={t('No imported transaction types')}>
           <p>
             {t(
@@ -82,12 +90,15 @@ export function CategorySourceManagement({
           </p>
         </EmptyState>
       ) : null}
-      {(sources.data?.length ?? 0) > 0 ? (
+      {(sources.data?.totalItems ?? 0) > 0 ? (
         <>
           <div className="category-source-filters">
             <FormField label={t('Search MCC or name')}>
               <input
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setPage(1)
+                  setQuery(event.target.value)
+                }}
                 placeholder={t('Search MCC or name…')}
                 type="search"
                 value={query}
@@ -95,9 +106,10 @@ export function CategorySourceManagement({
             </FormField>
             <FormField label={t('Mapping status')}>
               <Select
-                onChange={(event) =>
+                onChange={(event) => {
+                  setPage(1)
                   setMappingFilter(event.target.value as MappingFilter)
-                }
+                }}
                 value={mappingFilter}
               >
                 <option value="all">{t('All transaction types')}</option>
@@ -106,7 +118,7 @@ export function CategorySourceManagement({
               </Select>
             </FormField>
           </div>
-          {visibleSources.length === 0 ? (
+          {sources.data?.sources.length === 0 ? (
             <EmptyState title={t('No matching transaction types')}>
               <p>{t('Try a different search or filter.')}</p>
             </EmptyState>
@@ -117,11 +129,12 @@ export function CategorySourceManagement({
                   <tr>
                     <th scope="col">{t('MCC')}</th>
                     <th scope="col">{t('Imported name')}</th>
+                    <th scope="col">{t('Transactions')}</th>
                     <th scope="col">{t('Assigned category')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleSources.map((source) => {
+                  {sources.data?.sources.map((source) => {
                     const inputId = `category-source-${source.code}`
                     return (
                       <tr key={source.code}>
@@ -131,10 +144,10 @@ export function CategorySourceManagement({
                         <td data-label={t('Imported name')}>
                           <div className="category-source-copy">
                             <span>{source.originalName || '—'}</span>
-                            <small>
-                              {source.transactionCount} {t('transactions')}
-                            </small>
                           </div>
+                        </td>
+                        <td data-label={t('Transactions')}>
+                          {source.transactionCount}
                         </td>
                         <td data-label={t('Assigned category')}>
                           <Select
@@ -166,9 +179,36 @@ export function CategorySourceManagement({
               </table>
             </div>
           )}
+          <nav
+            aria-label={t('Pagination')}
+            className="category-source-pagination"
+          >
+            <Button
+              disabled={page === 1 || sources.isFetching}
+              onClick={() => setPage((current) => current - 1)}
+              size="small"
+              type="button"
+              variant="secondary"
+            >
+              {t('Previous')}
+            </Button>
+            <span>
+              {t('Page {page} of {total}', { page, total: totalPages })} ·{' '}
+              {sources.data?.totalItems ?? 0}
+            </span>
+            <Button
+              disabled={page === totalPages || sources.isFetching}
+              onClick={() => setPage((current) => current + 1)}
+              size="small"
+              type="button"
+              variant="secondary"
+            >
+              {t('Next')}
+            </Button>
+          </nav>
         </>
       ) : null}
-      {categories.length === 0 && (sources.data?.length ?? 0) > 0 ? (
+      {categories.length === 0 && (sources.data?.totalItems ?? 0) > 0 ? (
         <Alert tone="warning">
           {t(
             'Create personal categories first, then assign an imported transaction type to one of them.',

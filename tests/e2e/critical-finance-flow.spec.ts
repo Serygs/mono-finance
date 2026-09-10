@@ -382,6 +382,8 @@ async function installFinanceApiMock(page: Page): Promise<void> {
       return void route.fulfill(
         json({
           data: {
+            page: 1,
+            pageSize: 10,
             sources: [
               {
                 code: 'mcc-5812',
@@ -391,6 +393,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
                   state.sourceCategoryId === '' ? null : categories[0],
               },
             ],
+            totalItems: 1,
           },
         }),
       )

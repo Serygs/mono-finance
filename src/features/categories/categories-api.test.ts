@@ -16,7 +16,9 @@ describe('category API client', () => {
     const fetcher = vi.fn().mockResolvedValue(
       Response.json({
         data: {
-          sourceCategories: [
+          page: 1,
+          pageSize: 10,
+          sources: [
             {
               code: '5411',
               mappedCategory: null,
@@ -24,14 +26,22 @@ describe('category API client', () => {
               transactionCount: 12,
             },
           ],
+          totalItems: 1,
         },
       }),
     )
     vi.stubGlobal('fetch', fetcher)
 
-    await expect(getCategorySources()).resolves.toHaveLength(1)
+    await expect(
+      getCategorySources({
+        mapping: 'all',
+        page: 1,
+        pageSize: 10,
+        query: '',
+      }),
+    ).resolves.toMatchObject({ totalItems: 1 })
     expect(fetcher).toHaveBeenCalledWith(
-      '/api/category-sources',
+      '/api/category-sources?mapping=all&page=1&pageSize=10&query=',
       expect.objectContaining({ method: 'GET' }),
     )
   })
