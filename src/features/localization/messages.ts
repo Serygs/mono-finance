@@ -140,6 +140,7 @@ export const UKRAINIAN_MESSAGES: Readonly<Record<string, string>> = {
   'Monthly expenses': 'Щомісячні витрати',
   'Monthly trend': 'Місячний тренд',
   'Mono Finance overview': 'Огляд Mono Finance',
+  'Finance overview': 'Огляд фінансів',
   Name: 'Назва',
   'Net cash flow': 'Чистий грошовий потік',
   'No custom categories': 'Немає власних категорій',
