@@ -45,6 +45,7 @@
 html,
 #root {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 100%;
   background: var(--color-canvas);
@@ -56,10 +57,11 @@ html {
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 100dvh;
   margin: 0;
-  overflow-x: hidden;
   background: var(--color-canvas);
   color: var(--color-text);
   -webkit-tap-highlight-color: rgb(0 110 219 / 14%);
@@ -83,8 +85,9 @@ a {
 }
 
 .app-shell {
-  width: min(100% - 2rem, 72rem);
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
 }
 
 .app-header {
@@ -100,7 +103,7 @@ a {
   z-index: 10;
   right: 1rem;
   bottom: 1rem;
-  max-width: min(26rem, calc(100vw - 2rem));
+  max-width: min(26rem, calc(100% - 2rem));
   margin: 0;
   border: 1px solid #e7c36a;
   border-radius: 0.9rem;

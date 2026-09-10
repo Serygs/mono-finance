@@ -132,6 +132,8 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   ).toBeVisible()
 
   const layout = await page.evaluate(() => ({
+    appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
+    body: document.body.getBoundingClientRect(),
     clientWidth: document.documentElement.clientWidth,
     dashboardRight: document
       .querySelector('.dashboard-page')!
@@ -149,14 +151,48 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
     ).filter((control) => control.fontSize < 16),
     headerRight: document.querySelector('.app-header')!.getBoundingClientRect()
       .right,
+    headerActions: document
+      .querySelector('.app-header-actions')!
+      .getBoundingClientRect(),
+    root: document.querySelector('#root')!.getBoundingClientRect(),
     scrollWidth: document.documentElement.scrollWidth,
+    viewport: document
+      .querySelector('meta[name="viewport"]')
+      ?.getAttribute('content'),
+    bodyOverflowX: getComputedStyle(document.body).overflowX,
   }))
 
+  expect(layout.viewport).toContain('width=device-width')
+  expect(layout.viewport).toContain('initial-scale=1.0')
+  expect(layout.bodyOverflowX).toBe('visible')
   expect(layout.scrollWidth).toBe(layout.clientWidth)
+  expect(layout.body.left).toBe(0)
+  expect(layout.body.right).toBe(layout.clientWidth)
+  expect(layout.root.left).toBe(0)
+  expect(layout.root.right).toBe(layout.clientWidth)
+  expect(layout.appShell.left).toBe(0)
+  expect(layout.appShell.right).toBe(layout.clientWidth)
   expect(layout.headerRight).toBe(layout.clientWidth)
+  expect(layout.headerActions.right).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.undersizedControls).toEqual([])
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const narrowIphoneLayout = await page.evaluate(() => ({
+    appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
+    clientWidth: document.documentElement.clientWidth,
+    headerActions: document
+      .querySelector('.app-header-actions')!
+      .getBoundingClientRect(),
+    scrollWidth: document.documentElement.scrollWidth,
+  }))
+  expect(narrowIphoneLayout.scrollWidth).toBe(narrowIphoneLayout.clientWidth)
+  expect(narrowIphoneLayout.appShell.left).toBe(0)
+  expect(narrowIphoneLayout.appShell.right).toBe(narrowIphoneLayout.clientWidth)
+  expect(narrowIphoneLayout.headerActions.right).toBeLessThanOrEqual(
+    narrowIphoneLayout.clientWidth,
+  )
 
   await page.setViewportSize({ width: 215, height: 932 })
   const zoomedLayout = await page.evaluate(() => ({

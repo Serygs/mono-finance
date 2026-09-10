@@ -952,6 +952,7 @@
   }
 
   .app-header {
+    max-width: 100%;
     min-height: 3.75rem;
     flex-wrap: nowrap;
     gap: 0.75rem;
@@ -962,6 +963,12 @@
 
   .brand-lockup {
     flex: 1 1 auto;
+  }
+
+  .app-header-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    min-width: 0;
   }
 
   .sign-out-button {
