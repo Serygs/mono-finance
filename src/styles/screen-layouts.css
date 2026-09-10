@@ -46,15 +46,28 @@
 }
 
 .transaction-filters {
+  position: sticky;
+  z-index: 10;
+  top: 0.75rem;
+  grid-template-columns:
+    minmax(14rem, 1.5fr) minmax(9rem, 1fr) minmax(14rem, 1.2fr)
+    minmax(9rem, 1fr);
   align-items: start;
+  gap: 0.65rem;
   margin-top: 0;
-  padding: 1rem;
+  padding: 0.8rem;
+  backdrop-filter: saturate(150%) blur(16px);
 }
 
 .transaction-search,
 .filter-field,
 .custom-date-fields .ui-field {
   color: var(--color-text-secondary);
+}
+
+.transaction-filters .transaction-search,
+.transaction-filters .filter-field {
+  grid-column: auto;
 }
 
 .transaction-search input,
@@ -72,18 +85,13 @@
 }
 
 .transaction-filters .ui-segmented-control {
-  grid-column: span 4;
+  grid-column: auto;
   align-self: end;
 }
 
-.transaction-account-filter {
-  display: grid;
-  grid-column: 1 / -1;
+.transaction-filters .transaction-account-filter {
+  grid-column: span 2;
   min-width: 0;
-  gap: 0.4rem;
-  margin: 0;
-  border: 0;
-  padding: 0;
 }
 
 .transaction-account-options {
@@ -777,6 +785,17 @@
 }
 
 @media (max-width: 75rem) {
+  .transaction-filters {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .transaction-filters .transaction-search,
+  .transaction-filters .ui-segmented-control,
+  .transaction-filters .transaction-account-filter {
+    grid-column: 1 / -1;
+  }
+
   .kpi-grid {
     grid-template-columns: repeat(3, minmax(12rem, 1fr));
     overflow: visible;
@@ -900,12 +919,19 @@
 
   .transaction-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    padding: 0.75rem;
   }
 
   .transaction-filters .ui-segmented-control,
   .transaction-search,
-  .custom-date-fields {
+  .custom-date-fields,
+  .transaction-filters .transaction-account-filter {
     grid-column: 1 / -1;
+  }
+
+  .transaction-filters .filter-field:not(.transaction-account-filter) {
+    grid-column: auto;
   }
 
   .transaction-account-options {

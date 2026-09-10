@@ -371,7 +371,10 @@ function AccountMultiSelector({
 }) {
   const { t } = useLocalization()
   return (
-    <FormField className="filter-field" label={t('Accounts')}>
+    <FormField
+      className="filter-field transaction-account-filter"
+      label={t('Accounts')}
+    >
       <Select
         multiple
         onChange={(event) =>
