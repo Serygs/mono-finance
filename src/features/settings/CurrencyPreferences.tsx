@@ -37,18 +37,14 @@ export function CurrencyPreferences() {
   return (
     <section
       aria-labelledby="currency-settings-title"
-      className="category-management"
+      className="currency-preferences"
     >
-      <header className="section-heading">
+      <header className="currency-preferences__summary">
         <h2 id="currency-settings-title">{t('Base currency')}</h2>
-        <p>
-          {t(
-            'Base-currency totals use saved historical rates. Original transaction amounts always remain unchanged.',
-          )}
-        </p>
+        <strong>{preferences.data?.baseCurrencyCode ?? 'UAH'}</strong>
       </header>
       <form
-        className="category-form"
+        className="currency-preferences__form"
         key={preferences.data?.baseCurrencyCode ?? 'UAH'}
         onSubmit={submit}
       >

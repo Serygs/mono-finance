@@ -32,10 +32,33 @@ export async function listSourceCategoriesHandler(
   return noStore(
     context.json(
       success({
-        sources: await service.listSources(context.get('authenticatedUser').id),
+        ...(await service.listSources(
+          context.get('authenticatedUser').id,
+          sourceCategoryQuery(context),
+        )),
       }),
     ),
   )
+}
+function sourceCategoryQuery(context: CategoryContext) {
+  const query = context.req.query('query')?.slice(0, 128) ?? ''
+  const mapping = context.req.query('mapping')
+  const page = positiveInt(context.req.query('page'), 1, 10_000)
+  const pageSize = positiveInt(context.req.query('pageSize'), 10, 20)
+  const mappingFilter: 'all' | 'mapped' | 'unmapped' =
+    mapping === 'mapped' || mapping === 'unmapped' ? mapping : 'all'
+  return {
+    mapping: mappingFilter,
+    page,
+    pageSize,
+    query,
+  }
+}
+function positiveInt(value: string | undefined, fallback: number, max: number) {
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= max
+    ? parsed
+    : fallback
 }
 export async function saveSourceCategoryHandler(
   context: CategoryContext,

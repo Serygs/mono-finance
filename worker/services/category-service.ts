@@ -19,6 +19,18 @@ export interface SourceCategory {
   transactionCount: number
   mappedCategory: CustomCategory | null
 }
+export interface SourceCategoryQuery {
+  mapping: 'all' | 'mapped' | 'unmapped'
+  page: number
+  pageSize: number
+  query: string
+}
+export interface SourceCategoryPage {
+  page: number
+  pageSize: number
+  sources: SourceCategory[]
+  totalItems: number
+}
 
 export interface CategoryRepository {
   countOverrides(categoryId: string, userId: string): Promise<number>
@@ -111,8 +123,28 @@ export class CategoryService {
     return this.repository.listCategories(userId)
   }
 
-  listSources(userId: string): Promise<SourceCategory[]> {
-    return this.repository.listSourceCategories(userId)
+  async listSources(
+    userId: string,
+    input: SourceCategoryQuery,
+  ): Promise<SourceCategoryPage> {
+    const normalizedQuery = input.query.trim().toLocaleLowerCase()
+    const matching = (
+      await this.repository.listSourceCategories(userId)
+    ).filter(
+      (source) =>
+        (input.mapping === 'all' ||
+          (input.mapping === 'mapped') === (source.mappedCategory !== null)) &&
+        (normalizedQuery === '' ||
+          source.code.toLocaleLowerCase().includes(normalizedQuery) ||
+          source.originalName.toLocaleLowerCase().includes(normalizedQuery)),
+    )
+    const start = (input.page - 1) * input.pageSize
+    return {
+      page: input.page,
+      pageSize: input.pageSize,
+      sources: matching.slice(start, start + input.pageSize),
+      totalItems: matching.length,
+    }
   }
 
   create(userId: string, input: CreateCategoryInput): Promise<CustomCategory> {

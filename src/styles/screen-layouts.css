@@ -530,11 +530,8 @@
 }
 
 .settings-page {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.settings-page > .ui-page-header {
-  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 62rem);
+  justify-content: center;
 }
 
 .system-status-grid {
@@ -566,6 +563,43 @@
 .category-management {
   align-content: start;
   gap: 1rem;
+}
+
+.currency-preferences {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+  padding: 0.8rem 1rem;
+}
+
+.currency-preferences__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+}
+
+.currency-preferences__summary h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.currency-preferences__summary strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.currency-preferences__form {
+  display: flex;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.currency-preferences__form .ui-field {
+  width: 7.5rem;
 }
 
 .section-heading h2 {
@@ -772,14 +806,14 @@
 
 .category-source-table {
   width: 100%;
-  min-width: 38rem;
+  min-width: 42rem;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .category-source-table th,
 .category-source-table td {
-  padding: 0.8rem 1rem;
+  padding: 0.6rem 0.85rem;
   text-align: left;
   vertical-align: middle;
 }
@@ -797,7 +831,12 @@
 
 .category-source-table th:last-child,
 .category-source-table td:last-child {
-  width: min(18rem, 36%);
+  width: min(17rem, 32%);
+}
+
+.category-source-table th:nth-child(3),
+.category-source-table td:nth-child(3) {
+  width: 7rem;
 }
 
 .category-source-table tbody tr + tr td {
@@ -826,6 +865,15 @@
 
 .category-source-table .ui-select {
   width: 100%;
+}
+
+.category-source-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 0.65rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 @media (min-width: 30.0625rem) and (max-width: 40rem) {
@@ -1067,6 +1115,26 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 0.65rem;
     padding: 0.85rem;
+  }
+
+  .currency-preferences,
+  .currency-preferences__form {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .currency-preferences__form {
+    display: grid;
+  }
+
+  .currency-preferences__form .ui-field,
+  .currency-preferences__form .transaction-correction-actions,
+  .currency-preferences__form .ui-button {
+    width: 100%;
+  }
+
+  .category-source-pagination {
+    justify-content: space-between;
   }
 
   .dashboard-filters .ui-field {

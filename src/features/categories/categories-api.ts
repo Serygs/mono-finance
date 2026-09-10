@@ -20,6 +20,12 @@ export interface SourceCategory {
   transactionCount: number
   mappedCategory: CustomCategory | null
 }
+export interface SourceCategoryPage {
+  page: number
+  pageSize: number
+  sources: SourceCategory[]
+  totalItems: number
+}
 export interface CategoryInput {
   colorToken: string | null
   icon: string | null
@@ -32,12 +38,19 @@ export async function getCategories(): Promise<CustomCategory[]> {
   )
   return payload.categories
 }
-export async function getCategorySources(): Promise<SourceCategory[]> {
-  const payload = await request<{
-    sourceCategories?: SourceCategory[]
-    sources?: SourceCategory[]
-  }>('/api/category-sources')
-  return payload.sourceCategories ?? payload.sources ?? []
+export async function getCategorySources(input: {
+  mapping: 'all' | 'mapped' | 'unmapped'
+  page: number
+  pageSize: number
+  query: string
+}): Promise<SourceCategoryPage> {
+  const params = new URLSearchParams({
+    mapping: input.mapping,
+    page: String(input.page),
+    pageSize: String(input.pageSize),
+    query: input.query,
+  })
+  return request<SourceCategoryPage>(`/api/category-sources?${params}`)
 }
 export async function saveCategorySourceMapping(
   sourceCode: string,
