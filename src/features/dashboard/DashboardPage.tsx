@@ -547,6 +547,7 @@ function DashboardAnalyticsView({
         >
           <LineChart
             currencyCode={chartCurrency}
+            granularity="day"
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.daily, 'expenseAmountMinor')}
             title={t('Daily expenses')}
@@ -585,13 +586,17 @@ function DashboardAnalyticsView({
           ) : null}
         </ChartCard>
         <ChartCard title={t('Expense distribution')}>
-          <DonutChart minorUnits={minorUnits} values={categoryValues} />
+          <DonutChart
+            minorUnits={minorUnits}
+            values={categoryDisplay.initial}
+          />
         </ChartCard>
         <ChartCard
           title={`${t('Monthly trend')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
         >
           <LineChart
             currencyCode={chartCurrency}
+            granularity="month"
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.monthly, 'expenseAmountMinor')}
             title={t('Monthly expenses')}
@@ -747,23 +752,37 @@ function ChartCard({
 
 function LineChart({
   currencyCode,
+  granularity,
   minorUnit,
   points,
   title,
 }: {
   currencyCode: string | null
+  granularity: 'day' | 'month'
   minorUnit: number
   points: Array<{ periodStart: number; value: number }>
   title: string
 }) {
   const { t } = useLocalization()
   if (points.length === 0 || currencyCode === null) return <EmptyChart />
-  const width = 640
-  const height = 220
+  const width = 720
+  const height = 300
+  const plot = { bottom: 254, left: 78, right: 24, top: 20 }
+  const plotWidth = width - plot.left - plot.right
+  const plotHeight = plot.bottom - plot.top
   const maximum = Math.max(...points.map((point) => point.value), 1)
   const position = (index: number) =>
-    points.length === 1 ? width / 2 : (index / (points.length - 1)) * width
-  const y = (value: number) => height - (value / maximum) * (height - 24)
+    points.length === 1
+      ? plot.left + plotWidth / 2
+      : plot.left + (index / (points.length - 1)) * plotWidth
+  const y = (value: number) => plot.bottom - (value / maximum) * plotHeight
+  const axisValues =
+    maximum === 1 ? [maximum, 0] : [maximum, Math.round(maximum / 2), 0]
+  const axisPointIndexes = [
+    0,
+    Math.floor((points.length - 1) / 2),
+    points.length - 1,
+  ].filter((index, position, values) => values.indexOf(index) === position)
   const path = points
     .map(
       (point, index) =>
@@ -779,7 +798,22 @@ function LineChart({
         viewBox={`0 0 ${width} ${height}`}
       >
         <title>{title}</title>
-        <path className="line-chart-grid" d={`M 0 ${height - 1} H ${width}`} />
+        {axisValues.map((value) => (
+          <g key={value}>
+            <path
+              className="line-chart-grid"
+              d={`M ${plot.left} ${y(value)} H ${width - plot.right}`}
+            />
+            <text
+              className="line-chart-axis-label"
+              textAnchor="end"
+              x={plot.left - 10}
+              y={y(value) + 4}
+            >
+              {formatCurrencyAmount(value, currencyCode, minorUnit)}
+            </text>
+          </g>
+        ))}
         <path className="line-chart-path" d={path} />
         {points.map((point, index) => (
           <circle
@@ -788,9 +822,24 @@ function LineChart({
             key={point.periodStart}
             r="4"
           >
-            <title>{`${formatPeriod(point.periodStart, 'day')}: ${formatCurrencyAmount(point.value, currencyCode, minorUnit)}`}</title>
+            <title>{`${formatPeriod(point.periodStart, granularity)}: ${formatCurrencyAmount(point.value, currencyCode, minorUnit)}`}</title>
           </circle>
         ))}
+        {axisPointIndexes.map((index) => {
+          const point = points[index]
+          if (point === undefined) return null
+          return (
+            <text
+              className="line-chart-axis-label"
+              key={point.periodStart}
+              textAnchor="middle"
+              x={position(index)}
+              y={height - 12}
+            >
+              {formatPeriod(point.periodStart, granularity)}
+            </text>
+          )
+        })}
       </svg>
       <details>
         <summary>{t('View chart values')}</summary>
@@ -798,7 +847,9 @@ function LineChart({
           <tbody>
             {points.map((point) => (
               <tr key={point.periodStart}>
-                <th scope="row">{formatPeriod(point.periodStart, 'day')}</th>
+                <th scope="row">
+                  {formatPeriod(point.periodStart, granularity)}
+                </th>
                 <td>
                   {formatCurrencyAmount(point.value, currencyCode, minorUnit)}
                 </td>
