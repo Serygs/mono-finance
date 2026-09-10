@@ -13,18 +13,18 @@
 ## Architecture
 
 - Keep React code feature-oriented:
-    - feature-owned UI and hooks → `src/features/<feature>/`
-    - reusable UI → `src/components/`
-    - API/browser infrastructure → `src/lib/`
+  - feature-owned UI and hooks → `src/features/<feature>/`
+  - reusable UI → `src/components/`
+  - API/browser infrastructure → `src/lib/`
 - Keep Worker routes thin:
-    - HTTP mapping → `worker/routes/`
-    - business/use-case logic → `services/`
-    - parameterized D1 access → `repositories/`
+  - HTTP mapping → `worker/routes/`
+  - business/use-case logic → `services/`
+  - parameterized D1 access → `repositories/`
 - Keep Monobank DTOs and client code isolated in `worker/monobank/`.
 - Do not expose Monobank/provider response shapes directly to the frontend.
 - Use the shared response contract:
-    - success: `{ data }`
-    - failure: `{ error: { code, message } }`
+  - success: `{ data }`
+  - failure: `{ error: { code, message } }`
 - Never expose stack traces, SQL errors, upstream payloads, tokens, secrets, or internal error messages.
 - Do not add a D1 binding with a placeholder database ID.
 - Keep local D1 configuration explicit and inject the real production ID through protected deployment configuration.
@@ -32,11 +32,11 @@
 ## Security
 
 - Never place Monobank tokens, passwords, session identifiers, or secrets in:
-    - `src/`
-    - committed configuration
-    - logs
-    - tests
-    - error responses
+  - `src/`
+  - committed configuration
+  - logs
+  - tests
+  - error responses
 - Keep secret bindings server-side and configure them with Wrangler secrets, not `vars`.
 - Every private API route must be protected by the authentication boundary.
 - Only explicitly public endpoints may bypass authentication.
@@ -58,13 +58,13 @@
 - Do not scan or read the entire repository.
 - Use code search first to locate the relevant implementation.
 - Read only:
-    - files directly affected by the task;
-    - their immediate dependencies;
-    - relevant tests.
+  - files directly affected by the task;
+  - their immediate dependencies;
+  - relevant tests.
 - Inspect only the boundaries required by the task.
-    - Frontend-only task → do not inspect Worker/D1 unless required by an existing contract.
-    - Worker-only task → do not inspect unrelated frontend code.
-    - Styling/layout task → do not inspect backend/database implementation.
+  - Frontend-only task → do not inspect Worker/D1 unless required by an existing contract.
+  - Worker-only task → do not inspect unrelated frontend code.
+  - Styling/layout task → do not inspect backend/database implementation.
 - Do not reread unchanged files unless new information makes it necessary.
 - If an unrelated issue is discovered, report it instead of fixing it.
 
@@ -95,3 +95,4 @@ Run relevant lightweight validation first:
 ```bash
 npm run typecheck
 npm run lint
+```
