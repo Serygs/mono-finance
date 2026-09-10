@@ -17,6 +17,16 @@ test('an owner can complete the critical private-finance workflow', async ({
     request.url().includes('/api/analytics/overview'),
   )
   const periodSelect = page.locator('.dashboard-filters').getByLabel('Period')
+  await expect(periodSelect).toHaveValue('30d')
+  await expect(
+    page.getByRole('heading', { name: 'Currency distribution' }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole('heading', { name: 'Month-end forecast' }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole('heading', { name: 'Top merchants' }),
+  ).toHaveCount(0)
   await periodSelect.selectOption('7d')
   await periodRequest
   await expect(periodSelect).toHaveValue('7d')

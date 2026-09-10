@@ -602,13 +602,6 @@ function DashboardAnalyticsView({
             title={t('Monthly expenses')}
           />
         </ChartCard>
-        <ChartCard title={t('Month-end forecast')}>
-          <MetricValues
-            empty={t('No current-month expenses yet.')}
-            minorUnits={minorUnits}
-            values={displayed.overview.projectedMonthExpenses}
-          />
-        </ChartCard>
         <ChartCard title={t('Account distribution')}>
           <BarChart
             minorUnits={minorUnits}
@@ -618,26 +611,8 @@ function DashboardAnalyticsView({
             }))}
           />
         </ChartCard>
-        <ChartCard title={t('Currency distribution')}>
-          <BarChart
-            minorUnits={minorUnits}
-            values={analytics.breakdowns.expensesByCurrency.map((item) => ({
-              ...item,
-              label: item.currencyCode,
-            }))}
-          />
-        </ChartCard>
       </section>
       <section className="dashboard-evidence-grid">
-        <EvidenceList
-          minorUnits={minorUnits}
-          title={t('Top merchants')}
-          values={chartData.breakdowns.topMerchants.map((item) => ({
-            ...item,
-            detail: t('{count} transactions', { count: item.transactionCount }),
-            label: item.description,
-          }))}
-        />
         <EvidenceList
           minorUnits={minorUnits}
           title={t('Largest transactions')}
