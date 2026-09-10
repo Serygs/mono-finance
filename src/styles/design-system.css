@@ -14,17 +14,17 @@
 .skip-link {
   position: fixed;
   z-index: 100;
-  top: max(0.5rem, env(safe-area-inset-top));
-  left: max(0.75rem, env(safe-area-inset-left));
+  top: 0;
+  left: -100vw;
   border-radius: var(--radius-control);
   background: var(--color-text);
   color: var(--color-surface);
   padding: 0.7rem 1rem;
-  transform: translateY(-160%);
 }
 
-.skip-link:focus {
-  transform: translateY(0);
+.skip-link:focus-visible {
+  top: max(0.5rem, env(safe-area-inset-top));
+  left: max(0.75rem, env(safe-area-inset-left));
 }
 
 :where(h1, h2, h3) {
