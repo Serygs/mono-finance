@@ -10,7 +10,7 @@ test('an owner can complete the critical private-finance workflow', async ({
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+    page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
 
   const periodRequest = page.waitForRequest((request) =>
@@ -85,7 +85,7 @@ test('language, category type mapping, and category chart interaction are access
   await page.getByRole('button', { name: 'Увійти' }).click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
   await expect(
-    page.getByRole('heading', { name: 'Ваші фінанси — у чіткому фокусі.' }),
+    page.getByRole('heading', { name: 'Огляд фінансів' }),
   ).toBeVisible()
 
   const segment = page.locator('.donut-segment-group').first()
@@ -118,7 +118,7 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+    page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
 
   const layout = await page.evaluate(() => ({
@@ -154,6 +154,64 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
     scrollWidth: document.documentElement.scrollWidth,
   }))
   expect(zoomedLayout.scrollWidth).toBe(zoomedLayout.clientWidth)
+})
+
+test('core finance screens fit a narrow mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 })
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  for (const path of ['/', '/transactions', '/settings']) {
+    await page.goto(path)
+    await expect(page.locator('main')).toBeVisible()
+    const layout = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      overflowingControls: Array.from(
+        document.querySelectorAll('button, input, select'),
+        (element) => element.getBoundingClientRect(),
+      ).filter((rect) => rect.right > document.documentElement.clientWidth),
+    }))
+
+    expect(layout.scrollWidth).toBe(layout.clientWidth)
+    expect(layout.overflowingControls).toEqual([])
+  }
+
+  await page.setViewportSize({ width: 540, height: 720 })
+  await page.goto('/settings')
+  const sourceTableWidth = await page
+    .locator('.category-source-table-wrap')
+    .evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+  expect(sourceTableWidth.scrollWidth).toBe(sourceTableWidth.clientWidth)
+})
+
+test('custom category form stays compact until the owner opens it', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  await page.getByRole('link', { name: 'Settings' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
+    0,
+  )
+  await page.getByRole('button', { name: '+ Add category' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Add category' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
+    0,
+  )
 })
 
 async function installFinanceApiMock(page: Page): Promise<void> {

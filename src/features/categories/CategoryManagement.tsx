@@ -31,6 +31,7 @@ export function CategoryManagement() {
     id: string
     input: CategoryInput
   } | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{
     id: string
     name: string
@@ -47,6 +48,7 @@ export function CategoryManagement() {
         : updateCategory(editing.id, input),
     onSuccess: () => {
       setEditing(null)
+      setIsCreating(false)
       void refreshCategoryData()
     },
   })
@@ -96,48 +98,67 @@ export function CategoryManagement() {
           )}
         </p>
       </header>
-      <form
-        className="category-form"
-        key={editing?.id ?? 'new'}
-        onSubmit={submit}
-      >
-        <h3>{t(editing === null ? 'Add category' : 'Edit category')}</h3>
-        <FormField label={t('Name')}>
-          <input
-            autoComplete="off"
-            name="name"
-            defaultValue={editing?.input.name ?? EMPTY.name}
-            maxLength={80}
-            required
+      {!isCreating && editing === null ? (
+        <Button
+          className="category-add-action"
+          onClick={() => {
+            mutation.reset()
+            setIsCreating(true)
+          }}
+          type="button"
+          variant="secondary"
+        >
+          + {t('Add category')}
+        </Button>
+      ) : null}
+      {isCreating || editing !== null ? (
+        <form
+          className="category-form"
+          key={editing?.id ?? 'new'}
+          onSubmit={submit}
+        >
+          <h3>{t(editing === null ? 'Add category' : 'Edit category')}</h3>
+          <FormField label={t('Name')}>
+            <input
+              autoComplete="off"
+              name="name"
+              defaultValue={editing?.input.name ?? EMPTY.name}
+              maxLength={80}
+              required
+            />
+          </FormField>
+          <CategoryAppearanceFields
+            colorToken={editing?.input.colorToken ?? EMPTY.colorToken}
+            icon={editing?.input.icon ?? EMPTY.icon}
+            translate={t}
           />
-        </FormField>
-        <CategoryAppearanceFields
-          colorToken={editing?.input.colorToken ?? EMPTY.colorToken}
-          icon={editing?.input.icon ?? EMPTY.icon}
-          translate={t}
-        />
-        <div className="transaction-correction-actions">
-          <Button loading={mutation.isPending} type="submit">
-            {mutation.isPending
-              ? t('Saving…')
-              : editing === null
-                ? t('Add category')
-                : t('Save category')}
-          </Button>
-          {editing !== null ? (
-            <Button
-              type="button"
-              onClick={() => setEditing(null)}
-              variant="secondary"
-            >
-              {t('Cancel')}
+          <div className="transaction-correction-actions">
+            <Button loading={mutation.isPending} type="submit">
+              {mutation.isPending
+                ? t('Saving…')
+                : editing === null
+                  ? t('Add category')
+                  : t('Save category')}
             </Button>
+            <>
+              <Button
+                type="button"
+                onClick={() => {
+                  mutation.reset()
+                  setEditing(null)
+                  setIsCreating(false)
+                }}
+                variant="secondary"
+              >
+                {t('Cancel')}
+              </Button>
+            </>
+          </div>
+          {mutation.isError ? (
+            <Alert tone="danger">{t('Category could not be saved.')}</Alert>
           ) : null}
-        </div>
-        {mutation.isError ? (
-          <Alert tone="danger">{t('Category could not be saved.')}</Alert>
-        ) : null}
-      </form>
+        </form>
+      ) : null}
       {categories.isPending ? (
         <Skeleton label={t('Loading categories…')} lines={2} />
       ) : null}
@@ -149,7 +170,7 @@ export function CategoryManagement() {
           <p>{t('Add a category to personalize transaction analytics.')}</p>
         </EmptyState>
       ) : null}
-      <ul className="category-list">
+      <ul className="category-list category-list--compact">
         {categories.data?.map((category) => (
           <li key={category.id}>
             <CategoryChip
@@ -157,14 +178,13 @@ export function CategoryManagement() {
               icon={<CategoryIcon token={category.icon} />}
               label={category.name}
             />
-            <div>
-              <span>{category.colorToken ?? t('Default color')}</span>
-            </div>
-            <div className="transaction-correction-actions">
+            <div className="category-list-actions">
               <Button
                 size="small"
                 type="button"
-                onClick={() =>
+                onClick={() => {
+                  mutation.reset()
+                  setIsCreating(false)
                   setEditing({
                     id: category.id,
                     input: {
@@ -173,7 +193,7 @@ export function CategoryManagement() {
                       colorToken: category.colorToken,
                     },
                   })
-                }
+                }}
                 variant="secondary"
               >
                 {t('Edit')}

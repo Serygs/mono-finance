@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -40,6 +39,7 @@ import {
   availableCurrencies,
   chartAccentIndex,
   chartSeries,
+  displayExpenseCategories,
   filterDashboardAnalytics,
   formatCurrencyAmount,
   formatPeriod,
@@ -129,6 +129,10 @@ export function DashboardPage() {
     queryFn: () => getTransactions(recentFilters, undefined, 100),
     queryKey: ['dashboard-recent', recentFilters],
   })
+  const selectedPeriodLabel = t(
+    DATE_PRESETS.find((preset) => preset.value === datePreset)?.label ??
+      'Custom range',
+  )
 
   useEffect(() => {
     let active = true
@@ -223,16 +227,9 @@ export function DashboardPage() {
             </Button>
           </>
         }
-        description={
-          <p>
-            {t(
-              'Imported transactions, shaped by your adjustments and compensation links.',
-            )}
-          </p>
-        }
-        eyebrow={t('Personal finance')}
+        description={<p>{selectedPeriodLabel}</p>}
         id="dashboard-title"
-        title={t('Your money, in clear focus.')}
+        title={t('Finance overview')}
       />
 
       {error === null ? null : (
@@ -244,6 +241,13 @@ export function DashboardPage() {
         <Alert tone="danger" title={t('Transaction sync is unavailable')}>
           {syncStatusError}
         </Alert>
+      )}
+      {analyticsQuery.data === undefined || range === null ? null : (
+        <DashboardPrimaryKpis
+          accounts={accounts ?? []}
+          analytics={analyticsQuery.data}
+          displayCurrency={currencyMode === 'original' ? displayCurrency : null}
+        />
       )}
 
       <section
@@ -365,6 +369,62 @@ export function DashboardPage() {
   )
 }
 
+function DashboardPrimaryKpis({
+  accounts,
+  analytics,
+  displayCurrency,
+}: {
+  accounts: AccountSummary[]
+  analytics: DashboardAnalytics
+  displayCurrency: string | null
+}) {
+  const { t } = useLocalization()
+  const displayed = filterDashboardAnalytics(analytics, displayCurrency)
+  const minorUnits = new Map(
+    accounts.map((account) => [
+      account.currency.code,
+      account.currency.minorUnit,
+    ]),
+  )
+
+  if (displayed.overview.totals.length === 0) return null
+
+  return (
+    <section
+      className="kpi-grid dashboard-primary-kpis"
+      aria-label={t('Period summary')}
+    >
+      <MetricCard
+        accent="cyan"
+        minorUnits={minorUnits}
+        title={t('Total spent')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.expenseAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+      <MetricCard
+        accent="blue"
+        minorUnits={minorUnits}
+        title={t('Total income')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.incomeAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+      <MetricCard
+        accent="green"
+        minorUnits={minorUnits}
+        title={t('Net cash flow')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.netAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+    </section>
+  )
+}
+
 function DashboardAnalyticsView({
   accounts,
   analytics,
@@ -381,26 +441,16 @@ function DashboardAnalyticsView({
   recentTransactionsLoading: boolean
 }) {
   const { t } = useLocalization()
-  const [searchParameters, setSearchParameters] = useSearchParams()
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false)
   const currencies = availableCurrencies(analytics)
   const chartCurrency = displayCurrency ?? currencies[0] ?? null
   const displayed = filterDashboardAnalytics(analytics, displayCurrency)
   const chartData = filterDashboardAnalytics(analytics, chartCurrency)
   const categoryValues = chartData.breakdowns.expensesByCategory
-  const availableCategoryKeys = categoryValues.map(categoryKey)
-  const selectedCategoryKeys = searchParameters
-    .getAll('category')
-    .filter((key) => availableCategoryKeys.includes(key))
-  const hiddenCategoryKeys = new Set(
-    selectedCategoryKeys.length === 0
-      ? []
-      : availableCategoryKeys.filter(
-          (key) => !selectedCategoryKeys.includes(key),
-        ),
-  )
-  const visibleCategoryValues = categoryValues.filter(
-    (value) => !hiddenCategoryKeys.has(categoryKey(value)),
-  )
+  const categoryDisplay = displayExpenseCategories(categoryValues, t('Other'))
+  const displayedCategoryValues = categoriesExpanded
+    ? categoryDisplay.all
+    : categoryDisplay.initial
   const minorUnits = new Map(
     accounts.map((account) => [
       account.currency.code,
@@ -461,34 +511,10 @@ function DashboardAnalyticsView({
               currency: displayCurrency,
             })}
       </p>
-      <section className="kpi-grid" aria-label={t('Period summary')}>
-        <MetricCard
-          accent="cyan"
-          minorUnits={minorUnits}
-          title={t('Total spent')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.expenseAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
-        <MetricCard
-          accent="blue"
-          minorUnits={minorUnits}
-          title={t('Total income')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.incomeAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
-        <MetricCard
-          accent="green"
-          minorUnits={minorUnits}
-          title={t('Net cash flow')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.netAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
+      <section
+        className="kpi-grid dashboard-secondary-kpis"
+        aria-label={t('Period summary')}
+      >
         <MetricCard
           accent="violet"
           minorUnits={minorUnits}
@@ -521,6 +547,7 @@ function DashboardAnalyticsView({
         >
           <LineChart
             currencyCode={chartCurrency}
+            granularity="day"
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.daily, 'expenseAmountMinor')}
             title={t('Daily expenses')}
@@ -536,37 +563,40 @@ function DashboardAnalyticsView({
           className="dashboard-chart-primary"
           title={t('Spending by category')}
         >
-          <CategoryVisibilityFilter
-            hiddenKeys={hiddenCategoryKeys}
-            onChange={(nextHiddenKeys) => {
-              const next = new URLSearchParams(searchParameters)
-              next.delete('category')
-              const visibleKeys = categoryValues
-                .map(categoryKey)
-                .filter((key) => !nextHiddenKeys.has(key))
-              if (visibleKeys.length !== categoryValues.length) {
-                for (const key of visibleKeys) next.append('category', key)
-              }
-              setSearchParameters(next, { replace: true })
-            }}
-            values={categoryValues}
-          />
           <BarChart
+            className="category-bar-chart"
             minorUnits={minorUnits}
-            values={visibleCategoryValues.map((item) => ({
+            values={displayedCategoryValues.map((item) => ({
               ...item,
               label: item.categoryName,
             }))}
           />
+          {categoryDisplay.all.length > 5 ? (
+            <div className="category-chart-actions">
+              <Button
+                aria-expanded={categoriesExpanded}
+                onClick={() => setCategoriesExpanded((expanded) => !expanded)}
+                size="small"
+                type="button"
+                variant="quiet"
+              >
+                {t(categoriesExpanded ? 'Show less' : 'Show all')}
+              </Button>
+            </div>
+          ) : null}
         </ChartCard>
         <ChartCard title={t('Expense distribution')}>
-          <DonutChart minorUnits={minorUnits} values={visibleCategoryValues} />
+          <DonutChart
+            minorUnits={minorUnits}
+            values={categoryDisplay.initial}
+          />
         </ChartCard>
         <ChartCard
           title={`${t('Monthly trend')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
         >
           <LineChart
             currencyCode={chartCurrency}
+            granularity="month"
             minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
             points={chartSeries(chartData.trends.monthly, 'expenseAmountMinor')}
             title={t('Monthly expenses')}
@@ -722,23 +752,37 @@ function ChartCard({
 
 function LineChart({
   currencyCode,
+  granularity,
   minorUnit,
   points,
   title,
 }: {
   currencyCode: string | null
+  granularity: 'day' | 'month'
   minorUnit: number
   points: Array<{ periodStart: number; value: number }>
   title: string
 }) {
   const { t } = useLocalization()
   if (points.length === 0 || currencyCode === null) return <EmptyChart />
-  const width = 640
-  const height = 220
+  const width = 720
+  const height = 300
+  const plot = { bottom: 254, left: 78, right: 24, top: 20 }
+  const plotWidth = width - plot.left - plot.right
+  const plotHeight = plot.bottom - plot.top
   const maximum = Math.max(...points.map((point) => point.value), 1)
   const position = (index: number) =>
-    points.length === 1 ? width / 2 : (index / (points.length - 1)) * width
-  const y = (value: number) => height - (value / maximum) * (height - 24)
+    points.length === 1
+      ? plot.left + plotWidth / 2
+      : plot.left + (index / (points.length - 1)) * plotWidth
+  const y = (value: number) => plot.bottom - (value / maximum) * plotHeight
+  const axisValues =
+    maximum === 1 ? [maximum, 0] : [maximum, Math.round(maximum / 2), 0]
+  const axisPointIndexes = [
+    0,
+    Math.floor((points.length - 1) / 2),
+    points.length - 1,
+  ].filter((index, position, values) => values.indexOf(index) === position)
   const path = points
     .map(
       (point, index) =>
@@ -754,7 +798,22 @@ function LineChart({
         viewBox={`0 0 ${width} ${height}`}
       >
         <title>{title}</title>
-        <path className="line-chart-grid" d={`M 0 ${height - 1} H ${width}`} />
+        {axisValues.map((value) => (
+          <g key={value}>
+            <path
+              className="line-chart-grid"
+              d={`M ${plot.left} ${y(value)} H ${width - plot.right}`}
+            />
+            <text
+              className="line-chart-axis-label"
+              textAnchor="end"
+              x={plot.left - 10}
+              y={y(value) + 4}
+            >
+              {formatCurrencyAmount(value, currencyCode, minorUnit)}
+            </text>
+          </g>
+        ))}
         <path className="line-chart-path" d={path} />
         {points.map((point, index) => (
           <circle
@@ -763,9 +822,24 @@ function LineChart({
             key={point.periodStart}
             r="4"
           >
-            <title>{`${formatPeriod(point.periodStart, 'day')}: ${formatCurrencyAmount(point.value, currencyCode, minorUnit)}`}</title>
+            <title>{`${formatPeriod(point.periodStart, granularity)}: ${formatCurrencyAmount(point.value, currencyCode, minorUnit)}`}</title>
           </circle>
         ))}
+        {axisPointIndexes.map((index) => {
+          const point = points[index]
+          if (point === undefined) return null
+          return (
+            <text
+              className="line-chart-axis-label"
+              key={point.periodStart}
+              textAnchor="middle"
+              x={position(index)}
+              y={height - 12}
+            >
+              {formatPeriod(point.periodStart, granularity)}
+            </text>
+          )
+        })}
       </svg>
       <details>
         <summary>{t('View chart values')}</summary>
@@ -773,7 +847,9 @@ function LineChart({
           <tbody>
             {points.map((point) => (
               <tr key={point.periodStart}>
-                <th scope="row">{formatPeriod(point.periodStart, 'day')}</th>
+                <th scope="row">
+                  {formatPeriod(point.periodStart, granularity)}
+                </th>
                 <td>
                   {formatCurrencyAmount(point.value, currencyCode, minorUnit)}
                 </td>
@@ -844,9 +920,11 @@ function IncomeExpenseChart({
 }
 
 function BarChart({
+  className,
   minorUnits,
   values,
 }: {
+  className?: string
   minorUnits: Map<string, number>
   values: Array<CurrencyAmount & { label: string }>
 }) {
@@ -854,7 +932,7 @@ function BarChart({
   const displayed = values
   const maximum = Math.max(...displayed.map((value) => value.amountMinor), 1)
   return (
-    <ol className="bar-chart">
+    <ol className={['bar-chart', className].filter(Boolean).join(' ')}>
       {displayed.map((value) => (
         <li key={`${value.label}-${value.currencyCode}`}>
           <span>{value.label}</span>
@@ -879,66 +957,6 @@ function BarChart({
         </li>
       ))}
     </ol>
-  )
-}
-
-function CategoryVisibilityFilter({
-  hiddenKeys,
-  onChange,
-  values,
-}: {
-  hiddenKeys: Set<string>
-  onChange(value: Set<string>): void
-  values: Array<
-    CurrencyAmount & { categoryId: string | null; categoryName: string }
-  >
-}) {
-  const { t } = useLocalization()
-  if (values.length === 0) return null
-  return (
-    <div className="category-visibility-filter">
-      <div className="category-visibility-filter__heading">
-        <strong>{t('Visible categories')}</strong>
-        <Button
-          disabled={hiddenKeys.size === 0}
-          onClick={() => onChange(new Set())}
-          size="small"
-          type="button"
-          variant="quiet"
-        >
-          {t('Show all')}
-        </Button>
-      </div>
-      <div
-        className="category-visibility-filter__options"
-        role="group"
-        aria-label={t('Visible categories')}
-      >
-        {values.map((value) => {
-          const key = categoryKey(value)
-          const visible = !hiddenKeys.has(key)
-          return (
-            <button
-              aria-pressed={visible}
-              key={key}
-              onClick={() => {
-                const next = new Set(hiddenKeys)
-                if (visible && values.length - next.size > 1) next.add(key)
-                else next.delete(key)
-                onChange(next)
-              }}
-              type="button"
-            >
-              <i
-                aria-hidden="true"
-                className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
-              />
-              {value.categoryName}
-            </button>
-          )
-        })}
-      </div>
-    </div>
   )
 }
 
