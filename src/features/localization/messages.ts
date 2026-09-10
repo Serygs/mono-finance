@@ -149,6 +149,7 @@ export const UKRAINIAN_MESSAGES: Readonly<Record<string, string>> = {
   'No data in this period.': 'Немає даних за цей період.',
   'No matching transactions': 'Немає відповідних транзакцій',
   'No transactions in this view': 'У цьому представленні немає транзакцій',
+  Other: 'Інше',
   'No imported transaction types': 'Немає імпортованих типів транзакцій',
   'Open transactions': 'Відкрити транзакції',
   'Offline — showing encrypted data saved {date}.':
@@ -274,6 +275,7 @@ export const UKRAINIAN_MESSAGES: Readonly<Record<string, string>> = {
     'Імпортовані транзакції з урахуванням ваших коригувань і компенсацій.',
   'Refreshing…': 'Оновлення…',
   'Show all': 'Показати всі',
+  'Show less': 'Показати менше',
   Transactions: 'Транзакції',
   'Transactions could not be loaded': 'Не вдалося завантажити транзакції',
   'Transaction filters': 'Фільтри транзакцій',

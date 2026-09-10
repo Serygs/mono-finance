@@ -140,30 +140,6 @@
   gap: 0.45rem;
 }
 
-.category-visibility-filter {
-  display: grid;
-  gap: 0.7rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.category-visibility-filter__heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.category-visibility-filter__options {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding: 0.1rem 0 0.35rem;
-  scrollbar-width: thin;
-}
-
-.category-visibility-filter__options button,
 .donut-legend button {
   min-height: 2.75rem;
   border: 1px solid var(--color-border);
@@ -173,18 +149,15 @@
   font: inherit;
 }
 
-.category-visibility-filter__options button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 0.75rem;
-  cursor: pointer;
+.category-chart-actions {
+  display: flex;
+  justify-content: start;
+  margin-top: 1rem;
 }
 
-.category-visibility-filter__options button[aria-pressed='false'] {
-  opacity: 0.52;
-  text-decoration: line-through;
+.category-bar-chart li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .donut-segment-group {
@@ -768,10 +741,6 @@
     align-items: stretch;
   }
 
-  .category-visibility-filter__options {
-    margin-inline: -0.25rem;
-    padding-inline: 0.25rem;
-  }
   .app-header {
     min-height: 3.75rem;
     flex-wrap: nowrap;
@@ -889,6 +858,32 @@
 
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .category-bar-chart li {
+    grid-template-areas:
+      'label amount'
+      'bar bar';
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .category-bar-chart li > span {
+    grid-area: label;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .category-bar-chart li > div {
+    grid-area: bar;
+  }
+
+  .category-bar-chart li > strong {
+    grid-area: amount;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .dashboard-chart-grid,
