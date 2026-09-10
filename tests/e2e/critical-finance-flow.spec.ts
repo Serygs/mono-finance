@@ -10,7 +10,7 @@ test('an owner can complete the critical private-finance workflow', async ({
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+    page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
 
   const periodRequest = page.waitForRequest((request) =>
@@ -85,7 +85,7 @@ test('language, category type mapping, and category chart interaction are access
   await page.getByRole('button', { name: 'Увійти' }).click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
   await expect(
-    page.getByRole('heading', { name: 'Ваші фінанси — у чіткому фокусі.' }),
+    page.getByRole('heading', { name: 'Огляд фінансів' }),
   ).toBeVisible()
 
   const segment = page.locator('.donut-segment-group').first()
@@ -118,7 +118,7 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Your money, in clear focus.' }),
+    page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
 
   const layout = await page.evaluate(() => ({
