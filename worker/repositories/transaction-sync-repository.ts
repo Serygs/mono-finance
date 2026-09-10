@@ -1,4 +1,5 @@
 import type { TransactionSourceRecord } from '../monobank/internal-dtos'
+import { resolveMccCategoryName } from '../monobank/mcc-categories'
 import type {
   ClaimedTransactionSyncAccount,
   TransactionImportResult,
@@ -115,7 +116,7 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
             transaction.originalMcc,
             transaction.occurredAtEpochSeconds,
             transaction.originalMcc.toString(),
-            `MCC ${transaction.originalMcc}`,
+            resolveMccCategoryName(transaction.originalMcc),
             transaction.direction,
             importedAt,
           ),

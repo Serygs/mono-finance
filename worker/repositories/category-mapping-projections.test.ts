@@ -54,15 +54,36 @@ describe('effective category repository projections', () => {
   })
 
   it('projects source mappings into analytics after transaction overrides', async () => {
-    const database = databaseReturning([])
+    const database = databaseReturning([
+      {
+        account_id: 'account-1',
+        category_id: '5732',
+        category_name: 'Продаж електронного обладнання',
+        compensation_amount_minor: 0,
+        direction: 'expense',
+        effective_amount_minor: -1_000,
+        id: 'transaction-1',
+        is_excluded: 0,
+        original_amount_minor: -1_000,
+        original_currency_code: 'UAH',
+        original_description: 'Device',
+        original_timestamp: 1,
+      },
+    ])
 
-    await new D1AnalyticsRepository(database.binding).listResolvedTransactions({
+    const result = await new D1AnalyticsRepository(
+      database.binding,
+    ).listResolvedTransactions({
       accountIds: [],
       dateFrom: 1,
       dateTo: 2,
       userId: 'owner-1',
     })
 
+    expect(result[0]).toMatchObject({
+      categoryId: '5732',
+      categoryName: 'Продаж електронного обладнання',
+    })
     expect(database.sql).toContain(
       'COALESCE(override_categories.name, mapped_categories.name, transactions.original_category_name)',
     )
