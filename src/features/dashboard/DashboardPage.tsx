@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -40,6 +39,7 @@ import {
   availableCurrencies,
   chartAccentIndex,
   chartSeries,
+  displayExpenseCategories,
   filterDashboardAnalytics,
   formatCurrencyAmount,
   formatPeriod,
@@ -441,26 +441,16 @@ function DashboardAnalyticsView({
   recentTransactionsLoading: boolean
 }) {
   const { t } = useLocalization()
-  const [searchParameters, setSearchParameters] = useSearchParams()
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false)
   const currencies = availableCurrencies(analytics)
   const chartCurrency = displayCurrency ?? currencies[0] ?? null
   const displayed = filterDashboardAnalytics(analytics, displayCurrency)
   const chartData = filterDashboardAnalytics(analytics, chartCurrency)
   const categoryValues = chartData.breakdowns.expensesByCategory
-  const availableCategoryKeys = categoryValues.map(categoryKey)
-  const selectedCategoryKeys = searchParameters
-    .getAll('category')
-    .filter((key) => availableCategoryKeys.includes(key))
-  const hiddenCategoryKeys = new Set(
-    selectedCategoryKeys.length === 0
-      ? []
-      : availableCategoryKeys.filter(
-          (key) => !selectedCategoryKeys.includes(key),
-        ),
-  )
-  const visibleCategoryValues = categoryValues.filter(
-    (value) => !hiddenCategoryKeys.has(categoryKey(value)),
-  )
+  const categoryDisplay = displayExpenseCategories(categoryValues, t('Other'))
+  const displayedCategoryValues = categoriesExpanded
+    ? categoryDisplay.all
+    : categoryDisplay.initial
   const minorUnits = new Map(
     accounts.map((account) => [
       account.currency.code,
@@ -572,31 +562,30 @@ function DashboardAnalyticsView({
           className="dashboard-chart-primary"
           title={t('Spending by category')}
         >
-          <CategoryVisibilityFilter
-            hiddenKeys={hiddenCategoryKeys}
-            onChange={(nextHiddenKeys) => {
-              const next = new URLSearchParams(searchParameters)
-              next.delete('category')
-              const visibleKeys = categoryValues
-                .map(categoryKey)
-                .filter((key) => !nextHiddenKeys.has(key))
-              if (visibleKeys.length !== categoryValues.length) {
-                for (const key of visibleKeys) next.append('category', key)
-              }
-              setSearchParameters(next, { replace: true })
-            }}
-            values={categoryValues}
-          />
           <BarChart
+            className="category-bar-chart"
             minorUnits={minorUnits}
-            values={visibleCategoryValues.map((item) => ({
+            values={displayedCategoryValues.map((item) => ({
               ...item,
               label: item.categoryName,
             }))}
           />
+          {categoryDisplay.all.length > 5 ? (
+            <div className="category-chart-actions">
+              <Button
+                aria-expanded={categoriesExpanded}
+                onClick={() => setCategoriesExpanded((expanded) => !expanded)}
+                size="small"
+                type="button"
+                variant="quiet"
+              >
+                {t(categoriesExpanded ? 'Show less' : 'Show all')}
+              </Button>
+            </div>
+          ) : null}
         </ChartCard>
         <ChartCard title={t('Expense distribution')}>
-          <DonutChart minorUnits={minorUnits} values={visibleCategoryValues} />
+          <DonutChart minorUnits={minorUnits} values={categoryValues} />
         </ChartCard>
         <ChartCard
           title={`${t('Monthly trend')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
@@ -880,9 +869,11 @@ function IncomeExpenseChart({
 }
 
 function BarChart({
+  className,
   minorUnits,
   values,
 }: {
+  className?: string
   minorUnits: Map<string, number>
   values: Array<CurrencyAmount & { label: string }>
 }) {
@@ -890,7 +881,7 @@ function BarChart({
   const displayed = values
   const maximum = Math.max(...displayed.map((value) => value.amountMinor), 1)
   return (
-    <ol className="bar-chart">
+    <ol className={['bar-chart', className].filter(Boolean).join(' ')}>
       {displayed.map((value) => (
         <li key={`${value.label}-${value.currencyCode}`}>
           <span>{value.label}</span>
@@ -915,66 +906,6 @@ function BarChart({
         </li>
       ))}
     </ol>
-  )
-}
-
-function CategoryVisibilityFilter({
-  hiddenKeys,
-  onChange,
-  values,
-}: {
-  hiddenKeys: Set<string>
-  onChange(value: Set<string>): void
-  values: Array<
-    CurrencyAmount & { categoryId: string | null; categoryName: string }
-  >
-}) {
-  const { t } = useLocalization()
-  if (values.length === 0) return null
-  return (
-    <div className="category-visibility-filter">
-      <div className="category-visibility-filter__heading">
-        <strong>{t('Visible categories')}</strong>
-        <Button
-          disabled={hiddenKeys.size === 0}
-          onClick={() => onChange(new Set())}
-          size="small"
-          type="button"
-          variant="quiet"
-        >
-          {t('Show all')}
-        </Button>
-      </div>
-      <div
-        className="category-visibility-filter__options"
-        role="group"
-        aria-label={t('Visible categories')}
-      >
-        {values.map((value) => {
-          const key = categoryKey(value)
-          const visible = !hiddenKeys.has(key)
-          return (
-            <button
-              aria-pressed={visible}
-              key={key}
-              onClick={() => {
-                const next = new Set(hiddenKeys)
-                if (visible && values.length - next.size > 1) next.add(key)
-                else next.delete(key)
-                onChange(next)
-              }}
-              type="button"
-            >
-              <i
-                aria-hidden="true"
-                className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
-              />
-              {value.categoryName}
-            </button>
-          )
-        })}
-      </div>
-    </div>
   )
 }
 
