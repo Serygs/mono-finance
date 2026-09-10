@@ -11,8 +11,8 @@ import {
 } from './dashboard-data'
 
 describe('dashboard data', () => {
-  it('starts with a range wide enough to include the first historical backfill windows', () => {
-    expect(DEFAULT_DASHBOARD_DATE_PRESET).toBe('90d')
+  it('starts with the most recent 30-day period', () => {
+    expect(DEFAULT_DASHBOARD_DATE_PRESET).toBe('30d')
   })
 
   it('keeps currency groups separate when a display currency is selected', () => {
