@@ -18,8 +18,10 @@ import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { TransactionDetails } from './TransactionDetails'
 import {
   accountLabel,
+  formatTransactionDate,
   formatTransactionAmount,
   formatTransactionTime,
+  groupTransactionsByDate,
 } from './transaction-formatting'
 import { getTransactions } from './transactions-api'
 import type {
@@ -105,6 +107,7 @@ export function TransactionsPage() {
   })
   const transactions =
     transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
+  const transactionGroups = groupTransactionsByDate(transactions)
   const categories = [
     ...(customCategoriesQuery.data ?? []).map((item) => item.name),
     ...new Set(
@@ -230,44 +233,61 @@ export function TransactionsPage() {
       ) : null}
       {transactions.length > 0 ? (
         <div className="transaction-layout">
-          <ol
+          <div
             className="transaction-list"
             aria-label={t('Transactions in chronological order')}
           >
-            {transactions.map((transaction) => (
-              <li key={transaction.id}>
-                <button
-                  aria-pressed={selectedTransaction?.id === transaction.id}
-                  className="transaction-row"
-                  onClick={() => setSelectedTransaction(transaction)}
-                  type="button"
-                >
-                  <span className="transaction-main">
-                    <strong>{transaction.originalDescription}</strong>
-                    <span>
-                      {formatTransactionTime(transaction.originalTimestamp)} ·{' '}
-                      {accountLabel(transaction)}
-                    </span>
-                  </span>
-                  <span className="transaction-meta">
-                    <span
-                      className={
-                        transaction.effectiveAmountMinor < 0
-                          ? 'transaction-amount expense'
-                          : 'transaction-amount income'
-                      }
+            <div className="transaction-table-header" aria-hidden="true">
+              <span>{t('Date and time')}</span>
+              <span>{t('Name')}</span>
+              <span>{t('Category')}</span>
+              <span>{t('Account')}</span>
+              <span>{t('Effective amount')}</span>
+            </div>
+            {transactionGroups.map((group) => {
+              const firstTransaction = group.transactions[0]
+              if (firstTransaction === undefined) return null
+              return (
+                <section className="transaction-date-group" key={group.dateKey}>
+                  <h2>
+                    {formatTransactionDate(firstTransaction.originalTimestamp)}
+                  </h2>
+                  {group.transactions.map((transaction) => (
+                    <button
+                      aria-pressed={selectedTransaction?.id === transaction.id}
+                      className="transaction-row"
+                      key={transaction.id}
+                      onClick={() => setSelectedTransaction(transaction)}
+                      type="button"
                     >
-                      {formatTransactionAmount(transaction)}
-                    </span>
-                    <span className="transaction-category">
-                      {transaction.category.name ?? t('Uncategorized')}
-                    </span>
-                    <TransactionIndicators transaction={transaction} />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
+                      <span className="transaction-date">
+                        {formatTransactionTime(transaction.originalTimestamp)}
+                      </span>
+                      <span className="transaction-main">
+                        <strong>{transaction.originalDescription}</strong>
+                        <TransactionIndicators transaction={transaction} />
+                      </span>
+                      <span className="transaction-category">
+                        {transaction.category.name ?? t('Uncategorized')}
+                      </span>
+                      <span className="transaction-account">
+                        {accountLabel(transaction)}
+                      </span>
+                      <span
+                        className={
+                          transaction.effectiveAmountMinor < 0
+                            ? 'transaction-amount expense'
+                            : 'transaction-amount income'
+                        }
+                      >
+                        {formatTransactionAmount(transaction)}
+                      </span>
+                    </button>
+                  ))}
+                </section>
+              )
+            })}
+          </div>
           <BottomSheet
             onClose={() => setSelectedTransaction(null)}
             open={selectedTransaction !== null}

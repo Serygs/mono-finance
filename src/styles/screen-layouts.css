@@ -308,15 +308,56 @@
 }
 
 .transaction-list {
-  gap: 0.45rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.transaction-table-header,
+.transaction-row {
+  display: grid;
+  grid-template-columns:
+    minmax(7rem, 0.7fr) minmax(12rem, 1.5fr) minmax(7rem, 0.75fr)
+    minmax(10rem, 0.95fr) minmax(7rem, auto);
+  gap: 0.75rem;
+}
+
+.transaction-table-header {
+  align-items: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0 0.85rem;
+  text-transform: uppercase;
+}
+
+.transaction-table-header > :last-child {
+  text-align: right;
+}
+
+.transaction-date-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.transaction-date-group + .transaction-date-group {
+  margin-top: 0.2rem;
+}
+
+.transaction-date-group h2 {
+  margin: 0.25rem 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 650;
 }
 
 .transaction-row {
-  min-height: 4.75rem;
+  min-height: 0;
+  align-items: center;
   border-color: var(--color-border);
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   background: var(--color-surface-raised);
   box-shadow: none;
+  padding: 0.7rem 0.85rem;
 }
 
 .transaction-row:hover,
@@ -326,7 +367,9 @@
 }
 
 .transaction-amount {
+  justify-self: end;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .transaction-amount.expense {
@@ -341,6 +384,21 @@
   border: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-text-tertiary);
+}
+
+.transaction-date,
+.transaction-category,
+.transaction-account {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-main .transaction-indicators {
+  justify-content: start;
 }
 
 .transaction-details {
@@ -908,8 +966,53 @@
   }
 
   .transaction-row {
-    display: grid;
+    grid-template-areas:
+      'merchant amount'
+      'date category';
     grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem 0.75rem;
+    display: grid;
+    padding: 0.9rem;
+  }
+
+  .transaction-table-header {
+    display: none;
+  }
+
+  .transaction-date-group {
+    gap: 0.45rem;
+  }
+
+  .transaction-date-group h2 {
+    margin-top: 0;
+  }
+
+  .transaction-date {
+    grid-area: date;
+  }
+
+  .transaction-main {
+    grid-area: merchant;
+  }
+
+  .transaction-main strong {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .transaction-category {
+    grid-area: category;
+    justify-self: end;
+  }
+
+  .transaction-account {
+    display: none;
+  }
+
+  .transaction-amount {
+    grid-area: amount;
   }
 
   .account-filter-heading {
