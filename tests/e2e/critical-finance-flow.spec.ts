@@ -156,6 +156,41 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   expect(zoomedLayout.scrollWidth).toBe(zoomedLayout.clientWidth)
 })
 
+test('core finance screens fit a narrow mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 })
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  for (const path of ['/', '/transactions', '/settings']) {
+    await page.goto(path)
+    await expect(page.locator('main')).toBeVisible()
+    const layout = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      overflowingControls: Array.from(
+        document.querySelectorAll('button, input, select'),
+        (element) => element.getBoundingClientRect(),
+      ).filter((rect) => rect.right > document.documentElement.clientWidth),
+    }))
+
+    expect(layout.scrollWidth).toBe(layout.clientWidth)
+    expect(layout.overflowingControls).toEqual([])
+  }
+
+  await page.setViewportSize({ width: 540, height: 720 })
+  await page.goto('/settings')
+  const sourceTableWidth = await page
+    .locator('.category-source-table-wrap')
+    .evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }))
+  expect(sourceTableWidth.scrollWidth).toBe(sourceTableWidth.clientWidth)
+})
+
 test('custom category form stays compact until the owner opens it', async ({
   page,
 }) => {
