@@ -156,6 +156,29 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   expect(zoomedLayout.scrollWidth).toBe(zoomedLayout.clientWidth)
 })
 
+test('custom category form stays compact until the owner opens it', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  await page.getByRole('link', { name: 'Settings' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
+    0,
+  )
+  await page.getByRole('button', { name: '+ Add category' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Add category' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
+    0,
+  )
+})
+
 async function installFinanceApiMock(page: Page): Promise<void> {
   const state = {
     adjusted: false,
