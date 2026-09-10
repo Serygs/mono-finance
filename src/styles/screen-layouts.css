@@ -707,6 +707,29 @@
   grid-template-columns: minmax(0, auto) minmax(4rem, 1fr) auto;
 }
 
+.category-add-action {
+  justify-self: start;
+}
+
+.category-list--compact {
+  gap: 0.45rem;
+}
+
+.category-list--compact li {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
+.category-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 0.45rem;
+}
+
 .category-source-management {
   display: grid;
   gap: 1rem;
@@ -1189,6 +1212,10 @@
 
   .category-list li {
     grid-template-columns: 1fr;
+  }
+
+  .category-list-actions {
+    justify-content: start;
   }
 
   .category-source-filters {
