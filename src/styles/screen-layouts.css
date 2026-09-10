@@ -21,6 +21,13 @@
   margin-top: 0.35rem;
 }
 
+.dashboard-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 0.6rem;
+}
+
 .dashboard-filters,
 .transaction-filters,
 .category-form,
@@ -935,7 +942,7 @@
   }
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 47.99rem) {
   .language-switcher select,
   .ui-field .ui-select,
   .ui-field input,
@@ -952,13 +959,15 @@
   }
 
   .app-header {
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
     min-height: 3.75rem;
     flex-wrap: nowrap;
     gap: 0.75rem;
     padding: calc(env(safe-area-inset-top) + 0.55rem)
-      max(0.75rem, env(safe-area-inset-right)) 0.55rem
-      max(0.75rem, env(safe-area-inset-left));
+      max(1rem, env(safe-area-inset-right)) 0.55rem
+      max(1rem, env(safe-area-inset-left));
   }
 
   .brand-lockup {
@@ -1009,9 +1018,11 @@
 
   .page-content {
     width: 100%;
-    padding: 1.25rem max(0.875rem, env(safe-area-inset-right))
+    max-width: 100%;
+    min-width: 0;
+    padding: 1.25rem max(1rem, env(safe-area-inset-right))
       calc(5.5rem + env(safe-area-inset-bottom))
-      max(0.875rem, env(safe-area-inset-left));
+      max(1rem, env(safe-area-inset-left));
   }
 
   .ui-page-header {
@@ -1021,17 +1032,23 @@
   }
 
   .ui-page-header h1 {
-    font-size: clamp(2.2rem, 10vw, 3rem);
+    font-size: clamp(1.85rem, 8vw, 2.5rem);
     line-height: 1.02;
   }
 
   .ui-page-header__actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: block;
     min-width: 0;
   }
 
-  .ui-page-header__actions .ui-button {
+  .dashboard-sync-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .dashboard-sync-actions .ui-button {
     width: 100%;
     min-width: 0;
     padding-inline: 0.65rem;
@@ -1047,11 +1064,14 @@
   }
 
   .dashboard-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+    padding: 0.85rem;
   }
 
-  .dashboard-filters .ui-field:first-child {
-    grid-column: 1 / -1;
+  .dashboard-filters .ui-field {
+    grid-column: auto;
+    width: 100%;
   }
 
   .transaction-filters {
@@ -1081,8 +1101,16 @@
     justify-content: center;
   }
 
-  .kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .dashboard-primary-kpis,
+  .dashboard-secondary-kpis {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
+  .dashboard-primary-kpis .ui-kpi,
+  .dashboard-secondary-kpis .ui-kpi {
+    min-height: 0;
+    padding: 0.85rem 1rem;
   }
 
   .category-bar-chart li {
@@ -1337,20 +1365,6 @@
 }
 
 @media (max-width: 22rem) {
-  .app-header {
-    flex-wrap: wrap;
-  }
-
-  .brand-lockup,
-  .app-header-actions {
-    width: 100%;
-  }
-
-  .app-header-actions {
-    justify-content: space-between;
-  }
-
-  .ui-page-header__actions,
   .transaction-account-options {
     grid-template-columns: 1fr;
   }

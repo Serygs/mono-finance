@@ -203,7 +203,7 @@ export function DashboardPage() {
     <PageSurface className="dashboard-page">
       <PageHeader
         actions={
-          <>
+          <div className="dashboard-sync-actions">
             <Button
               disabled={isSynchronizing || accounts === null}
               loading={isSynchronizing}
@@ -225,7 +225,7 @@ export function DashboardPage() {
                 ? t('Refreshing…')
                 : t('Refresh transactions')}
             </Button>
-          </>
+          </div>
         }
         description={<p>{selectedPeriodLabel}</p>}
         id="dashboard-title"

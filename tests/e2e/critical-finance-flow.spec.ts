@@ -118,7 +118,7 @@ test('language, category type mapping, and category chart interaction are access
   ).toBeVisible()
 })
 
-test('overview stays within the iPhone Pro Max viewport without form-control zoom', async ({
+test('overview switches to a single-column mobile composition without viewport overflow', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 430, height: 932 })
@@ -130,6 +130,7 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   await expect(
     page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
+  await expect(page.locator('.dashboard-primary-kpis .ui-kpi')).toHaveCount(3)
 
   const layout = await page.evaluate(() => ({
     appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
@@ -141,6 +142,18 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
     filtersRight: document
       .querySelector('.dashboard-filters')!
       .getBoundingClientRect().right,
+    filterFields: Array.from(
+      document.querySelectorAll('.dashboard-filters .ui-field'),
+      (field) => field.getBoundingClientRect(),
+    ),
+    primaryKpis: Array.from(
+      document.querySelectorAll('.dashboard-primary-kpis .ui-kpi'),
+      (card) => card.getBoundingClientRect(),
+    ),
+    syncActions: Array.from(
+      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
+      (button) => button.getBoundingClientRect(),
+    ),
     undersizedControls: Array.from(
       document.querySelectorAll('input, select, textarea'),
       (control) => ({
@@ -163,7 +176,7 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   }))
 
   expect(layout.viewport).toContain('width=device-width')
-  expect(layout.viewport).toContain('initial-scale=1.0')
+  expect(layout.viewport).toContain('initial-scale=1')
   expect(layout.bodyOverflowX).toBe('visible')
   expect(layout.scrollWidth).toBe(layout.clientWidth)
   expect(layout.body.left).toBe(0)
@@ -176,23 +189,57 @@ test('overview stays within the iPhone Pro Max viewport without form-control zoo
   expect(layout.headerActions.right).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
+  expect(layout.filterFields).toHaveLength(3)
+  expect(layout.filterFields.every((field) => field.width > 350)).toBe(true)
+  expect(layout.primaryKpis).toHaveLength(3)
+  expect(layout.primaryKpis.every((card) => card.width > 350)).toBe(true)
+  expect(layout.syncActions).toHaveLength(2)
+  expect(layout.syncActions.every((button) => button.width > 350)).toBe(true)
+  expect(layout.syncActions[1].top).toBeGreaterThan(layout.syncActions[0].top)
   expect(layout.undersizedControls).toEqual([])
 
-  await page.setViewportSize({ width: 390, height: 844 })
-  const narrowIphoneLayout = await page.evaluate(() => ({
-    appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
-    clientWidth: document.documentElement.clientWidth,
-    headerActions: document
-      .querySelector('.app-header-actions')!
-      .getBoundingClientRect(),
-    scrollWidth: document.documentElement.scrollWidth,
-  }))
-  expect(narrowIphoneLayout.scrollWidth).toBe(narrowIphoneLayout.clientWidth)
-  expect(narrowIphoneLayout.appShell.left).toBe(0)
-  expect(narrowIphoneLayout.appShell.right).toBe(narrowIphoneLayout.clientWidth)
-  expect(narrowIphoneLayout.headerActions.right).toBeLessThanOrEqual(
-    narrowIphoneLayout.clientWidth,
+  for (const width of [320, 375, 390, 767]) {
+    await page.setViewportSize({ width, height: 844 })
+    const mobileLayout = await page.evaluate(() => ({
+      appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
+      clientWidth: document.documentElement.clientWidth,
+      headerActions: document
+        .querySelector('.app-header-actions')!
+        .getBoundingClientRect(),
+      scrollWidth: document.documentElement.scrollWidth,
+      syncActions: Array.from(
+        document.querySelectorAll('.dashboard-sync-actions .ui-button'),
+        (button) => button.getBoundingClientRect(),
+      ),
+    }))
+    expect(mobileLayout.scrollWidth).toBe(mobileLayout.clientWidth)
+    expect(mobileLayout.appShell.left).toBe(0)
+    expect(mobileLayout.appShell.right).toBe(mobileLayout.clientWidth)
+    expect(mobileLayout.headerActions.right).toBeLessThanOrEqual(
+      mobileLayout.clientWidth,
+    )
+    expect(mobileLayout.syncActions[1].top).toBeGreaterThan(
+      mobileLayout.syncActions[0].top,
+    )
+  }
+
+  await page.setViewportSize({ width: 768, height: 844 })
+  const tabletLayout = await page.evaluate(() =>
+    Array.from(
+      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
+      (button) => button.getBoundingClientRect(),
+    ),
   )
+  expect(tabletLayout[1].top).toBe(tabletLayout[0].top)
+
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const desktopLayout = await page.evaluate(() =>
+    Array.from(
+      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
+      (button) => button.getBoundingClientRect(),
+    ),
+  )
+  expect(desktopLayout[1].top).toBe(desktopLayout[0].top)
 
   await page.setViewportSize({ width: 215, height: 932 })
   const zoomedLayout = await page.evaluate(() => ({
