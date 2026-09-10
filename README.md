@@ -288,15 +288,16 @@ Tests use synthetic financial fixtures and no real secrets. Repository tests cur
 
 Production D1 configuration is generated into the ignored `dist/mono_finance/wrangler.production.json`; `wrangler.jsonc` intentionally contains no production database UUID.
 
-For a trusted workstation deployment, set `CLOUDFLARE_D1_DATABASE_ID` and `PRODUCTION_HEALTH_URL` only in the current process, then run:
+For a trusted workstation release, set `CLOUDFLARE_D1_DATABASE_ID` and `PRODUCTION_HEALTH_URL` only in the current process, then run:
 
 ```powershell
-npm run build
-npm run prepare:production
-npm run db:migrate:production
-npm run deploy:production
-npm run healthcheck:production
+npm run release:production
 ```
+
+`npm run deploy:production` is also self-contained: it rebuilds the production
+artifact and generates `wrangler.production.json` before invoking Wrangler. Use
+`release:production` when pending production D1 migrations must be applied
+before deployment.
 
 The GitHub workflow is the preferred release path. After deployment, verify the HTTPS health endpoint, authentication, a read-only dashboard request, synchronization status, and installed PWA behavior.
 

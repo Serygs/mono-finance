@@ -272,6 +272,10 @@
   stroke: var(--color-border);
 }
 
+.line-chart-axis-label {
+  fill: var(--color-text-tertiary);
+}
+
 .line-chart-path,
 .line-chart circle {
   stroke: var(--color-action);
