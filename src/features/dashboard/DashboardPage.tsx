@@ -129,6 +129,10 @@ export function DashboardPage() {
     queryFn: () => getTransactions(recentFilters, undefined, 100),
     queryKey: ['dashboard-recent', recentFilters],
   })
+  const selectedPeriodLabel = t(
+    DATE_PRESETS.find((preset) => preset.value === datePreset)?.label ??
+      'Custom range',
+  )
 
   useEffect(() => {
     let active = true
@@ -223,16 +227,9 @@ export function DashboardPage() {
             </Button>
           </>
         }
-        description={
-          <p>
-            {t(
-              'Imported transactions, shaped by your adjustments and compensation links.',
-            )}
-          </p>
-        }
-        eyebrow={t('Personal finance')}
+        description={<p>{selectedPeriodLabel}</p>}
         id="dashboard-title"
-        title={t('Your money, in clear focus.')}
+        title={t('Finance overview')}
       />
 
       {error === null ? null : (
@@ -244,6 +241,13 @@ export function DashboardPage() {
         <Alert tone="danger" title={t('Transaction sync is unavailable')}>
           {syncStatusError}
         </Alert>
+      )}
+      {analyticsQuery.data === undefined || range === null ? null : (
+        <DashboardPrimaryKpis
+          accounts={accounts ?? []}
+          analytics={analyticsQuery.data}
+          displayCurrency={currencyMode === 'original' ? displayCurrency : null}
+        />
       )}
 
       <section
@@ -365,6 +369,62 @@ export function DashboardPage() {
   )
 }
 
+function DashboardPrimaryKpis({
+  accounts,
+  analytics,
+  displayCurrency,
+}: {
+  accounts: AccountSummary[]
+  analytics: DashboardAnalytics
+  displayCurrency: string | null
+}) {
+  const { t } = useLocalization()
+  const displayed = filterDashboardAnalytics(analytics, displayCurrency)
+  const minorUnits = new Map(
+    accounts.map((account) => [
+      account.currency.code,
+      account.currency.minorUnit,
+    ]),
+  )
+
+  if (displayed.overview.totals.length === 0) return null
+
+  return (
+    <section
+      className="kpi-grid dashboard-primary-kpis"
+      aria-label={t('Period summary')}
+    >
+      <MetricCard
+        accent="cyan"
+        minorUnits={minorUnits}
+        title={t('Total spent')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.expenseAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+      <MetricCard
+        accent="blue"
+        minorUnits={minorUnits}
+        title={t('Total income')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.incomeAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+      <MetricCard
+        accent="green"
+        minorUnits={minorUnits}
+        title={t('Net cash flow')}
+        values={displayed.overview.totals.map((item) => ({
+          amountMinor: item.netAmountMinor,
+          currencyCode: item.currencyCode,
+        }))}
+      />
+    </section>
+  )
+}
+
 function DashboardAnalyticsView({
   accounts,
   analytics,
@@ -461,34 +521,10 @@ function DashboardAnalyticsView({
               currency: displayCurrency,
             })}
       </p>
-      <section className="kpi-grid" aria-label={t('Period summary')}>
-        <MetricCard
-          accent="cyan"
-          minorUnits={minorUnits}
-          title={t('Total spent')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.expenseAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
-        <MetricCard
-          accent="blue"
-          minorUnits={minorUnits}
-          title={t('Total income')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.incomeAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
-        <MetricCard
-          accent="green"
-          minorUnits={minorUnits}
-          title={t('Net cash flow')}
-          values={displayed.overview.totals.map((item) => ({
-            amountMinor: item.netAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
+      <section
+        className="kpi-grid dashboard-secondary-kpis"
+        aria-label={t('Period summary')}
+      >
         <MetricCard
           accent="violet"
           minorUnits={minorUnits}

@@ -6,6 +6,21 @@
   gap: clamp(1.25rem, 3vw, 2rem);
 }
 
+.dashboard-page > .ui-page-header {
+  gap: 1rem 2rem;
+  padding-block: 0;
+}
+
+.dashboard-page > .ui-page-header h1 {
+  max-width: none;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.1;
+}
+
+.dashboard-page > .ui-page-header .ui-page-description {
+  margin-top: 0.35rem;
+}
+
 .dashboard-filters,
 .transaction-filters,
 .category-form,
@@ -83,6 +98,17 @@
   overflow-x: auto;
   padding: 0.15rem 0.1rem 0.5rem;
   scroll-snap-type: x proximity;
+}
+
+.dashboard-primary-kpis,
+.dashboard-secondary-kpis {
+  grid-template-columns: repeat(3, minmax(10.5rem, 1fr));
+  overflow: visible;
+}
+
+.dashboard-secondary-kpis .ui-kpi {
+  min-height: 7.25rem;
+  box-shadow: none;
 }
 
 .ui-kpi {
