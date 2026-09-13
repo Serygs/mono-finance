@@ -14,6 +14,7 @@ describe('dashboard preferences', () => {
       'recent-transactions',
       'income-expenses',
       'spending-by-category',
+      'spending-by-weekday',
       'spending-trend',
       'monthly-trend',
     ])

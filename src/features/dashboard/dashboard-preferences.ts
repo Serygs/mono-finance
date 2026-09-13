@@ -29,6 +29,7 @@ export const DEFAULT_DASHBOARD_PREFERENCES: DashboardPreferences = {
     'recent-transactions',
     'income-expenses',
     'spending-by-category',
+    'spending-by-weekday',
     'spending-trend',
     'monthly-trend',
   ],

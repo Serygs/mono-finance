@@ -123,6 +123,7 @@ describe('dashboard data', () => {
     expect(buckets[0]).toMatchObject({
       expenseAmountMinor: -15,
       incomeAmountMinor: 15,
+      periodEnd: 4,
       periodStart: 0,
     })
   })
