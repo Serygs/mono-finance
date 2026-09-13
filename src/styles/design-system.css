@@ -358,6 +358,10 @@
   background-color: var(--color-surface);
   color: var(--color-text);
   font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.35;
+  font: inherit;
   padding: 0.65rem 0.75rem;
 }
 
@@ -531,6 +535,49 @@
 
 .ui-alert strong {
   color: var(--color-text);
+}
+
+:where(input, select, select[multiple], option, textarea, button) {
+  font: inherit;
+  color: inherit;
+}
+
+.ui-info-tooltip {
+  position: relative;
+  display: inline-flex;
+  margin-inline-start: 0.35rem;
+  vertical-align: middle;
+}
+.ui-info-tooltip__trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.ui-info-tooltip__content {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  width: min(18rem, 70vw);
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-overlay);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  line-height: 1.4;
+  transform: translateX(-50%);
 }
 
 .ui-alert :where(p, div) {

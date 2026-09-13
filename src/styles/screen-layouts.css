@@ -131,6 +131,25 @@
 .recent-transactions-limit .ui-select {
   min-height: 2rem;
 }
+
+.income-expense-legend {
+  display: flex;
+  gap: 0.9rem;
+  margin-bottom: 0.55rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.income-expense-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.income-expense-legend i {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 0.18rem;
+}
 .recent-transactions-list li {
   display: grid;
   grid-template-columns: 5.5rem minmax(0, 1fr) auto;
@@ -987,7 +1006,7 @@
 .category-list--compact li {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.45rem 0.7rem;
   border-radius: var(--radius-control);
   box-shadow: none;
 }
@@ -997,6 +1016,11 @@
   flex-wrap: wrap;
   justify-content: end;
   gap: 0.45rem;
+}
+
+.category-list--compact .ui-button {
+  min-height: 2.2rem;
+  padding-inline: 0.65rem;
 }
 
 .category-source-management {
