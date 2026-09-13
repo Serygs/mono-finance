@@ -230,10 +230,10 @@ export function formatPeriod(
 }
 
 function byCurrency<T extends { currencyCode: string }>(
-  items: T[],
+  items: T[] | undefined,
   currencyCode: string,
 ): T[] {
-  return items.filter((item) => item.currencyCode === currencyCode)
+  return (items ?? []).filter((item) => item.currencyCode === currencyCode)
 }
 
 function dateInputToEpoch(value: string): number | null {

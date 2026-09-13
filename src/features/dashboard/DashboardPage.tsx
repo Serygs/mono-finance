@@ -356,6 +356,7 @@ function Toolbar({
       </FormField>
       <FormField label={t('Accounts')}>
         <select
+          className="ui-select"
           multiple
           onChange={(event) => {
             const selected = Array.from(
