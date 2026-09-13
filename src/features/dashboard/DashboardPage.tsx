@@ -1,21 +1,22 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { GridLayout, useContainerWidth } from 'react-grid-layout'
+import { Link } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
-import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { Alert, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
-import { Card, ChartContainer, KpiCard } from '../../components/ui/Surfaces'
-import { AccountSelector } from '../accounts/AccountSelector'
+import { Card, KpiCard } from '../../components/ui/Surfaces'
+import { getAccounts, synchronizeAccounts } from '../accounts/accounts-api'
 import {
   loadAccountFilter,
   saveAccountFilter,
-  toggleAccountFilter,
   type AccountFilter,
 } from '../accounts/account-filter-storage'
-import { getAccounts, synchronizeAccounts } from '../accounts/accounts-api'
 import type { AccountSummary } from '../accounts/account-types'
-import { TransactionSyncStatus } from '../transactions/TransactionSyncStatus'
+import { useLocalization } from '../localization/localization'
+import { getCurrencyPreferences } from '../settings/currency-preferences-api'
 import {
   getTransactionSyncStatus,
   synchronizeTransactions,
@@ -26,26 +27,32 @@ import type {
   TransactionListFilters,
   TransactionListItem,
 } from '../transactions/transaction-types'
-
 import {
   getDashboardAnalytics,
   type CurrencyAmount,
-  type CurrencyTotals,
+  type TimeSeriesPoint,
 } from './analytics-api'
-import { getCurrencyPreferences } from '../settings/currency-preferences-api'
-import { useLocalization } from '../localization/localization'
 import {
-  DEFAULT_DASHBOARD_DATE_PRESET,
   availableCurrencies,
   chartAccentIndex,
-  chartSeries,
   displayExpenseCategories,
   filterDashboardAnalytics,
   formatCurrencyAmount,
   formatPeriod,
   resolveDashboardRange,
+  DEFAULT_DASHBOARD_DATE_PRESET,
   type DashboardDatePreset,
 } from './dashboard-data'
+import {
+  DASHBOARD_WIDGET_IDS,
+  DEFAULT_DASHBOARD_PREFERENCES,
+  loadDashboardPreferences,
+  resetDashboardLayout,
+  resetDashboardWidgetSizes,
+  saveDashboardPreferences,
+  type DashboardPreferences,
+  type DashboardWidgetId,
+} from './dashboard-preferences'
 
 const DATE_PRESETS: Array<{ label: string; value: DashboardDatePreset }> = [
   { label: 'Last 7 days', value: '7d' },
@@ -56,877 +63,939 @@ const DATE_PRESETS: Array<{ label: string; value: DashboardDatePreset }> = [
   { label: 'Current year', value: 'current-year' },
   { label: 'Custom range', value: 'custom' },
 ]
-
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
   const { t } = useLocalization()
-  const queryClient = useQueryClient()
+  const client = useQueryClient()
   const [accounts, setAccounts] = useState<AccountSummary[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isSynchronizing, setIsSynchronizing] = useState(false)
-  const [isTransactionSynchronizing, setIsTransactionSynchronizing] =
-    useState(false)
+  const [filter, setFilter] = useState<AccountFilter>(loadAccount)
+  const [preset, setPreset] = useState<DashboardDatePreset>(
+    DEFAULT_DASHBOARD_DATE_PRESET,
+  )
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [mode, setMode] = useState<'base' | 'original'>('original')
+  const [currency, setCurrency] = useState<string | null>(null)
+  const [preferences, setPreferences] =
+    useState<DashboardPreferences>(loadPreferences)
+  const [customizing, setCustomizing] = useState(false)
+  const [syncOpen, setSyncOpen] = useState(false)
+  const [syncingAccounts, setSyncingAccounts] = useState(false)
+  const [syncingTransactions, setSyncingTransactions] = useState(false)
   const [syncStates, setSyncStates] = useState<TransactionSyncState[] | null>(
     null,
   )
-  const [syncStatusError, setSyncStatusError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<AccountFilter>(loadBrowserAccountFilter)
-  const [datePreset, setDatePreset] = useState<DashboardDatePreset>(
-    DEFAULT_DASHBOARD_DATE_PRESET,
-  )
-  const [customDateFrom, setCustomDateFrom] = useState('')
-  const [customDateTo, setCustomDateTo] = useState('')
-  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null)
-  const [currencyMode, setCurrencyMode] = useState<'base' | 'original'>(
-    'original',
-  )
-  const preferencesQuery = useQuery({
-    queryFn: getCurrencyPreferences,
-    queryKey: ['currency-preferences'],
-  })
-  const baseCurrencyCode = preferencesQuery.data?.baseCurrencyCode ?? 'UAH'
+  const [error, setError] = useState<string | null>(null)
   const range = useMemo(
-    () => resolveDashboardRange(datePreset, customDateFrom, customDateTo),
-    [customDateFrom, customDateTo, datePreset],
+    () => resolveDashboardRange(preset, from, to),
+    [from, preset, to],
   )
   const accountIds = useMemo(
     () => (filter.mode === 'selected' ? filter.accountIds : []),
     [filter],
   )
+  const currencies = useQuery({
+    queryFn: getCurrencyPreferences,
+    queryKey: ['currency-preferences'],
+  })
   const analyticsFilters = useMemo(
     () =>
       range === null
         ? null
         : {
             accountIds,
-            ...(currencyMode === 'base' ? { baseCurrencyCode } : {}),
+            ...(mode === 'base'
+              ? { baseCurrencyCode: currencies.data?.baseCurrencyCode ?? 'UAH' }
+              : {}),
             dateFrom: range.dateFrom,
             dateTo: range.dateTo,
           },
-    [accountIds, baseCurrencyCode, currencyMode, range],
+    [accountIds, currencies.data?.baseCurrencyCode, mode, range],
   )
-  const analyticsQuery = useQuery({
+  const analytics = useQuery({
     enabled: analyticsFilters !== null,
     queryFn: () => getDashboardAnalytics(analyticsFilters!),
     queryKey: ['dashboard-analytics', analyticsFilters],
   })
-  const recentFilters = useMemo<TransactionListFilters>(
+  const transactionFilters = useMemo<TransactionListFilters>(
     () => ({
       accountIds,
       category: null,
-      currency: currencyMode === 'original' ? displayCurrency : null,
+      currency: mode === 'original' ? currency : null,
       dateFrom: range?.dateFrom ?? null,
       dateTo: range?.dateTo ?? null,
       direction: null,
       excluded: false,
       search: null,
     }),
-    [accountIds, currencyMode, displayCurrency, range],
+    [accountIds, currency, mode, range],
   )
-  const recentQuery = useQuery({
+  const recent = useQuery({
     enabled: analyticsFilters !== null,
-    queryFn: () => getTransactions(recentFilters, undefined, 100),
-    queryKey: ['dashboard-recent', recentFilters],
+    queryFn: () => getTransactions(transactionFilters, undefined, 100),
+    queryKey: ['dashboard-recent', transactionFilters],
   })
-  const selectedPeriodLabel = t(
-    DATE_PRESETS.find((preset) => preset.value === datePreset)?.label ??
-      'Custom range',
-  )
-
   useEffect(() => {
-    let active = true
     void getAccounts()
-      .then((loadedAccounts) => {
-        if (active) setAccounts(loadedAccounts)
-      })
-      .catch(() => {
-        if (active) setError('Accounts could not be loaded. Try again later.')
-      })
+      .then(setAccounts)
+      .catch(() => setError('Accounts could not be loaded. Try again later.'))
     void getTransactionSyncStatus()
-      .then((states) => {
-        if (active) setSyncStates(states)
-      })
-      .catch(() => {
-        if (active) {
-          setSyncStatusError('Transaction sync status could not be loaded.')
-        }
-      })
-    return () => {
-      active = false
-    }
+      .then(setSyncStates)
+      .catch(() => setError('Transaction sync status could not be loaded.'))
   }, [])
-
   useEffect(() => {
-    saveBrowserAccountFilter(filter)
+    storeAccount(filter)
   }, [filter])
-
-  async function handleAccountSynchronize() {
-    setIsSynchronizing(true)
-    setError(null)
+  useEffect(() => {
+    storePreferences(preferences)
+  }, [preferences])
+  async function syncAccounts() {
+    setSyncingAccounts(true)
     try {
       setAccounts(await synchronizeAccounts())
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] })
-    } catch (syncError) {
-      setError(
-        syncError instanceof Error
-          ? syncError.message
-          : 'Accounts could not be synchronized. Try again later.',
-      )
+      await client.invalidateQueries({ queryKey: ['dashboard-analytics'] })
+    } catch {
+      setError('Accounts could not be synchronized. Try again later.')
     } finally {
-      setIsSynchronizing(false)
+      setSyncingAccounts(false)
     }
   }
-
-  async function handleTransactionSynchronize() {
-    setIsTransactionSynchronizing(true)
-    setSyncStatusError(null)
+  async function syncTransactions() {
+    setSyncingTransactions(true)
     try {
       await synchronizeTransactions()
       setSyncStates(await getTransactionSyncStatus())
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard-recent'] }),
+        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
+        client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
       ])
-    } catch (syncError) {
-      setSyncStatusError(
-        syncError instanceof Error
-          ? syncError.message
-          : 'Transaction sync is unavailable. Try again later.',
-      )
+    } catch {
+      setError('Transaction sync is unavailable. Try again later.')
     } finally {
-      setIsTransactionSynchronizing(false)
+      setSyncingTransactions(false)
     }
   }
-
   return (
     <PageSurface className="dashboard-page">
       <PageHeader
-        actions={
-          <div className="dashboard-sync-actions">
-            <Button
-              disabled={isSynchronizing || accounts === null}
-              loading={isSynchronizing}
-              onClick={() => void handleAccountSynchronize()}
-              size="small"
-              type="button"
-              variant="secondary"
-            >
-              {t(isSynchronizing ? 'Syncing…' : 'Sync accounts')}
-            </Button>
-            <Button
-              disabled={isTransactionSynchronizing || accounts === null}
-              loading={isTransactionSynchronizing}
-              onClick={() => void handleTransactionSynchronize()}
-              size="small"
-              type="button"
-            >
-              {isTransactionSynchronizing
-                ? t('Refreshing…')
-                : t('Refresh transactions')}
-            </Button>
-          </div>
+        description={
+          <p>
+            {t(
+              DATE_PRESETS.find((item) => item.value === preset)?.label ??
+                'Custom range',
+            )}
+          </p>
         }
-        description={<p>{selectedPeriodLabel}</p>}
         id="dashboard-title"
         title={t('Finance overview')}
       />
-
+      <Toolbar
+        accounts={accounts ?? []}
+        analytics={analytics.data}
+        baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
+        currency={currency}
+        filter={filter}
+        from={from}
+        mode={mode}
+        onCurrency={setCurrency}
+        onFilter={setFilter}
+        onFrom={setFrom}
+        onMode={setMode}
+        onPreset={setPreset}
+        onTo={setTo}
+        preset={preset}
+        to={to}
+      />
+      <section className="dashboard-toolbar-actions">
+        <div className="dashboard-sync-popover">
+          <Button
+            aria-expanded={syncOpen}
+            onClick={() => setSyncOpen(!syncOpen)}
+            size="small"
+            type="button"
+            variant="secondary"
+          >
+            {t('Sync status')}
+          </Button>
+          {syncOpen ? (
+            <div className="dashboard-popover" role="dialog">
+              <div className="dashboard-sync-actions">
+                <Button
+                  disabled={syncingAccounts}
+                  loading={syncingAccounts}
+                  onClick={() => void syncAccounts()}
+                  size="small"
+                  type="button"
+                  variant="secondary"
+                >
+                  {t('Sync accounts')}
+                </Button>
+                <Button
+                  disabled={syncingTransactions}
+                  loading={syncingTransactions}
+                  onClick={() => void syncTransactions()}
+                  size="small"
+                  type="button"
+                >
+                  {t('Refresh transactions')}
+                </Button>
+              </div>
+              <SyncSummary states={syncStates} />
+            </div>
+          ) : null}
+        </div>
+        <Button
+          onClick={() => setCustomizing(true)}
+          size="small"
+          type="button"
+          variant="secondary"
+        >
+          {t('Customize dashboard')}
+        </Button>
+      </section>
       {error === null ? null : (
-        <Alert tone="danger" title={t('Accounts could not be synchronized')}>
+        <Alert tone="danger" title={t('Dashboard update failed')}>
           {error}
         </Alert>
       )}
-      {syncStatusError === null ? null : (
-        <Alert tone="danger" title={t('Transaction sync is unavailable')}>
-          {syncStatusError}
-        </Alert>
-      )}
-      {analyticsQuery.data === undefined || range === null ? null : (
-        <DashboardPrimaryKpis
-          accounts={accounts ?? []}
-          analytics={analyticsQuery.data}
-          displayCurrency={currencyMode === 'original' ? displayCurrency : null}
-        />
-      )}
-
-      <section
-        className="dashboard-filters"
-        aria-label={t('Dashboard filters')}
-      >
-        <FormField label={t('Period')}>
-          <Select
-            onChange={(event) =>
-              setDatePreset(event.target.value as DashboardDatePreset)
-            }
-            value={datePreset}
-          >
-            {DATE_PRESETS.map((preset) => (
-              <option key={preset.value} value={preset.value}>
-                {t(preset.label)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        {datePreset === 'custom' ? (
-          <>
-            <FormField label={t('From')}>
-              <input
-                autoComplete="off"
-                name="dashboard-from"
-                onChange={(event) => setCustomDateFrom(event.target.value)}
-                type="date"
-                value={customDateFrom}
-              />
-            </FormField>
-            <FormField label={t('To')}>
-              <input
-                autoComplete="off"
-                name="dashboard-to"
-                onChange={(event) => setCustomDateTo(event.target.value)}
-                type="date"
-                value={customDateTo}
-              />
-            </FormField>
-          </>
-        ) : null}
-        <FormField label={t('Currency view')}>
-          <Select
-            onChange={(event) =>
-              setCurrencyMode(event.target.value as 'base' | 'original')
-            }
-            value={currencyMode}
-          >
-            <option value="original">{t('Original currencies')}</option>
-            <option value="base">
-              {t('Base currency')} · {baseCurrencyCode}
-            </option>
-          </Select>
-        </FormField>
-        {currencyMode === 'original' ? (
-          <FormField label={t('Original currency')}>
-            <Select
-              onChange={(event) =>
-                setDisplayCurrency(event.target.value || null)
-              }
-              value={displayCurrency ?? ''}
-            >
-              <option value="">{t('All original currencies')}</option>
-              {analyticsQuery.data === undefined
-                ? null
-                : availableCurrencies(analyticsQuery.data).map((currency) => (
-                    <option key={currency} value={currency}>
-                      {currency}
-                    </option>
-                  ))}
-            </Select>
-          </FormField>
-        ) : null}
-      </section>
-
-      {syncStates?.some((state) => state.status === 'failed') ? (
-        <Alert tone="warning" title={t('Some accounts need attention')}>
-          {t(
-            'Some accounts still need a transaction sync retry. The dashboard shows transactions already stored in D1.',
-          )}
-        </Alert>
-      ) : null}
-
       {range === null ? (
         <Alert tone="danger" title={t('Date range is incomplete')}>
           {t('Enter a valid start and end date to view analytics.')}
         </Alert>
       ) : null}
-      {analyticsQuery.isPending ? <DashboardSkeleton /> : null}
-      {analyticsQuery.isError ? (
-        <DashboardError onRetry={() => void analyticsQuery.refetch()} />
+      {analytics.isPending ? (
+        <Skeleton label={t('Loading dashboard…')} lines={6} />
       ) : null}
-      {analyticsQuery.data === undefined || range === null ? null : (
-        <DashboardAnalyticsView
+      {analytics.isError ? (
+        <Alert tone="danger" title={t('Analytics could not be loaded')}>
+          <Button
+            onClick={() => void analytics.refetch()}
+            size="small"
+            type="button"
+          >
+            {t('Retry analytics')}
+          </Button>
+        </Alert>
+      ) : null}
+      {analytics.data === undefined || range === null ? null : (
+        <Dashboard
           accounts={accounts ?? []}
-          analytics={analyticsQuery.data}
-          displayCurrency={currencyMode === 'original' ? displayCurrency : null}
-          currencyMode={currencyMode}
-          recentTransactions={recentQuery.data?.transactions ?? []}
-          recentTransactionsLoading={recentQuery.isPending}
+          analytics={analytics.data}
+          currency={mode === 'original' ? currency : null}
+          onPreferences={setPreferences}
+          preferences={preferences}
+          recentLoading={recent.isPending}
+          transactions={recent.data?.transactions ?? []}
         />
       )}
-
-      {accounts === null ? (
-        <Skeleton label={t('Loading accounts…')} lines={2} />
-      ) : (
-        <AccountSelector
-          accounts={accounts}
-          filter={filter}
-          onSelectAll={() => setFilter({ mode: 'all' })}
-          onToggle={(accountId) =>
-            setFilter((current) => toggleAccountFilter(current, accountId))
-          }
+      {customizing ? (
+        <Customize
+          onChange={setPreferences}
+          onClose={() => setCustomizing(false)}
+          preferences={preferences}
         />
-      )}
-      <TransactionSyncStatus states={syncStates} />
+      ) : null}
     </PageSurface>
   )
 }
 
-function DashboardPrimaryKpis({
+function Toolbar({
   accounts,
   analytics,
-  displayCurrency,
+  baseCurrency,
+  currency,
+  filter,
+  from,
+  mode,
+  onCurrency,
+  onFilter,
+  onFrom,
+  onMode,
+  onPreset,
+  onTo,
+  preset,
+  to,
 }: {
   accounts: AccountSummary[]
-  analytics: DashboardAnalytics
-  displayCurrency: string | null
+  analytics: DashboardAnalytics | undefined
+  baseCurrency: string
+  currency: string | null
+  filter: AccountFilter
+  from: string
+  mode: 'base' | 'original'
+  onCurrency(value: string | null): void
+  onFilter(value: AccountFilter): void
+  onFrom(value: string): void
+  onMode(value: 'base' | 'original'): void
+  onPreset(value: DashboardDatePreset): void
+  onTo(value: string): void
+  preset: DashboardDatePreset
+  to: string
 }) {
   const { t } = useLocalization()
-  const displayed = filterDashboardAnalytics(analytics, displayCurrency)
-  const minorUnits = new Map(
-    accounts.map((account) => [
-      account.currency.code,
-      account.currency.minorUnit,
-    ]),
-  )
-
-  if (displayed.overview.totals.length === 0) return null
-
+  const ids =
+    filter.mode === 'all'
+      ? accounts.map((account) => account.id)
+      : filter.accountIds
   return (
-    <section
-      className="kpi-grid dashboard-primary-kpis"
-      aria-label={t('Period summary')}
-    >
-      <MetricCard
-        accent="cyan"
-        minorUnits={minorUnits}
-        title={t('Total spent')}
-        values={displayed.overview.totals.map((item) => ({
-          amountMinor: item.expenseAmountMinor,
-          currencyCode: item.currencyCode,
-        }))}
-      />
-      <MetricCard
-        accent="blue"
-        minorUnits={minorUnits}
-        title={t('Total income')}
-        values={displayed.overview.totals.map((item) => ({
-          amountMinor: item.incomeAmountMinor,
-          currencyCode: item.currencyCode,
-        }))}
-      />
-      <MetricCard
-        accent="green"
-        minorUnits={minorUnits}
-        title={t('Net cash flow')}
-        values={displayed.overview.totals.map((item) => ({
-          amountMinor: item.netAmountMinor,
-          currencyCode: item.currencyCode,
-        }))}
-      />
+    <section className="dashboard-toolbar" aria-label={t('Dashboard filters')}>
+      <FormField label={t('Period')}>
+        <Select
+          onChange={(event) =>
+            onPreset(event.target.value as DashboardDatePreset)
+          }
+          value={preset}
+        >
+          {DATE_PRESETS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {t(item.label)}
+            </option>
+          ))}
+        </Select>
+      </FormField>
+      <FormField label={t('Accounts')}>
+        <select
+          multiple
+          onChange={(event) => {
+            const selected = Array.from(
+              event.currentTarget.selectedOptions,
+            ).map((option) => option.value)
+            onFilter(
+              selected.length === 0 || selected.length === accounts.length
+                ? { mode: 'all' }
+                : { accountIds: selected, mode: 'selected' },
+            )
+          }}
+          value={ids}
+        >
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.type} · {account.currency.code}
+            </option>
+          ))}
+        </select>
+      </FormField>
+      <FormField label={t('Currency')}>
+        <Select
+          onChange={(event) =>
+            onMode(event.target.value as 'base' | 'original')
+          }
+          value={mode}
+        >
+          <option value="original">{t('Original currencies')}</option>
+          <option value="base">
+            {t('Base currency')} · {baseCurrency}
+          </option>
+        </Select>
+      </FormField>
+      <details className="dashboard-toolbar-menu">
+        <summary>{t('Filters')}</summary>
+        {preset === 'custom' ? (
+          <div>
+            <FormField label={t('From')}>
+              <input
+                onChange={(event) => onFrom(event.target.value)}
+                type="date"
+                value={from}
+              />
+            </FormField>
+            <FormField label={t('To')}>
+              <input
+                onChange={(event) => onTo(event.target.value)}
+                type="date"
+                value={to}
+              />
+            </FormField>
+          </div>
+        ) : null}
+        {mode === 'original' ? (
+          <FormField label={t('Original currency')}>
+            <Select
+              onChange={(event) => onCurrency(event.target.value || null)}
+              value={currency ?? ''}
+            >
+              <option value="">{t('All original currencies')}</option>
+              {analytics === undefined
+                ? null
+                : availableCurrencies(analytics).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+            </Select>
+          </FormField>
+        ) : null}
+      </details>
     </section>
   )
 }
 
-function DashboardAnalyticsView({
+function Dashboard({
   accounts,
   analytics,
-  currencyMode,
-  displayCurrency,
-  recentTransactions,
-  recentTransactionsLoading,
+  currency,
+  onPreferences,
+  preferences,
+  recentLoading,
+  transactions,
 }: {
   accounts: AccountSummary[]
   analytics: DashboardAnalytics
-  currencyMode: 'base' | 'original'
-  displayCurrency: string | null
-  recentTransactions: TransactionListItem[]
-  recentTransactionsLoading: boolean
+  currency: string | null
+  onPreferences(value: DashboardPreferences): void
+  preferences: DashboardPreferences
+  recentLoading: boolean
+  transactions: TransactionListItem[]
 }) {
   const { t } = useLocalization()
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false)
-  const currencies = availableCurrencies(analytics)
-  const chartCurrency = displayCurrency ?? currencies[0] ?? null
-  const displayed = filterDashboardAnalytics(analytics, displayCurrency)
-  const chartData = filterDashboardAnalytics(analytics, chartCurrency)
-  const categoryValues = chartData.breakdowns.expensesByCategory
-  const categoryDisplay = displayExpenseCategories(categoryValues, t('Other'))
-  const displayedCategoryValues = categoriesExpanded
-    ? categoryDisplay.all
-    : categoryDisplay.initial
-  const minorUnits = new Map(
+  const { containerRef, width } = useContainerWidth()
+  const [expanded, setExpanded] = useState(false)
+  const displayed = filterDashboardAnalytics(analytics, currency)
+  const chartCurrency = currency ?? availableCurrencies(analytics)[0] ?? null
+  const chart = filterDashboardAnalytics(analytics, chartCurrency)
+  const units = new Map(
     accounts.map((account) => [
       account.currency.code,
       account.currency.minorUnit,
     ]),
   )
-  const adjusted = recentTransactions
-    .filter((transaction) => transaction.hasAdjustment)
-    .slice(0, 5)
-  const compensated = recentTransactions
-    .filter((transaction) => transaction.hasCompensation)
-    .slice(0, 5)
-  if (displayed.overview.totals.length === 0) {
-    return (
-      <EmptyState title={t('No transactions in this view')}>
-        <p>
-          {t(
-            'Change the filters or refresh transactions to build this dashboard.',
-          )}
-        </p>
-        {currencyMode === 'base' &&
-        analytics.overview.currencyConversion.missingRateTransactionCounts
-          .length > 0 ? (
-          <p>
-            {t(
-              'Historical rates are missing for {currencies}. Switch to original currencies to view them.',
-              {
-                currencies:
-                  analytics.overview.currencyConversion.missingRateTransactionCounts
-                    .map((item) => `${item.count} ${item.currencyCode}`)
-                    .join(', '),
-              },
-            )}
-          </p>
-        ) : null}
-      </EmptyState>
-    )
-  }
+  const categories = displayExpenseCategories(
+    chart.breakdowns.expensesByCategory,
+    t('Other'),
+  )
+  const widgets = buildWidgets(
+    displayed,
+    chart,
+    units,
+    chartCurrency,
+    categories,
+    expanded,
+    setExpanded,
+    recentLoading,
+    transactions,
+    preferences.recentTransactionsLimit,
+  )
+  const visible = widgets.filter((item) =>
+    preferences.enabledWidgetIds.includes(item.id),
+  )
+  const layout = visible.map(
+    (item, index) =>
+      preferences.layout.find((saved) => saved.i === item.id) ?? {
+        h: item.h,
+        i: item.id,
+        minH: 4,
+        minW: 3,
+        w: item.w,
+        x: (index % 2) * 6,
+        y: Math.floor(index / 2) * 7,
+      },
+  )
   return (
-    <div className="dashboard-content">
-      {currencyMode === 'base' ? (
-        <Alert tone="warning" title={t('Historical currency conversion')}>
-          {t(
-            'Base-currency values are converted from preserved original amounts using rates stored at or before each transaction.',
-          )}
-          {analytics.overview.currencyConversion.missingRateTransactionCounts
-            .length > 0
-            ? ` ${t('{currencies} transactions have no historical rate and are excluded from base totals.', { currencies: analytics.overview.currencyConversion.missingRateTransactionCounts.map((item) => `${item.count} ${item.currencyCode}`).join(', ') })}`
-            : ''}
-        </Alert>
-      ) : null}
-      <p className="dashboard-currency-note">
-        {displayCurrency === null
-          ? t(
-              'Totals remain separated by original currency. Choose a currency for a focused chart view.',
-            )
-          : t('Charts use {currency}; no current-rate conversion is used.', {
-              currency: displayCurrency,
-            })}
-      </p>
-      <section
-        className="kpi-grid dashboard-secondary-kpis"
-        aria-label={t('Period summary')}
-      >
-        <MetricCard
-          accent="violet"
-          minorUnits={minorUnits}
-          title={t('Available to save')}
+    <>
+      <section className="dashboard-kpis" aria-label={t('Period summary')}>
+        <Metric
+          accent="cyan"
+          title={t('Total spent')}
+          units={units}
           values={displayed.overview.totals.map((item) => ({
-            amountMinor: Math.max(0, item.netAmountMinor),
+            amountMinor: item.expenseAmountMinor,
             currencyCode: item.currencyCode,
           }))}
         />
-        <MetricCard
+        <Metric
+          accent="blue"
+          title={t('Total income')}
+          units={units}
+          values={displayed.overview.totals.map((item) => ({
+            amountMinor: item.incomeAmountMinor,
+            currencyCode: item.currencyCode,
+          }))}
+        />
+        <Metric
+          accent="green"
+          title={t('Net cash flow')}
+          units={units}
+          values={displayed.overview.totals.map((item) => ({
+            amountMinor: item.netAmountMinor,
+            currencyCode: item.currencyCode,
+          }))}
+        />
+        <Metric
           accent="pink"
-          minorUnits={minorUnits}
           title={t('Average spend / day')}
+          units={units}
           values={displayed.overview.averageExpensePerDay}
         />
-        <MetricCard
-          accent="cyan"
-          minorUnits={minorUnits}
-          title={t('Previous period change')}
-          values={displayed.overview.comparison.map((item) => ({
-            amountMinor: item.changeAmountMinor,
-            currencyCode: item.currencyCode,
-          }))}
-        />
       </section>
-      <section className="dashboard-chart-grid">
-        <ChartCard
-          className="dashboard-chart-primary"
-          title={`${t('Expense timeline')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
-        >
-          <LineChart
-            currencyCode={chartCurrency}
-            granularity="day"
-            minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
-            points={chartSeries(chartData.trends.daily, 'expenseAmountMinor')}
-            title={t('Daily expenses')}
-          />
-        </ChartCard>
-        <ChartCard title={t('Income vs expense')}>
-          <IncomeExpenseChart
-            minorUnits={minorUnits}
-            totals={displayed.overview.totals}
-          />
-        </ChartCard>
-        <ChartCard
-          className="dashboard-chart-primary"
-          title={t('Spending by category')}
-        >
-          <BarChart
-            className="category-bar-chart"
-            minorUnits={minorUnits}
-            values={displayedCategoryValues.map((item) => ({
-              ...item,
-              label: item.categoryName,
-            }))}
-          />
-          {categoryDisplay.all.length > 5 ? (
-            <div className="category-chart-actions">
-              <Button
-                aria-expanded={categoriesExpanded}
-                onClick={() => setCategoriesExpanded((expanded) => !expanded)}
-                size="small"
-                type="button"
-                variant="quiet"
-              >
-                {t(categoriesExpanded ? 'Show less' : 'Show all')}
-              </Button>
-            </div>
-          ) : null}
-        </ChartCard>
-        <ChartCard title={t('Expense distribution')}>
-          <DonutChart
-            minorUnits={minorUnits}
-            values={categoryDisplay.initial}
-          />
-        </ChartCard>
-        <ChartCard
-          title={`${t('Monthly trend')}${chartCurrency === null ? '' : ` · ${chartCurrency}`}`}
-        >
-          <LineChart
-            currencyCode={chartCurrency}
-            granularity="month"
-            minorUnit={minorUnits.get(chartCurrency ?? '') ?? 2}
-            points={chartSeries(chartData.trends.monthly, 'expenseAmountMinor')}
-            title={t('Monthly expenses')}
-          />
-        </ChartCard>
-        <ChartCard title={t('Account distribution')}>
-          <BarChart
-            minorUnits={minorUnits}
-            values={chartData.breakdowns.expensesByAccount.map((item) => ({
-              ...item,
-              label: accountName(accounts, item.accountId),
-            }))}
-          />
-        </ChartCard>
-      </section>
-      <section className="dashboard-evidence-grid">
-        <EvidenceList
-          minorUnits={minorUnits}
-          title={t('Largest transactions')}
-          values={chartData.breakdowns.largestTransactions.map((item) => ({
-            ...item,
-            detail: formatPeriod(item.timestamp, 'day'),
-            label: item.description,
-          }))}
-        />
-        <TransactionEvidence
-          empty={t('No adjusted transactions in this period.')}
-          loading={recentTransactionsLoading}
-          minorUnits={minorUnits}
-          title={t('Recent adjusted transactions')}
-          transactions={adjusted}
-        />
-        <TransactionEvidence
-          empty={t('No compensation links in this period.')}
-          loading={recentTransactionsLoading}
-          minorUnits={minorUnits}
-          title={t('Recent compensations')}
-          transactions={compensated}
-        />
-      </section>
-    </div>
+      <div className="dashboard-grid-shell" ref={containerRef}>
+        {width < 768 ? (
+          <div className="dashboard-mobile-widgets">
+            {visible.map((item) => (
+              <div key={item.id}>{item.content}</div>
+            ))}
+          </div>
+        ) : (
+          <GridLayout
+            className="dashboard-grid"
+            dragConfig={{ enabled: true, handle: '.dashboard-widget__handle' }}
+            gridConfig={{ cols: 12, margin: [16, 16], rowHeight: 42 }}
+            layout={layout}
+            onLayoutChange={(next) =>
+              onPreferences({ ...preferences, layout: next })
+            }
+            resizeConfig={{ enabled: true }}
+            width={width}
+          >
+            {visible.map((item) => (
+              <div className="dashboard-widget" key={item.id}>
+                {item.content}
+              </div>
+            ))}
+          </GridLayout>
+        )}
+      </div>
+    </>
   )
 }
 
-function DashboardSkeleton() {
-  const { t } = useLocalization()
-  return <Skeleton label={t('Loading dashboard…')} lines={6} />
+function buildWidgets(
+  _all: DashboardAnalytics,
+  chart: DashboardAnalytics,
+  units: Map<string, number>,
+  currency: string | null,
+  categories: ReturnType<typeof displayExpenseCategories>,
+  expanded: boolean,
+  setExpanded: (value: boolean | ((value: boolean) => boolean)) => void,
+  loading: boolean,
+  transactions: TransactionListItem[],
+  limit: 5 | 10 | 20,
+) {
+  const corrections = transactions
+    .filter((item) => item.hasAdjustment)
+    .slice(0, 5)
+  const compensations = transactions
+    .filter((item) => item.hasCompensation)
+    .slice(0, 5)
+  return [
+    box(
+      'recent-transactions',
+      'Recent transactions',
+      <Recent
+        limit={limit}
+        loading={loading}
+        transactions={transactions}
+        units={units}
+      />,
+      12,
+      6,
+    ),
+    box(
+      'income-expenses',
+      'Income vs expenses',
+      <GroupedBars
+        currency={currency}
+        points={chart.trends.daily}
+        units={units}
+      />,
+      12,
+      7,
+    ),
+    box(
+      'spending-by-category',
+      'Spending by category',
+      <>
+        <Bars
+          units={units}
+          values={(expanded ? categories.all : categories.initial).map(
+            (item) => ({ ...item, label: item.categoryName }),
+          )}
+        />
+        {categories.all.length > 5 ? (
+          <Button
+            onClick={() => setExpanded((value) => !value)}
+            size="small"
+            type="button"
+            variant="quiet"
+          >
+            {expanded ? 'Show less' : 'Show all'}
+          </Button>
+        ) : null}
+      </>,
+      6,
+      7,
+    ),
+    box(
+      'spending-trend',
+      'Spending trend',
+      <Trend
+        currency={currency}
+        points={chart.trends.spendingTrend}
+        units={units}
+      />,
+      6,
+      7,
+    ),
+    box(
+      'monthly-trend',
+      'Monthly trend',
+      <Trend currency={currency} points={chart.trends.monthly} units={units} />,
+      6,
+      7,
+    ),
+    box(
+      'expense-distribution',
+      'Expense distribution',
+      <Bars
+        units={units}
+        values={categories.initial.map((item) => ({
+          ...item,
+          label: item.categoryName,
+        }))}
+      />,
+      6,
+      7,
+    ),
+    box(
+      'spending-by-weekday',
+      'Spending by weekday',
+      <Weekdays points={chart.trends.daily} units={units} />,
+      6,
+      7,
+    ),
+    box(
+      'top-merchants',
+      'Top merchants',
+      <Evidence
+        units={units}
+        values={chart.breakdowns.topMerchants.map((item) => ({
+          ...item,
+          detail: `${item.transactionCount} transactions`,
+          label: item.description,
+        }))}
+      />,
+      6,
+      6,
+    ),
+    box(
+      'recurring-expenses',
+      'Recurring expenses',
+      <Unavailable message="Recurring-expense detection is not configured yet." />,
+      6,
+      5,
+    ),
+    box(
+      'fixed-variable-expenses',
+      'Fixed vs variable expenses',
+      <Unavailable message="Expense classification is not configured yet." />,
+      6,
+      5,
+    ),
+    box(
+      'largest-transactions',
+      'Largest transactions',
+      <Evidence
+        units={units}
+        values={chart.breakdowns.largestTransactions.map((item) => ({
+          ...item,
+          detail: formatPeriod(item.timestamp, 'day'),
+          label: item.description,
+        }))}
+      />,
+      6,
+      6,
+    ),
+    box(
+      'recent-corrections',
+      'Recent corrections',
+      <TransactionEvidence
+        empty="No corrected transactions in this period."
+        loading={loading}
+        transactions={corrections}
+        units={units}
+      />,
+      6,
+      6,
+    ),
+    box(
+      'recent-compensations',
+      'Recent compensations',
+      <TransactionEvidence
+        empty="No compensation links in this period."
+        loading={loading}
+        transactions={compensations}
+        units={units}
+      />,
+      6,
+      6,
+    ),
+  ]
 }
-
-function DashboardError({ onRetry }: { onRetry(): void }) {
-  const { t } = useLocalization()
-  return (
-    <Alert tone="danger" title={t('Analytics could not be loaded')}>
-      <p>{t('Check the connection, then try again.')}</p>
-      <Button onClick={onRetry} size="small" type="button">
-        {t('Retry analytics')}
-      </Button>
-    </Alert>
-  )
+function box(
+  id: DashboardWidgetId,
+  title: string,
+  children: React.ReactNode,
+  w: number,
+  h: number,
+) {
+  return {
+    content: (
+      <Card
+        actions={
+          <span aria-label="Drag widget" className="dashboard-widget__handle">
+            ⋮⋮
+          </span>
+        }
+        title={title}
+      >
+        {children}
+      </Card>
+    ),
+    h,
+    id,
+    w,
+  }
 }
-
-function MetricCard({
+function Metric({
   accent,
-  minorUnits,
   title,
+  units,
   values,
 }: {
   accent: 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
-  minorUnits: Map<string, number>
   title: string
+  units: Map<string, number>
   values: CurrencyAmount[]
 }) {
   return (
     <KpiCard
       accent={accent}
       label={title}
-      value={<MetricValues empty="—" minorUnits={minorUnits} values={values} />}
+      value={
+        values.length === 0 ? (
+          '—'
+        ) : (
+          <div className="metric-values">
+            {values.map((item) => (
+              <strong key={item.currencyCode}>
+                {formatCurrencyAmount(
+                  item.amountMinor,
+                  item.currencyCode,
+                  units.get(item.currencyCode) ?? 2,
+                )}
+              </strong>
+            ))}
+          </div>
+        )
+      }
     />
   )
 }
-
-function MetricValues({
-  empty,
-  minorUnits,
-  values,
+function Recent({
+  limit,
+  loading,
+  transactions,
+  units,
 }: {
-  empty: string
-  minorUnits: Map<string, number>
-  values: CurrencyAmount[]
+  limit: 5 | 10 | 20
+  loading: boolean
+  transactions: TransactionListItem[]
+  units: Map<string, number>
 }) {
-  return values.length === 0 ? (
-    <p className="metric-empty">{empty}</p>
-  ) : (
-    <div className="metric-values">
-      {values.map((value) => (
-        <strong key={value.currencyCode}>
-          {formatCurrencyAmount(
-            value.amountMinor,
-            value.currencyCode,
-            minorUnits.get(value.currencyCode) ?? 2,
-          )}
-        </strong>
+  const { t } = useLocalization()
+  const [currentLimit, setCurrentLimit] = useState(limit)
+  function changeLimit(value: 5 | 10 | 20) {
+    setCurrentLimit(value)
+    storePreferences({ ...loadPreferences(), recentTransactionsLimit: value })
+  }
+  return (
+    <>
+      <label className="recent-transactions-limit">
+        {t('Show')}{' '}
+        <Select
+          onChange={(event) =>
+            changeLimit(Number(event.target.value) as 5 | 10 | 20)
+          }
+          value={currentLimit}
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+        </Select>
+      </label>
+      {loading ? (
+        <Skeleton label={t('Loading transactions…')} lines={3} />
+      ) : (
+        <ol className="recent-transactions-list">
+          {transactions.slice(0, currentLimit).map((item) => (
+            <li key={item.id}>
+              <time>{formatPeriod(item.originalTimestamp, 'day')}</time>
+              <span>
+                <strong>{item.originalDescription}</strong>
+                <small>{item.category.name ?? t('Uncategorized')}</small>
+              </span>
+              <b>
+                {formatCurrencyAmount(
+                  item.effectiveAmountMinor,
+                  item.currencyCode,
+                  units.get(item.currencyCode) ?? item.currencyMinorUnit,
+                )}
+              </b>
+            </li>
+          ))}
+        </ol>
+      )}
+      <Link to="/transactions">{t('View all transactions')}</Link>
+    </>
+  )
+}
+function GroupedBars({
+  currency,
+  points,
+  units,
+}: {
+  currency: string | null
+  points: TimeSeriesPoint[]
+  units: Map<string, number>
+}) {
+  if (currency === null || points.length === 0) return <Empty />
+  const buckets =
+    points.length > 14 && points.length <= 90 ? weekly(points) : points
+  const max = Math.max(
+    ...buckets.flatMap((item) => [
+      item.incomeAmountMinor,
+      item.expenseAmountMinor,
+    ]),
+    1,
+  )
+  return (
+    <div className="income-expense-vertical">
+      {buckets.map((item) => (
+        <div key={item.periodStart}>
+          <div className="income-expense-bars">
+            <span
+              className="income-bar"
+              style={{ height: `${(item.incomeAmountMinor / max) * 100}%` }}
+              title={`Income: ${formatCurrencyAmount(item.incomeAmountMinor, currency, units.get(currency) ?? 2)}`}
+            />
+            <span
+              className="expense-bar"
+              style={{ height: `${(item.expenseAmountMinor / max) * 100}%` }}
+              title={`Expenses: ${formatCurrencyAmount(item.expenseAmountMinor, currency, units.get(currency) ?? 2)}`}
+            />
+          </div>
+          <small>
+            {formatPeriod(
+              item.periodStart,
+              buckets.length > 12 ? 'month' : 'day',
+            )}
+          </small>
+          <span className="sr-only">
+            Net{' '}
+            {formatCurrencyAmount(
+              item.netAmountMinor,
+              currency,
+              units.get(currency) ?? 2,
+            )}
+          </span>
+        </div>
       ))}
     </div>
   )
 }
-
-function ChartCard({
-  children,
-  className,
-  title,
-}: {
-  children: ReactNode
-  className?: string
-  title: string
-}) {
-  const { t } = useLocalization()
-  return (
-    <ChartContainer
-      {...(className === undefined ? {} : { className })}
-      summary={t('Chart summary for {title}', { title })}
-      title={title}
-    >
-      {children}
-    </ChartContainer>
-  )
+function weekly(points: TimeSeriesPoint[]) {
+  const result = new Map<number, TimeSeriesPoint>()
+  for (const item of points) {
+    const date = new Date(item.periodStart * 1000)
+    const start =
+      new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate() - ((date.getDay() + 6) % 7),
+      ).getTime() / 1000
+    const current = result.get(start) ?? {
+      currencyCode: item.currencyCode,
+      expenseAmountMinor: 0,
+      incomeAmountMinor: 0,
+      netAmountMinor: 0,
+      periodStart: start,
+    }
+    current.expenseAmountMinor += item.expenseAmountMinor
+    current.incomeAmountMinor += item.incomeAmountMinor
+    current.netAmountMinor += item.netAmountMinor
+    result.set(start, current)
+  }
+  return [...result.values()]
 }
-
-function LineChart({
-  currencyCode,
-  granularity,
-  minorUnit,
+function Trend({
+  currency,
   points,
-  title,
+  units,
 }: {
-  currencyCode: string | null
-  granularity: 'day' | 'month'
-  minorUnit: number
-  points: Array<{ periodStart: number; value: number }>
-  title: string
+  currency: string | null
+  points: TimeSeriesPoint[]
+  units: Map<string, number>
 }) {
-  const { t } = useLocalization()
-  if (points.length === 0 || currencyCode === null) return <EmptyChart />
-  const width = 720
-  const height = 300
-  const plot = { bottom: 254, left: 78, right: 24, top: 20 }
-  const plotWidth = width - plot.left - plot.right
-  const plotHeight = plot.bottom - plot.top
-  const maximum = Math.max(...points.map((point) => point.value), 1)
-  const position = (index: number) =>
-    points.length === 1
-      ? plot.left + plotWidth / 2
-      : plot.left + (index / (points.length - 1)) * plotWidth
-  const y = (value: number) => plot.bottom - (value / maximum) * plotHeight
-  const axisValues =
-    maximum === 1 ? [maximum, 0] : [maximum, Math.round(maximum / 2), 0]
-  const axisPointIndexes = [
-    0,
-    Math.floor((points.length - 1) / 2),
-    points.length - 1,
-  ].filter((index, position, values) => values.indexOf(index) === position)
+  if (currency === null || points.length === 0) return <Empty />
+  const max = Math.max(...points.map((item) => item.expenseAmountMinor), 1)
   const path = points
     .map(
-      (point, index) =>
-        `${index === 0 ? 'M' : 'L'} ${position(index)} ${y(point.value)}`,
+      (item, index) =>
+        `${index === 0 ? 'M' : 'L'} ${20 + (index / Math.max(points.length - 1, 1)) * 680} ${260 - (item.expenseAmountMinor / max) * 220}`,
     )
     .join(' ')
   return (
-    <div className="chart-wrap">
-      <svg
-        aria-label={title}
-        className="line-chart"
-        role="img"
-        viewBox={`0 0 ${width} ${height}`}
-      >
-        <title>{title}</title>
-        {axisValues.map((value) => (
-          <g key={value}>
-            <path
-              className="line-chart-grid"
-              d={`M ${plot.left} ${y(value)} H ${width - plot.right}`}
-            />
-            <text
-              className="line-chart-axis-label"
-              textAnchor="end"
-              x={plot.left - 10}
-              y={y(value) + 4}
-            >
-              {formatCurrencyAmount(value, currencyCode, minorUnit)}
-            </text>
-          </g>
-        ))}
-        <path className="line-chart-path" d={path} />
-        {points.map((point, index) => (
-          <circle
-            cx={position(index)}
-            cy={y(point.value)}
-            key={point.periodStart}
-            r="4"
-          >
-            <title>{`${formatPeriod(point.periodStart, granularity)}: ${formatCurrencyAmount(point.value, currencyCode, minorUnit)}`}</title>
-          </circle>
-        ))}
-        {axisPointIndexes.map((index) => {
-          const point = points[index]
-          if (point === undefined) return null
-          return (
-            <text
-              className="line-chart-axis-label"
-              key={point.periodStart}
-              textAnchor="middle"
-              x={position(index)}
-              y={height - 12}
-            >
-              {formatPeriod(point.periodStart, granularity)}
-            </text>
-          )
-        })}
-      </svg>
-      <details>
-        <summary>{t('View chart values')}</summary>
-        <table>
-          <tbody>
-            {points.map((point) => (
-              <tr key={point.periodStart}>
-                <th scope="row">
-                  {formatPeriod(point.periodStart, granularity)}
-                </th>
-                <td>
-                  {formatCurrencyAmount(point.value, currencyCode, minorUnit)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
-    </div>
+    <svg
+      aria-label="Spending trend"
+      className="line-chart"
+      role="img"
+      viewBox="0 0 720 300"
+    >
+      <path className="line-chart-path" d={path} />
+      {points.map((item, index) => (
+        <circle
+          cx={20 + (index / Math.max(points.length - 1, 1)) * 680}
+          cy={260 - (item.expenseAmountMinor / max) * 220}
+          key={item.periodStart}
+          r="4"
+        >
+          <title>
+            {formatCurrencyAmount(
+              item.expenseAmountMinor,
+              currency,
+              units.get(currency) ?? 2,
+            )}
+          </title>
+        </circle>
+      ))}
+    </svg>
   )
 }
-
-function IncomeExpenseChart({
-  minorUnits,
-  totals,
-}: {
-  minorUnits: Map<string, number>
-  totals: CurrencyTotals[]
-}) {
-  const { t } = useLocalization()
-  if (totals.length === 0) return <EmptyChart />
-  return (
-    <div className="income-expense-chart">
-      {totals.map((total) => {
-        const maximum = Math.max(
-          total.expenseAmountMinor,
-          total.incomeAmountMinor,
-          1,
-        )
-        return (
-          <div className="income-expense-row" key={total.currencyCode}>
-            <strong>{total.currencyCode}</strong>
-            <div>
-              <span
-                className="income-bar"
-                style={{
-                  width: `${(total.incomeAmountMinor / maximum) * 100}%`,
-                }}
-                title={[
-                  t('Income'),
-                  formatCurrencyAmount(
-                    total.incomeAmountMinor,
-                    total.currencyCode,
-                    minorUnits.get(total.currencyCode) ?? 2,
-                  ),
-                ].join(': ')}
-              />
-              <span
-                className="expense-bar"
-                style={{
-                  width: `${(total.expenseAmountMinor / maximum) * 100}%`,
-                }}
-                title={[
-                  t('Expenses'),
-                  formatCurrencyAmount(
-                    total.expenseAmountMinor,
-                    total.currencyCode,
-                    minorUnits.get(total.currencyCode) ?? 2,
-                  ),
-                ].join(': ')}
-              />
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function BarChart({
-  className,
-  minorUnits,
+function Bars({
+  units,
   values,
 }: {
-  className?: string
-  minorUnits: Map<string, number>
+  units: Map<string, number>
   values: Array<CurrencyAmount & { label: string }>
 }) {
-  if (values.length === 0) return <EmptyChart />
-  const displayed = values
-  const maximum = Math.max(...displayed.map((value) => value.amountMinor), 1)
+  if (values.length === 0) return <Empty />
+  const max = Math.max(...values.map((item) => item.amountMinor), 1)
   return (
-    <ol className={['bar-chart', className].filter(Boolean).join(' ')}>
-      {displayed.map((value) => (
-        <li key={`${value.label}-${value.currencyCode}`}>
-          <span>{value.label}</span>
+    <ol className="bar-chart">
+      {values.map((item) => (
+        <li key={`${item.label}-${item.currencyCode}`}>
+          <span>{item.label}</span>
           <div>
             <i
-              className={`donut-segment-${chartAccentIndex(`${value.label}:${value.currencyCode}`)}`}
-              style={{ width: `${(value.amountMinor / maximum) * 100}%` }}
-              title={formatCurrencyAmount(
-                value.amountMinor,
-                value.currencyCode,
-                minorUnits.get(value.currencyCode) ?? 2,
-              )}
+              className={`donut-segment-${chartAccentIndex(item.label)}`}
+              style={{ width: `${(item.amountMinor / max) * 100}%` }}
             />
           </div>
           <strong>
             {formatCurrencyAmount(
-              value.amountMinor,
-              value.currencyCode,
-              minorUnits.get(value.currencyCode) ?? 2,
+              item.amountMinor,
+              item.currencyCode,
+              units.get(item.currencyCode) ?? 2,
             )}
           </strong>
         </li>
@@ -934,217 +1003,210 @@ function BarChart({
     </ol>
   )
 }
-
-function DonutChart({
-  minorUnits,
-  values,
+function Weekdays({
+  points,
+  units,
 }: {
-  minorUnits: Map<string, number>
-  values: Array<CurrencyAmount & { categoryName: string }>
+  points: TimeSeriesPoint[]
+  units: Map<string, number>
 }) {
-  const { t } = useLocalization()
-  const [activeKey, setActiveKey] = useState<string | null>(null)
-  if (values.length === 0) return <EmptyChart />
-  const displayed = values
-  const total = displayed.reduce((sum, value) => sum + value.amountMinor, 0)
-  const segments = displayed.reduce<
-    Array<{ offset: number; value: (typeof displayed)[number] }>
-  >((current, value) => {
-    const previous = current.at(-1)
-    return current.concat({
-      offset:
-        previous === undefined
-          ? 0
-          : previous.offset + (previous.value.amountMinor / total) * 100,
-      value,
-    })
-  }, [])
   return (
-    <div className="donut-layout">
-      <svg
-        aria-label={t('Expense distribution by category')}
-        className="donut-chart"
-        role="img"
-        viewBox="0 0 42 42"
-      >
-        <title>{t('Expense distribution by category')}</title>
-        {segments.map(({ offset, value }) => {
-          const accentIndex = chartAccentIndex(
-            `${value.categoryName}:${value.currencyCode}`,
-          )
-          const key = categoryKey(value)
-          const isActive = activeKey === key
-          return (
-            <g
-              aria-label={`${value.categoryName}: ${formatCurrencyAmount(value.amountMinor, value.currencyCode, minorUnits.get(value.currencyCode) ?? 2)}`}
-              className={`donut-segment-group${isActive ? ' is-active' : ''}${activeKey !== null && !isActive ? ' is-muted' : ''}`}
-              key={key}
-              onBlur={() => setActiveKey(null)}
-              onFocus={() => setActiveKey(key)}
-              onPointerEnter={() => setActiveKey(key)}
-              onPointerLeave={() => setActiveKey(null)}
-              role="button"
-              tabIndex={0}
-            >
-              <circle
-                className={`donut-segment donut-segment-${accentIndex}`}
-                cx="21"
-                cy="21"
-                fill="transparent"
-                r="15.9155"
-                strokeDasharray={`${(value.amountMinor / total) * 100} ${100 - (value.amountMinor / total) * 100}`}
-                strokeDashoffset={-offset}
-              />
-            </g>
-          )
-        })}
-      </svg>
-      <ol className="donut-legend">
-        {displayed.map((value) => (
-          <li
-            className={activeKey === categoryKey(value) ? 'is-active' : ''}
-            key={categoryKey(value)}
-            onPointerEnter={() => setActiveKey(categoryKey(value))}
-            onPointerLeave={() => setActiveKey(null)}
-          >
-            <button
-              onBlur={() => setActiveKey(null)}
-              onFocus={() => setActiveKey(categoryKey(value))}
-              type="button"
-            >
-              <i
-                aria-hidden="true"
-                className={`donut-legend-marker donut-segment-${chartAccentIndex(`${value.categoryName}:${value.currencyCode}`)}`}
-              />
-              <span>{value.categoryName}</span>
-            </button>
-            <strong>
-              {formatCurrencyAmount(
-                value.amountMinor,
-                value.currencyCode,
-                minorUnits.get(value.currencyCode) ?? 2,
-              )}
-            </strong>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <Bars
+      units={units}
+      values={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+        (label, day) => ({
+          amountMinor: points
+            .filter(
+              (item) => new Date(item.periodStart * 1000).getDay() === day,
+            )
+            .reduce((sum, item) => sum + item.expenseAmountMinor, 0),
+          currencyCode: points[0]?.currencyCode ?? 'UAH',
+          label,
+        }),
+      )}
+    />
   )
 }
-
-function categoryKey(value: {
-  categoryId?: string | null
-  categoryName: string
-  currencyCode: string
-}): string {
-  return `${value.categoryId ?? value.categoryName}:${value.currencyCode}`
-}
-
-function EvidenceList({
-  minorUnits,
-  title,
+function Evidence({
+  units,
   values,
 }: {
-  minorUnits: Map<string, number>
-  title: string
+  units: Map<string, number>
   values: Array<CurrencyAmount & { detail: string; label: string }>
 }) {
-  const { t } = useLocalization()
-  return (
-    <Card className="evidence-card" title={title}>
-      {values.length === 0 ? (
-        <p className="metric-empty">{t('No data in this period.')}</p>
-      ) : (
-        <ol className="evidence-list">
-          {values.slice(0, 5).map((value) => (
-            <li key={`${value.label}-${value.currencyCode}`}>
-              <span>
-                <strong>{value.label}</strong>
-                <small>{value.detail}</small>
-              </span>
-              <b>
-                {formatCurrencyAmount(
-                  value.amountMinor,
-                  value.currencyCode,
-                  minorUnits.get(value.currencyCode) ?? 2,
-                )}
-              </b>
-            </li>
-          ))}
-        </ol>
-      )}
-    </Card>
+  return values.length === 0 ? (
+    <Empty />
+  ) : (
+    <ol className="evidence-list">
+      {values.slice(0, 5).map((item) => (
+        <li key={`${item.label}-${item.currencyCode}`}>
+          <span>
+            <strong>{item.label}</strong>
+            <small>{item.detail}</small>
+          </span>
+          <b>
+            {formatCurrencyAmount(
+              item.amountMinor,
+              item.currencyCode,
+              units.get(item.currencyCode) ?? 2,
+            )}
+          </b>
+        </li>
+      ))}
+    </ol>
   )
 }
-
 function TransactionEvidence({
   empty,
   loading,
-  minorUnits,
-  title,
   transactions,
+  units,
 }: {
   empty: string
   loading: boolean
-  minorUnits: Map<string, number>
-  title: string
   transactions: TransactionListItem[]
+  units: Map<string, number>
 }) {
-  const { t } = useLocalization()
-  return (
-    <Card className="evidence-card" title={title}>
-      {loading ? (
-        <p className="metric-empty">{t('Loading…')}</p>
-      ) : transactions.length === 0 ? (
-        <p className="metric-empty">{empty}</p>
-      ) : (
-        <ol className="evidence-list">
-          {transactions.map((transaction) => (
-            <li key={transaction.id}>
-              <span>
-                <strong>{transaction.originalDescription}</strong>
-                <small>
-                  {formatPeriod(transaction.originalTimestamp, 'day')}
-                </small>
-              </span>
-              <b>
-                {formatCurrencyAmount(
-                  transaction.effectiveAmountMinor,
-                  transaction.currencyCode,
-                  minorUnits.get(transaction.currencyCode) ??
-                    transaction.currencyMinorUnit,
-                )}
-              </b>
-            </li>
-          ))}
-        </ol>
-      )}
-    </Card>
+  return loading ? (
+    <Skeleton label="Loading" lines={3} />
+  ) : transactions.length === 0 ? (
+    <p>{empty}</p>
+  ) : (
+    <Evidence
+      units={units}
+      values={transactions.map((item) => ({
+        amountMinor: item.effectiveAmountMinor,
+        currencyCode: item.currencyCode,
+        detail: formatPeriod(item.originalTimestamp, 'day'),
+        label: item.originalDescription,
+      }))}
+    />
   )
 }
-
-function EmptyChart() {
+function Empty() {
   const { t } = useLocalization()
   return <p className="chart-empty">{t('No data in this period.')}</p>
 }
-
-function accountName(accounts: AccountSummary[], accountId: string): string {
-  const account = accounts.find((item) => item.id === accountId)
-  return account === undefined
-    ? 'Account'
-    : `${account.type.charAt(0).toUpperCase()}${account.type.slice(1)} ${account.currency.code}`
+function Unavailable({ message }: { message: string }) {
+  return <p className="metric-empty">{message}</p>
 }
-function loadBrowserAccountFilter(): AccountFilter {
+function SyncSummary({ states }: { states: TransactionSyncState[] | null }) {
+  const { t, locale } = useLocalization()
+  return states === null ? (
+    <Skeleton label={t('Loading transaction sync status…')} lines={2} />
+  ) : (
+    <ul className="sync-status-list">
+      {states.map((item) => (
+        <li key={item.accountId}>
+          <span>
+            {item.accountType} · {item.currencyCode}
+          </span>
+          <strong className={`sync-state sync-state-${item.status}`}>
+            {item.status === 'failed'
+              ? t('Sync needs retry')
+              : item.lastSuccessfulSyncAt === null
+                ? t('Not synced yet')
+                : new Intl.DateTimeFormat(locale, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  }).format(item.lastSuccessfulSyncAt * 1000)}
+          </strong>
+        </li>
+      ))}
+    </ul>
+  )
+}
+function Customize({
+  onChange,
+  onClose,
+  preferences,
+}: {
+  onChange(value: DashboardPreferences): void
+  onClose(): void
+  preferences: DashboardPreferences
+}) {
+  const { t } = useLocalization()
+  return (
+    <div className="dashboard-dialog-backdrop">
+      <section
+        aria-label={t('Customize dashboard')}
+        className="dashboard-dialog"
+        role="dialog"
+      >
+        <header>
+          <h2>{t('Customize dashboard')}</h2>
+          <Button onClick={onClose} size="small" type="button" variant="quiet">
+            {t('Close')}
+          </Button>
+        </header>
+        <div className="dashboard-widget-toggles">
+          {DASHBOARD_WIDGET_IDS.map((id) => (
+            <label key={id}>
+              <input
+                checked={preferences.enabledWidgetIds.includes(id)}
+                onChange={() =>
+                  onChange({
+                    ...preferences,
+                    enabledWidgetIds: preferences.enabledWidgetIds.includes(id)
+                      ? preferences.enabledWidgetIds.filter(
+                          (item) => item !== id,
+                        )
+                      : [...preferences.enabledWidgetIds, id],
+                  })
+                }
+                type="checkbox"
+              />
+              {id.replaceAll('-', ' ')}
+            </label>
+          ))}
+        </div>
+        <div className="dashboard-dialog-actions">
+          <Button
+            onClick={() => onChange(resetDashboardLayout(preferences))}
+            size="small"
+            type="button"
+            variant="secondary"
+          >
+            {t('Reset layout')}
+          </Button>
+          <Button
+            onClick={() => onChange(resetDashboardWidgetSizes(preferences))}
+            size="small"
+            type="button"
+            variant="secondary"
+          >
+            {t('Reset widget sizes')}
+          </Button>
+        </div>
+      </section>
+    </div>
+  )
+}
+function loadAccount(): AccountFilter {
   try {
     return loadAccountFilter(window.localStorage)
   } catch {
     return { mode: 'all' }
   }
 }
-function saveBrowserAccountFilter(filter: AccountFilter): void {
+function storeAccount(filter: AccountFilter) {
   try {
     saveAccountFilter(window.localStorage, filter)
   } catch {
-    /* Keep the in-memory selection when storage is unavailable. */
+    /* Kept in memory. */
+  }
+}
+function loadPreferences(): DashboardPreferences {
+  try {
+    return loadDashboardPreferences(window.localStorage)
+  } catch {
+    return DEFAULT_DASHBOARD_PREFERENCES
+  }
+}
+function storePreferences(preferences: DashboardPreferences) {
+  try {
+    saveDashboardPreferences(window.localStorage, preferences)
+  } catch {
+    /* Kept in memory. */
   }
 }

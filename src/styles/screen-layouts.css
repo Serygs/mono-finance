@@ -28,6 +28,190 @@
   gap: 0.6rem;
 }
 
+/* Configurable dashboard canvas. Kept local to the overview route. */
+.dashboard-toolbar,
+.dashboard-toolbar-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.dashboard-toolbar {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+}
+
+.dashboard-toolbar .ui-field {
+  flex: 1 1 10rem;
+}
+.dashboard-toolbar select {
+  width: 100%;
+  min-height: 2.35rem;
+}
+.dashboard-toolbar select[multiple] {
+  min-height: 4.6rem;
+}
+.dashboard-toolbar-menu {
+  position: relative;
+}
+.dashboard-toolbar-menu > div,
+.dashboard-toolbar-menu > .ui-field {
+  margin-top: 0.55rem;
+}
+.dashboard-toolbar-actions {
+  justify-content: end;
+  margin-top: -0.15rem;
+}
+.dashboard-sync-popover {
+  position: relative;
+}
+.dashboard-popover {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  width: min(24rem, 90vw);
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+.dashboard-popover .dashboard-sync-actions {
+  justify-content: start;
+  margin-bottom: 0.7rem;
+}
+.dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+.dashboard-grid-shell {
+  min-width: 0;
+}
+.dashboard-grid .react-grid-item > .dashboard-widget {
+  height: 100%;
+}
+.dashboard-grid .ui-card {
+  height: 100%;
+  overflow: auto;
+}
+.dashboard-widget__handle {
+  cursor: grab;
+  color: var(--color-text-tertiary);
+  letter-spacing: -0.2rem;
+  user-select: none;
+}
+.dashboard-mobile-widgets {
+  display: grid;
+  gap: 1rem;
+}
+.recent-transactions-list {
+  display: grid;
+  gap: 0;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+.recent-transactions-limit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  color: var(--color-text-secondary);
+}
+.recent-transactions-limit .ui-select {
+  min-height: 2rem;
+}
+.recent-transactions-list li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.recent-transactions-list span,
+.recent-transactions-list small {
+  display: grid;
+  min-width: 0;
+}
+.recent-transactions-list b {
+  text-align: right;
+}
+.income-expense-vertical {
+  display: flex;
+  align-items: end;
+  min-height: 14rem;
+  gap: 0.45rem;
+  overflow-x: auto;
+}
+.income-expense-vertical > div {
+  display: grid;
+  min-width: 2.25rem;
+  flex: 1 0 2.25rem;
+  gap: 0.35rem;
+  text-align: center;
+}
+.income-expense-bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  height: 11rem;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.income-expense-bars span {
+  width: 0.7rem;
+  min-height: 2px;
+}
+.income-expense-bars .income-bar {
+  background: var(--color-income);
+}
+.income-expense-bars .expense-bar {
+  background: var(--color-action);
+}
+.dashboard-dialog-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 35%);
+}
+.dashboard-dialog {
+  width: min(34rem, 100%);
+  max-height: min(42rem, 90vh);
+  overflow: auto;
+  padding: 1rem;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+.dashboard-dialog header,
+.dashboard-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dashboard-widget-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+.dashboard-widget-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: capitalize;
+}
+
 .dashboard-filters,
 .transaction-filters,
 .category-form,
