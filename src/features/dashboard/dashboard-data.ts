@@ -29,6 +29,7 @@ export interface DashboardAnalytics {
 }
 
 export type ExpenseCategory = AnalyticsBreakdowns['expensesByCategory'][number]
+export type TimeSeriesBucket = TimeSeriesPoint & { periodEnd: number }
 
 export function displayExpenseCategories(
   values: readonly ExpenseCategory[],
@@ -198,19 +199,20 @@ export function chartSeries(
 export function groupTimeSeriesIntoBuckets(
   points: readonly TimeSeriesPoint[],
   maximumBuckets = 7,
-): TimeSeriesPoint[] {
-  if (points.length <= maximumBuckets) return [...points]
+): TimeSeriesBucket[] {
+  if (points.length <= maximumBuckets)
+    return points.map((point) => ({ ...point, periodEnd: point.periodStart }))
   const sorted = [...points].sort(
     (left, right) => left.periodStart - right.periodStart,
   )
   const bucketSize = Math.ceil(sorted.length / maximumBuckets)
-  const buckets: TimeSeriesPoint[] = []
+  const buckets: TimeSeriesBucket[] = []
   for (let index = 0; index < sorted.length; index += bucketSize) {
     const values = sorted.slice(index, index + bucketSize)
     const first = values[0]
     if (first === undefined) continue
     buckets.push(
-      values.reduce(
+      values.reduce<TimeSeriesBucket>(
         (total, value) => ({
           ...total,
           expenseAmountMinor:
@@ -223,11 +225,28 @@ export function groupTimeSeriesIntoBuckets(
           expenseAmountMinor: 0,
           incomeAmountMinor: 0,
           netAmountMinor: 0,
+          periodEnd: first.periodStart,
         },
       ),
     )
+    const last = values.at(-1)
+    if (last !== undefined)
+      buckets[buckets.length - 1]!.periodEnd = last.periodStart
   }
   return buckets
+}
+
+export function formatPeriodRange(
+  periodStart: number,
+  periodEnd: number,
+  locale?: string,
+): string {
+  const format = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+  })
+  if (periodStart === periodEnd) return format.format(periodStart * 1_000)
+  return `${format.format(periodStart * 1_000)}–${format.format(periodEnd * 1_000)}`
 }
 
 export function chartAccentIndex(stableKey: string): number {

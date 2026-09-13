@@ -46,6 +46,7 @@ import {
   filterDashboardAnalytics,
   formatCurrencyAmount,
   formatPeriod,
+  formatPeriodRange,
   groupTimeSeriesIntoBuckets,
   resolveDashboardRange,
   DEFAULT_DASHBOARD_DATE_PRESET,
@@ -89,6 +90,12 @@ const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
   'spending-trend': 'Spending trend help',
   'top-merchants': 'Top merchants help',
 }
+const DEFAULT_WIDGET_ORDER = [
+  ...DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds,
+  ...DASHBOARD_WIDGET_IDS.filter(
+    (id) => !DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds.includes(id),
+  ),
+]
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
@@ -559,9 +566,13 @@ function Dashboard({
       <div className="dashboard-grid-shell" ref={containerRef}>
         {!mounted ? null : width < 768 ? (
           <div className="dashboard-mobile-widgets">
-            {visible.map((item) => (
-              <div key={item.id}>{item.content}</div>
-            ))}
+            {[...visible]
+              .sort((left, right) =>
+                compareWidgetOrder(left.id, right.id, preferences),
+              )
+              .map((item) => (
+                <div key={item.id}>{item.content}</div>
+              ))}
           </div>
         ) : (
           <GridLayout
@@ -668,6 +679,14 @@ function buildWidgets(
     ),
     box(
       t,
+      'spending-by-weekday',
+      'Spending by weekday',
+      <WeekdayBars units={units} values={chart.breakdowns.spendingByWeekday} />,
+      6,
+      7,
+    ),
+    box(
+      t,
       'spending-trend',
       'Spending trend',
       <Trend
@@ -697,14 +716,6 @@ function buildWidgets(
           label: item.categoryName,
         }))}
       />,
-      6,
-      7,
-    ),
-    box(
-      t,
-      'spending-by-weekday',
-      'Spending by weekday',
-      <WeekdayBars units={units} values={chart.breakdowns.spendingByWeekday} />,
       6,
       7,
     ),
@@ -788,6 +799,24 @@ function buildWidgets(
     ),
   ]
 }
+
+function compareWidgetOrder(
+  left: DashboardWidgetId,
+  right: DashboardWidgetId,
+  preferences: DashboardPreferences,
+) {
+  const leftLayout = preferences.layout.find((item) => item.i === left)
+  const rightLayout = preferences.layout.find((item) => item.i === right)
+  if (leftLayout !== undefined && rightLayout !== undefined) {
+    const layoutDifference =
+      leftLayout.y * 12 + leftLayout.x - (rightLayout.y * 12 + rightLayout.x)
+    if (layoutDifference !== 0) return layoutDifference
+  }
+  return (
+    DEFAULT_WIDGET_ORDER.indexOf(left) - DEFAULT_WIDGET_ORDER.indexOf(right)
+  )
+}
+
 function box(
   t: (key: TranslationKey) => string,
   id: DashboardWidgetId,
@@ -800,7 +829,10 @@ function box(
     content: (
       <Card
         actions={
-          <span aria-label="Drag widget" className="dashboard-widget__handle">
+          <span
+            aria-label={t('Drag widget')}
+            className="dashboard-widget__handle"
+          >
             ⋮⋮
           </span>
         }
@@ -888,6 +920,8 @@ function Recent({
       </label>
       {loading ? (
         <Skeleton label={t('Loading transactions…')} lines={3} />
+      ) : transactions.length === 0 ? (
+        <Empty message="No transactions in this view" />
       ) : (
         <ol className="recent-transactions-list">
           {transactions.slice(0, limit).map((item) => (
@@ -927,7 +961,7 @@ function GroupedBars({
   const max = Math.max(
     ...buckets.flatMap((item) => [
       item.incomeAmountMinor,
-      item.expenseAmountMinor,
+      Math.abs(item.expenseAmountMinor),
     ]),
     1,
   )
@@ -946,37 +980,52 @@ function GroupedBars({
           {t('Expenses')}
         </span>
       </div>
-      {buckets.map((item) => (
-        <div key={item.periodStart}>
-          <div className="income-expense-bars">
-            <span
-              className="income-bar"
-              style={{ height: `${(item.incomeAmountMinor / max) * 100}%` }}
-              title={`${t('Income')}: ${formatCurrencyAmount(item.incomeAmountMinor, currency, units.get(currency) ?? 2, locale)}`}
-            />
-            <span
-              className="expense-bar"
-              style={{ height: `${(item.expenseAmountMinor / max) * 100}%` }}
-              title={`${t('Expenses')}: ${formatCurrencyAmount(Math.abs(item.expenseAmountMinor), currency, units.get(currency) ?? 2, locale)}`}
-            />
-          </div>
-          <small>
-            {formatPeriod(
-              item.periodStart,
-              buckets.length > 12 ? 'month' : 'day',
-            )}
-          </small>
-          <span className="sr-only">
-            Net{' '}
-            {formatCurrencyAmount(
-              item.netAmountMinor,
-              currency,
-              units.get(currency) ?? 2,
-              locale,
-            )}
-          </span>
-        </div>
-      ))}
+      <div className="income-expense-plot">
+        {buckets.map((item) => {
+          const period = formatPeriodRange(
+            item.periodStart,
+            item.periodEnd,
+            locale,
+          )
+          const income = formatCurrencyAmount(
+            item.incomeAmountMinor,
+            currency,
+            units.get(currency) ?? 2,
+            locale,
+          )
+          const expense = formatCurrencyAmount(
+            Math.abs(item.expenseAmountMinor),
+            currency,
+            units.get(currency) ?? 2,
+            locale,
+          )
+          const net = formatCurrencyAmount(
+            item.netAmountMinor,
+            currency,
+            units.get(currency) ?? 2,
+            locale,
+          )
+          const summary = `${period}\n${t('Income')}: ${income}\n${t('Expenses')}: ${expense}\n${t('Net cash flow')}: ${net}`
+          return (
+            <div key={item.periodStart}>
+              <div className="income-expense-bars" title={summary}>
+                <span
+                  className="income-bar"
+                  style={{ height: `${(item.incomeAmountMinor / max) * 100}%` }}
+                />
+                <span
+                  className="expense-bar"
+                  style={{
+                    height: `${(Math.abs(item.expenseAmountMinor) / max) * 100}%`,
+                  }}
+                />
+              </div>
+              <small>{period}</small>
+              <span className="sr-only">{summary}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -989,17 +1038,23 @@ function Trend({
   points: TimeSeriesPoint[]
   units: Map<string, number>
 }) {
+  const { t } = useLocalization()
   if (currency === null || points.length === 0) return <Empty />
-  const max = Math.max(...points.map((item) => item.expenseAmountMinor), 1)
+  if (points.length < 2)
+    return <Empty message="Not enough data in this period." />
+  const max = Math.max(
+    ...points.map((item) => Math.abs(item.expenseAmountMinor)),
+    1,
+  )
   const path = points
     .map(
       (item, index) =>
-        `${index === 0 ? 'M' : 'L'} ${20 + (index / Math.max(points.length - 1, 1)) * 680} ${260 - (item.expenseAmountMinor / max) * 220}`,
+        `${index === 0 ? 'M' : 'L'} ${20 + (index / Math.max(points.length - 1, 1)) * 680} ${260 - (Math.abs(item.expenseAmountMinor) / max) * 220}`,
     )
     .join(' ')
   return (
     <svg
-      aria-label="Spending trend"
+      aria-label={t('Spending trend')}
       className="line-chart"
       role="img"
       viewBox="0 0 720 300"
@@ -1008,13 +1063,13 @@ function Trend({
       {points.map((item, index) => (
         <circle
           cx={20 + (index / Math.max(points.length - 1, 1)) * 680}
-          cy={260 - (item.expenseAmountMinor / max) * 220}
+          cy={260 - (Math.abs(item.expenseAmountMinor) / max) * 220}
           key={item.periodStart}
           r="4"
         >
           <title>
             {formatCurrencyAmount(
-              item.expenseAmountMinor,
+              Math.abs(item.expenseAmountMinor),
               currency,
               units.get(currency) ?? 2,
             )}
@@ -1135,6 +1190,7 @@ function RecurringExpenses({
     transactionCount: number
   }>
 }) {
+  const { t } = useLocalization()
   return values.length === 0 ? (
     <Empty />
   ) : (
@@ -1144,19 +1200,21 @@ function RecurringExpenses({
           <span>
             <strong>{item.description}</strong>
             <small>
-              About every {item.frequencyDays} days · {item.transactionCount}{' '}
-              payments
+              {t('About every {days} days · {count} payments', {
+                count: item.transactionCount,
+                days: item.frequencyDays,
+              })}
             </small>
           </span>
           <b>
-            Avg{' '}
+            {t('Average')}{' '}
             {formatCurrencyAmount(
               item.averageAmountMinor,
               item.currencyCode,
               units.get(item.currencyCode) ?? 2,
             )}
             <small>
-              Last{' '}
+              {t('Last')}{' '}
               {formatCurrencyAmount(
                 item.lastAmountMinor,
                 item.currencyCode,
@@ -1180,6 +1238,7 @@ function FixedVariableExpenses({
     variableExpenseAmountMinor: number
   }>
 }) {
+  const { t } = useLocalization()
   if (values.length === 0) return <Empty />
   return (
     <Bars
@@ -1188,12 +1247,12 @@ function FixedVariableExpenses({
         {
           amountMinor: item.fixedExpenseAmountMinor,
           currencyCode: item.currencyCode,
-          label: 'Recurring / fixed',
+          label: t('Recurring / fixed'),
         },
         {
           amountMinor: item.variableExpenseAmountMinor,
           currencyCode: item.currencyCode,
-          label: 'Variable',
+          label: t('Variable'),
         },
       ])}
     />
@@ -1239,8 +1298,9 @@ function TransactionEvidence({
   transactions: TransactionListItem[]
   units: Map<string, number>
 }) {
+  const { t } = useLocalization()
   return loading ? (
-    <Skeleton label="Loading" lines={3} />
+    <Skeleton label={t('Loading…')} lines={3} />
   ) : transactions.length === 0 ? (
     <p>{empty}</p>
   ) : (
@@ -1255,9 +1315,13 @@ function TransactionEvidence({
     />
   )
 }
-function Empty() {
+function Empty({
+  message = 'No data in this period.',
+}: {
+  message?: TranslationKey
+}) {
   const { t } = useLocalization()
-  return <p className="chart-empty">{t('No data in this period.')}</p>
+  return <p className="chart-empty">{t(message)}</p>
 }
 function SyncSummary({ states }: { states: TransactionSyncState[] | null }) {
   const { t, locale } = useLocalization()
