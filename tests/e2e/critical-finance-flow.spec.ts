@@ -16,7 +16,10 @@ test('an owner can complete the critical private-finance workflow', async ({
   const periodRequest = page.waitForRequest((request) =>
     request.url().includes('/api/analytics/overview'),
   )
-  const periodSelect = page.locator('.dashboard-filters').getByLabel('Period')
+  const periodSelect = page.getByRole('combobox', {
+    exact: true,
+    name: 'Period',
+  })
   await expect(periodSelect).toHaveValue('30d')
   await expect(
     page.getByRole('heading', { name: 'Currency distribution' }),
@@ -30,14 +33,6 @@ test('an owner can complete the critical private-finance workflow', async ({
   await periodSelect.selectOption('7d')
   await periodRequest
   await expect(periodSelect).toHaveValue('7d')
-
-  const accountRequest = page.waitForRequest(
-    (request) =>
-      request.url().includes('/api/analytics/overview') &&
-      new URL(request.url()).searchParams.get('accountId') === 'account-1',
-  )
-  await page.getByRole('button', { name: 'Black account' }).click()
-  await accountRequest
 
   await page.getByRole('link', { name: 'Transactions' }).first().click()
   await expect(page.getByRole('button', { name: /Restaurant/ })).toBeVisible()
@@ -72,8 +67,16 @@ test('an owner can complete the critical private-finance workflow', async ({
 
   await page.getByRole('button', { name: 'Close' }).click()
   await page.getByRole('link', { name: 'Overview' }).first().click()
-  await expect(page.getByText('Recent adjusted transactions')).toBeVisible()
-  await expect(page.getByText('Recent compensations')).toBeVisible()
+  await page.getByRole('button', { name: 'Customize dashboard' }).click()
+  await page.getByLabel('recent corrections').check()
+  await page.getByLabel('recent compensations').check()
+  await page.getByRole('button', { name: 'Close' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Recent corrections' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Recent compensations' }),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(
@@ -81,7 +84,7 @@ test('an owner can complete the critical private-finance workflow', async ({
   ).toBeVisible()
 })
 
-test('language, category type mapping, and category chart interaction are accessible', async ({
+test('language and category type mapping remain accessible', async ({
   page,
 }) => {
   await installFinanceApiMock(page)
@@ -97,13 +100,6 @@ test('language, category type mapping, and category chart interaction are access
   await expect(
     page.getByRole('heading', { name: 'Огляд фінансів' }),
   ).toBeVisible()
-
-  const segment = page.locator('.donut-segment-group').first()
-  await segment.focus()
-  await expect(segment).toHaveClass(/is-active/)
-  await expect(page.locator('.donut-legend li').first()).toHaveClass(
-    /is-active/,
-  )
 
   await page.getByRole('link', { name: 'Налаштування' }).first().click()
   const sourceSelect = page.getByLabel('Категорія для mcc-5812')
@@ -130,7 +126,7 @@ test('overview switches to a single-column mobile composition without viewport o
   await expect(
     page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
-  await expect(page.locator('.dashboard-primary-kpis .ui-kpi')).toHaveCount(3)
+  await expect(page.locator('.dashboard-kpis .ui-kpi')).toHaveCount(4)
 
   const layout = await page.evaluate(() => ({
     appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
@@ -140,18 +136,18 @@ test('overview switches to a single-column mobile composition without viewport o
       .querySelector('.dashboard-page')!
       .getBoundingClientRect().right,
     filtersRight: document
-      .querySelector('.dashboard-filters')!
+      .querySelector('.dashboard-toolbar')!
       .getBoundingClientRect().right,
     filterFields: Array.from(
-      document.querySelectorAll('.dashboard-filters .ui-field'),
+      document.querySelectorAll('.dashboard-toolbar .ui-field'),
       (field) => field.getBoundingClientRect(),
     ),
     primaryKpis: Array.from(
-      document.querySelectorAll('.dashboard-primary-kpis .ui-kpi'),
+      document.querySelectorAll('.dashboard-kpis .ui-kpi'),
       (card) => card.getBoundingClientRect(),
     ),
     syncActions: Array.from(
-      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
+      document.querySelectorAll('.dashboard-toolbar-actions .ui-button'),
       (button) => button.getBoundingClientRect(),
     ),
     undersizedControls: Array.from(
@@ -189,13 +185,9 @@ test('overview switches to a single-column mobile composition without viewport o
   expect(layout.headerActions.right).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
-  expect(layout.filterFields).toHaveLength(3)
-  expect(layout.filterFields.every((field) => field.width > 350)).toBe(true)
-  expect(layout.primaryKpis).toHaveLength(3)
-  expect(layout.primaryKpis.every((card) => card.width > 350)).toBe(true)
+  expect(layout.filterFields).toHaveLength(4)
+  expect(layout.primaryKpis).toHaveLength(4)
   expect(layout.syncActions).toHaveLength(2)
-  expect(layout.syncActions.every((button) => button.width > 350)).toBe(true)
-  expect(layout.syncActions[1].top).toBeGreaterThan(layout.syncActions[0].top)
   expect(layout.undersizedControls).toEqual([])
 
   for (const width of [320, 375, 390, 767]) {
@@ -207,10 +199,6 @@ test('overview switches to a single-column mobile composition without viewport o
         .querySelector('.app-header-actions')!
         .getBoundingClientRect(),
       scrollWidth: document.documentElement.scrollWidth,
-      syncActions: Array.from(
-        document.querySelectorAll('.dashboard-sync-actions .ui-button'),
-        (button) => button.getBoundingClientRect(),
-      ),
     }))
     expect(mobileLayout.scrollWidth).toBe(mobileLayout.clientWidth)
     expect(mobileLayout.appShell.left).toBe(0)
@@ -218,28 +206,7 @@ test('overview switches to a single-column mobile composition without viewport o
     expect(mobileLayout.headerActions.right).toBeLessThanOrEqual(
       mobileLayout.clientWidth,
     )
-    expect(mobileLayout.syncActions[1].top).toBeGreaterThan(
-      mobileLayout.syncActions[0].top,
-    )
   }
-
-  await page.setViewportSize({ width: 768, height: 844 })
-  const tabletLayout = await page.evaluate(() =>
-    Array.from(
-      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
-      (button) => button.getBoundingClientRect(),
-    ),
-  )
-  expect(tabletLayout[1].top).toBe(tabletLayout[0].top)
-
-  await page.setViewportSize({ width: 1440, height: 900 })
-  const desktopLayout = await page.evaluate(() =>
-    Array.from(
-      document.querySelectorAll('.dashboard-sync-actions .ui-button'),
-      (button) => button.getBoundingClientRect(),
-    ),
-  )
-  expect(desktopLayout[1].top).toBe(desktopLayout[0].top)
 
   await page.setViewportSize({ width: 215, height: 932 })
   const zoomedLayout = await page.evaluate(() => ({

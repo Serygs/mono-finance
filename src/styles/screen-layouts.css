@@ -107,7 +107,12 @@
 }
 .dashboard-mobile-widgets {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 1rem;
+}
+.dashboard-mobile-widgets > div {
+  min-width: 0;
 }
 .recent-transactions-list {
   display: grid;
