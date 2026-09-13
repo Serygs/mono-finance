@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Controls'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
-import { Card, KpiCard } from '../../components/ui/Surfaces'
+import { Card, InfoTooltip, KpiCard } from '../../components/ui/Surfaces'
 import { getAccounts, synchronizeAccounts } from '../accounts/accounts-api'
 import {
   loadAccountFilter,
@@ -42,6 +42,7 @@ import {
   filterDashboardAnalytics,
   formatCurrencyAmount,
   formatPeriod,
+  groupTimeSeriesIntoBuckets,
   resolveDashboardRange,
   DEFAULT_DASHBOARD_DATE_PRESET,
   type DashboardDatePreset,
@@ -69,6 +70,21 @@ const DATE_PRESETS: Array<{
   { label: 'Current year', value: 'current-year' },
   { label: 'Custom range', value: 'custom' },
 ]
+const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
+  'expense-distribution': 'Expense distribution help',
+  'fixed-variable-expenses': 'Fixed vs variable expenses help',
+  'income-expenses': 'Income vs expenses help',
+  'largest-transactions': 'Largest transactions help',
+  'monthly-trend': 'Monthly trend help',
+  'recent-compensations': 'Recent compensations help',
+  'recent-corrections': 'Recent corrections help',
+  'recent-transactions': 'Recent transactions help',
+  'recurring-expenses': 'Recurring expenses help',
+  'spending-by-category': 'Spending by category help',
+  'spending-by-weekday': 'Spending by weekday help',
+  'spending-trend': 'Spending trend help',
+  'top-merchants': 'Top merchants help',
+}
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
@@ -472,6 +488,7 @@ function Dashboard({
     t('Other'),
   )
   const widgets = buildWidgets(
+    t,
     displayed,
     chart,
     units,
@@ -505,6 +522,7 @@ function Dashboard({
       <section className="dashboard-kpis" aria-label={t('Period summary')}>
         <Metric
           accent="cyan"
+          description={t('Total spent help')}
           title={t('Total spent')}
           units={units}
           values={displayed.overview.totals.map((item) => ({
@@ -514,6 +532,7 @@ function Dashboard({
         />
         <Metric
           accent="blue"
+          description={t('Total income help')}
           title={t('Total income')}
           units={units}
           values={displayed.overview.totals.map((item) => ({
@@ -523,6 +542,7 @@ function Dashboard({
         />
         <Metric
           accent="green"
+          description={t('Net cash flow help')}
           title={t('Net cash flow')}
           units={units}
           values={displayed.overview.totals.map((item) => ({
@@ -532,6 +552,7 @@ function Dashboard({
         />
         <Metric
           accent="pink"
+          description={t('Average spend / day help')}
           title={t('Average spend / day')}
           units={units}
           values={displayed.overview.averageExpensePerDay}
@@ -569,6 +590,10 @@ function Dashboard({
 }
 
 function buildWidgets(
+  t: (
+    key: TranslationKey,
+    variables?: Record<string, string | number>,
+  ) => string,
   _all: DashboardAnalytics,
   chart: DashboardAnalytics,
   units: Map<string, number>,
@@ -589,6 +614,7 @@ function buildWidgets(
     .slice(0, 5)
   return [
     box(
+      t,
       'recent-transactions',
       'Recent transactions',
       <Recent
@@ -598,10 +624,11 @@ function buildWidgets(
         transactions={transactions}
         units={units}
       />,
-      12,
+      6,
       6,
     ),
     box(
+      t,
       'income-expenses',
       'Income vs expenses',
       <GroupedBars
@@ -613,10 +640,11 @@ function buildWidgets(
         }
         units={units}
       />,
-      12,
+      6,
       7,
     ),
     box(
+      t,
       'spending-by-category',
       'Spending by category',
       <>
@@ -633,7 +661,7 @@ function buildWidgets(
             type="button"
             variant="quiet"
           >
-            {expanded ? 'Show less' : 'Show all'}
+            {t(expanded ? 'Show less' : 'Show all')}
           </Button>
         ) : null}
       </>,
@@ -641,6 +669,7 @@ function buildWidgets(
       7,
     ),
     box(
+      t,
       'spending-trend',
       'Spending trend',
       <Trend
@@ -652,6 +681,7 @@ function buildWidgets(
       7,
     ),
     box(
+      t,
       'monthly-trend',
       'Monthly trend',
       <Trend currency={currency} points={chart.trends.monthly} units={units} />,
@@ -659,6 +689,7 @@ function buildWidgets(
       7,
     ),
     box(
+      t,
       'expense-distribution',
       'Expense distribution',
       <Bars
@@ -672,6 +703,7 @@ function buildWidgets(
       7,
     ),
     box(
+      t,
       'spending-by-weekday',
       'Spending by weekday',
       <WeekdayBars units={units} values={chart.breakdowns.spendingByWeekday} />,
@@ -679,13 +711,14 @@ function buildWidgets(
       7,
     ),
     box(
+      t,
       'top-merchants',
       'Top merchants',
       <Evidence
         units={units}
         values={chart.breakdowns.topMerchants.map((item) => ({
           ...item,
-          detail: `${item.transactionCount} transactions`,
+          detail: t('{count} transactions', { count: item.transactionCount }),
           label: item.description,
         }))}
       />,
@@ -693,6 +726,7 @@ function buildWidgets(
       6,
     ),
     box(
+      t,
       'recurring-expenses',
       'Recurring expenses',
       <RecurringExpenses
@@ -703,6 +737,7 @@ function buildWidgets(
       5,
     ),
     box(
+      t,
       'fixed-variable-expenses',
       'Fixed vs variable expenses',
       <FixedVariableExpenses
@@ -713,6 +748,7 @@ function buildWidgets(
       5,
     ),
     box(
+      t,
       'largest-transactions',
       'Largest transactions',
       <Evidence
@@ -727,10 +763,11 @@ function buildWidgets(
       6,
     ),
     box(
+      t,
       'recent-corrections',
       'Recent corrections',
       <TransactionEvidence
-        empty="No corrected transactions in this period."
+        empty={t('No corrected transactions in this period.')}
         loading={loading}
         transactions={corrections}
         units={units}
@@ -739,10 +776,11 @@ function buildWidgets(
       6,
     ),
     box(
+      t,
       'recent-compensations',
       'Recent compensations',
       <TransactionEvidence
-        empty="No compensation links in this period."
+        empty={t('No compensation links in this period.')}
         loading={loading}
         transactions={compensations}
         units={units}
@@ -753,8 +791,9 @@ function buildWidgets(
   ]
 }
 function box(
+  t: (key: TranslationKey) => string,
   id: DashboardWidgetId,
-  title: string,
+  title: TranslationKey,
   children: React.ReactNode,
   w: number,
   h: number,
@@ -767,7 +806,12 @@ function box(
             ⋮⋮
           </span>
         }
-        title={title}
+        title={
+          <>
+            {t(title)}
+            <InfoTooltip description={t(WIDGET_HELP[id])} label={t(title)} />
+          </>
+        }
       >
         {children}
       </Card>
@@ -779,11 +823,13 @@ function box(
 }
 function Metric({
   accent,
+  description,
   title,
   units,
   values,
 }: {
   accent: 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
+  description: string
   title: string
   units: Map<string, number>
   values: CurrencyAmount[]
@@ -791,6 +837,7 @@ function Metric({
   return (
     <KpiCard
       accent={accent}
+      description={description}
       label={title}
       value={
         values.length === 0 ? (
@@ -876,9 +923,9 @@ function GroupedBars({
   points: TimeSeriesPoint[]
   units: Map<string, number>
 }) {
+  const { locale, t } = useLocalization()
   if (currency === null || points.length === 0) return <Empty />
-  const buckets =
-    points.length > 14 && points.length <= 90 ? weekly(points) : points
+  const buckets = groupTimeSeriesIntoBuckets(points)
   const max = Math.max(
     ...buckets.flatMap((item) => [
       item.incomeAmountMinor,
@@ -888,18 +935,31 @@ function GroupedBars({
   )
   return (
     <div className="income-expense-vertical">
+      <div
+        className="income-expense-legend"
+        aria-label={t('Income vs expenses')}
+      >
+        <span>
+          <i className="income-bar" />
+          {t('Income')}
+        </span>
+        <span>
+          <i className="expense-bar" />
+          {t('Expenses')}
+        </span>
+      </div>
       {buckets.map((item) => (
         <div key={item.periodStart}>
           <div className="income-expense-bars">
             <span
               className="income-bar"
               style={{ height: `${(item.incomeAmountMinor / max) * 100}%` }}
-              title={`Income: ${formatCurrencyAmount(item.incomeAmountMinor, currency, units.get(currency) ?? 2)}`}
+              title={`${t('Income')}: ${formatCurrencyAmount(item.incomeAmountMinor, currency, units.get(currency) ?? 2, locale)}`}
             />
             <span
               className="expense-bar"
               style={{ height: `${(item.expenseAmountMinor / max) * 100}%` }}
-              title={`Expenses: ${formatCurrencyAmount(item.expenseAmountMinor, currency, units.get(currency) ?? 2)}`}
+              title={`${t('Expenses')}: ${formatCurrencyAmount(Math.abs(item.expenseAmountMinor), currency, units.get(currency) ?? 2, locale)}`}
             />
           </div>
           <small>
@@ -914,36 +974,13 @@ function GroupedBars({
               item.netAmountMinor,
               currency,
               units.get(currency) ?? 2,
+              locale,
             )}
           </span>
         </div>
       ))}
     </div>
   )
-}
-function weekly(points: TimeSeriesPoint[]) {
-  const result = new Map<number, TimeSeriesPoint>()
-  for (const item of points) {
-    const date = new Date(item.periodStart * 1000)
-    const start =
-      new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - ((date.getDay() + 6) % 7),
-      ).getTime() / 1000
-    const current = result.get(start) ?? {
-      currencyCode: item.currencyCode,
-      expenseAmountMinor: 0,
-      incomeAmountMinor: 0,
-      netAmountMinor: 0,
-      periodStart: start,
-    }
-    current.expenseAmountMinor += item.expenseAmountMinor
-    current.incomeAmountMinor += item.incomeAmountMinor
-    current.netAmountMinor += item.netAmountMinor
-    result.set(start, current)
-  }
-  return [...result.values()]
 }
 function Trend({
   currency,
@@ -1028,20 +1065,34 @@ function WeekdayBars({
   units: Map<string, number>
   values: Array<CurrencyAmount & { transactionCount: number; weekday: number }>
 }) {
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  if (values.length === 0) return <Empty />
-  const max = Math.max(...values.map((item) => item.amountMinor), 1)
+  const { t } = useLocalization()
+  const labels: TranslationKey[] = [
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ]
+  const expenses = values.map((item) => ({
+    ...item,
+    amountMinor: Math.abs(item.amountMinor),
+  }))
+  if (expenses.length === 0 || expenses.every((item) => item.amountMinor === 0))
+    return <p className="chart-empty">{t('No expenses in this period.')}</p>
+  const max = Math.max(...expenses.map((item) => item.amountMinor), 1)
   return (
     <div
       className="weekday-vertical-chart"
       role="img"
-      aria-label="Spending by weekday"
+      aria-label={t('Spending by weekday')}
     >
       {labels.map((label, index) => {
-        const value = values.find((item) => item.weekday === index + 1)
+        const value = expenses.find((item) => item.weekday === index + 1)
         const amountMinor = value?.amountMinor ?? 0
         const currencyCode =
-          value?.currencyCode ?? values[0]?.currencyCode ?? 'UAH'
+          value?.currencyCode ?? expenses[0]?.currencyCode ?? 'UAH'
         const transactionCount = value?.transactionCount ?? 0
         const amount = formatCurrencyAmount(
           amountMinor,
@@ -1052,11 +1103,19 @@ function WeekdayBars({
           <div key={label}>
             <span
               style={{ height: `${(amountMinor / max) * 100}%` }}
-              title={`${label}: ${amount} (${transactionCount} transactions)`}
+              title={t('Weekday {weekday}: {amount}. {count} transactions.', {
+                amount,
+                count: transactionCount,
+                weekday: t(label),
+              })}
             />
-            <small>{label}</small>
+            <small>{t(label)}</small>
             <span className="sr-only">
-              {amount}, {transactionCount} transactions
+              {t('Weekday {weekday}: {amount}. {count} transactions.', {
+                amount,
+                count: transactionCount,
+                weekday: t(label),
+              })}
             </span>
           </div>
         )

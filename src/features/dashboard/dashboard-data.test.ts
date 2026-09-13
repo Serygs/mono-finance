@@ -6,6 +6,7 @@ import {
   chartAccentIndex,
   displayExpenseCategories,
   filterDashboardAnalytics,
+  groupTimeSeriesIntoBuckets,
   resolveDashboardRange,
   type DashboardAnalytics,
 } from './dashboard-data'
@@ -104,6 +105,25 @@ describe('dashboard data', () => {
           currencyCode: 'UAH',
         },
       ],
+    })
+  })
+
+  it('groups chronological income and expense values into at most seven buckets', () => {
+    const points = Array.from({ length: 30 }, (_, index) => ({
+      currencyCode: 'UAH',
+      expenseAmountMinor: -(index + 1),
+      incomeAmountMinor: index + 1,
+      netAmountMinor: 0,
+      periodStart: index,
+    }))
+
+    const buckets = groupTimeSeriesIntoBuckets(points)
+
+    expect(buckets).toHaveLength(6)
+    expect(buckets[0]).toMatchObject({
+      expenseAmountMinor: -15,
+      incomeAmountMinor: 15,
+      periodStart: 0,
     })
   })
 })

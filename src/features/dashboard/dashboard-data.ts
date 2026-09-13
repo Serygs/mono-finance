@@ -195,6 +195,41 @@ export function chartSeries(
   }))
 }
 
+export function groupTimeSeriesIntoBuckets(
+  points: readonly TimeSeriesPoint[],
+  maximumBuckets = 7,
+): TimeSeriesPoint[] {
+  if (points.length <= maximumBuckets) return [...points]
+  const sorted = [...points].sort(
+    (left, right) => left.periodStart - right.periodStart,
+  )
+  const bucketSize = Math.ceil(sorted.length / maximumBuckets)
+  const buckets: TimeSeriesPoint[] = []
+  for (let index = 0; index < sorted.length; index += bucketSize) {
+    const values = sorted.slice(index, index + bucketSize)
+    const first = values[0]
+    if (first === undefined) continue
+    buckets.push(
+      values.reduce(
+        (total, value) => ({
+          ...total,
+          expenseAmountMinor:
+            total.expenseAmountMinor + value.expenseAmountMinor,
+          incomeAmountMinor: total.incomeAmountMinor + value.incomeAmountMinor,
+          netAmountMinor: total.netAmountMinor + value.netAmountMinor,
+        }),
+        {
+          ...first,
+          expenseAmountMinor: 0,
+          incomeAmountMinor: 0,
+          netAmountMinor: 0,
+        },
+      ),
+    )
+  }
+  return buckets
+}
+
 export function chartAccentIndex(stableKey: string): number {
   let hash = 2_166_136_261
   for (let index = 0; index < stableKey.length; index += 1) {
@@ -208,8 +243,9 @@ export function formatCurrencyAmount(
   amountMinor: number,
   currencyCode: string,
   minorUnit = 2,
+  locale?: string,
 ): string {
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     currency: currencyCode,
     currencyDisplay: 'code',
     maximumFractionDigits: minorUnit,

@@ -209,7 +209,7 @@ export function CategoryManagement() {
                 }}
                 variant="secondary"
               >
-                Merge
+                {t('Merge')}
               </Button>
               <Button
                 disabled={removal.isPending}
@@ -279,19 +279,15 @@ export function CategoryManagement() {
           }
         }}
         open={pendingMerge !== null}
-        title="Merge category?"
+        title={t('Merge category?')}
       >
-        <p>
-          All transaction overrides and MCC mappings from{' '}
-          {pendingMerge?.name ?? 'this category'} will move to the selected
-          category. The source category will then be deleted.
-        </p>
-        <FormField label="Merge into">
+        <p>{t('Merge category explanation')}</p>
+        <FormField label={t('Merge into')}>
           <Select
             onChange={(event) => setMergeTargetId(event.target.value)}
             value={mergeTargetId}
           >
-            <option value="">Select target category</option>
+            <option value="">{t('Select target category')}</option>
             {(categories.data ?? [])
               .filter((category) => category.id !== pendingMerge?.id)
               .map((category) => (
@@ -302,7 +298,7 @@ export function CategoryManagement() {
           </Select>
         </FormField>
         {merge.isError ? (
-          <Alert tone="danger">Categories could not be merged.</Alert>
+          <Alert tone="danger">{t('Categories could not be merged.')}</Alert>
         ) : null}
         <div className="transaction-correction-actions">
           <Button
@@ -310,7 +306,7 @@ export function CategoryManagement() {
             onClick={() => setPendingMerge(null)}
             variant="secondary"
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button
             disabled={mergeTargetId === ''}
@@ -324,7 +320,7 @@ export function CategoryManagement() {
             }}
             variant="danger"
           >
-            Merge categories
+            {t('Merge categories')}
           </Button>
         </div>
       </Dialog>

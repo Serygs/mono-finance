@@ -1,4 +1,51 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'About every {days} days · {count} payments',
+  'Average',
+  'Average spend / day help',
+  'Categories could not be merged.',
+  'Expense distribution help',
+  'Fixed vs variable expenses',
+  'Fixed vs variable expenses help',
+  'Income vs expenses',
+  'Income vs expenses help',
+  'Largest transactions help',
+  'Last',
+  'Merge',
+  'Merge categories',
+  'Merge category?',
+  'Merge into',
+  'Merge category explanation',
+  'Monthly trend help',
+  'Net cash flow help',
+  'No expenses in this period.',
+  'Recent compensations help',
+  'Recent corrections',
+  'Recent corrections help',
+  'Recent transactions',
+  'Recent transactions help',
+  'Recurring expenses',
+  'Recurring expenses help',
+  'Recurring / fixed',
+  'Spending by category help',
+  'Spending by weekday',
+  'Spending by weekday help',
+  'Spending trend',
+  'Spending trend help',
+  'Total income help',
+  'Total spent help',
+  'Top merchants help',
+  'Select target category',
+  'No corrected transactions in this period.',
+  'Transaction count: {count}',
+  'Variable',
+  'Weekday {weekday}: {amount}. {count} transactions.',
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+  'Sun',
   'All transaction types',
   'Assigned category',
   'Imported name',
@@ -297,6 +344,71 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
   >
 
 export const UKRAINIAN_MESSAGES = {
+  'About every {days} days · {count} payments':
+    'Приблизно кожні {days} днів · {count} платежів',
+  Average: 'Середнє',
+  'Average spend / day help':
+    'Загальні витрати, поділені на кількість днів у вибраному періоді.',
+  'Categories could not be merged.': 'Не вдалося об’єднати категорії.',
+  'Expense distribution help':
+    'Розподіл витрат за категоріями у вибраній валюті.',
+  'Fixed vs variable expenses': 'Постійні та змінні витрати',
+  'Fixed vs variable expenses help':
+    'Порівняння регулярних і змінних витрат у вибраному періоді.',
+  'Income vs expenses': 'Доходи та витрати',
+  'Income vs expenses help':
+    'Порівняння доходів і витрат за хронологічними частинами вибраного періоду.',
+  'Largest transactions help':
+    'Найбільші транзакції у вибраному періоді та валюті.',
+  Last: 'Останній',
+  Merge: 'Об’єднати',
+  'Merge categories': 'Об’єднати категорії',
+  'Merge category?': 'Об’єднати категорію?',
+  'Merge into': 'Об’єднати з',
+  'Merge category explanation':
+    'Усі перевизначення транзакцій і зіставлення MCC з цієї категорії буде перенесено до вибраної. Початкову категорію буде видалено.',
+  'Monthly trend help': 'Витрати за місяцями у вибраному періоді.',
+  'Net cash flow help':
+    'Доходи мінус витрати. Від’ємне значення означає, що витрати перевищили доходи.',
+  'No expenses in this period.': 'У цьому періоді немає витрат.',
+  'Recent compensations help':
+    'Останні зв’язки компенсацій серед транзакцій вибраного періоду.',
+  'Recent corrections': 'Останні коригування',
+  'Recent corrections help':
+    'Останні скориговані транзакції у вибраному періоді.',
+  'Recent transactions': 'Останні транзакції',
+  'Recent transactions help':
+    'Нещодавно імпортовані транзакції, що відповідають поточним фільтрам.',
+  'Recurring expenses': 'Регулярні витрати',
+  'Recurring expenses help':
+    'Повторювані витрати, визначені за історією транзакцій.',
+  'Recurring / fixed': 'Регулярні / постійні',
+  'Spending by category help': 'Витрати згруповано за вашими категоріями.',
+  'Spending by weekday': 'Витрати за днями тижня',
+  'Spending by weekday help':
+    'Загальні витрати та кількість транзакцій для кожного дня тижня.',
+  'Spending trend': 'Динаміка витрат',
+  'Spending trend help': 'Зміна витрат протягом вибраного періоду.',
+  'Total income help':
+    'Усі дохідні транзакції у вибраному періоді та за поточними фільтрами.',
+  'Total spent help':
+    'Усі видаткові транзакції у вибраному періоді та за поточними фільтрами.',
+  'Top merchants help':
+    'Найбільші отримувачі та продавці за сумою витрат у вибраному періоді.',
+  'Select target category': 'Виберіть цільову категорію',
+  'No corrected transactions in this period.':
+    'У цьому періоді немає скоригованих транзакцій.',
+  'Transaction count: {count}': 'Кількість транзакцій: {count}',
+  Variable: 'Змінні',
+  'Weekday {weekday}: {amount}. {count} transactions.':
+    '{weekday}: {amount}. Транзакцій: {count}.',
+  Mon: 'Пн',
+  Tue: 'Вт',
+  Wed: 'Ср',
+  Thu: 'Чт',
+  Fri: 'Пт',
+  Sat: 'Сб',
+  Sun: 'Нд',
   'All transaction types': 'Усі типи транзакцій',
   'Assigned category': 'Призначена категорія',
   'Imported name': 'Імпортована назва',
