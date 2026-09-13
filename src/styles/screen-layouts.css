@@ -195,17 +195,6 @@
   padding: 0;
   list-style: none;
 }
-.recent-transactions-limit {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.35rem;
-  color: var(--color-text-secondary);
-}
-.recent-transactions-limit .ui-select {
-  min-height: 2rem;
-}
-
 .income-expense-legend {
   display: flex;
   gap: 0.9rem;

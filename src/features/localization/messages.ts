@@ -64,6 +64,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Accounts',
   'Accounts in view',
   'Choose one, combine several, or return to the full picture.',
+  'Choose Custom range to set exact dates.',
   'Accounts could not be loaded. Try again later.',
   'Accounts could not be synchronized',
   'Add category',
@@ -72,6 +73,8 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Adjusted',
   'All',
   'All accounts',
+  'All accounts ({count})',
+  '{count} accounts selected',
   'All categories',
   'All original currencies',
   'Analytics category',
@@ -233,6 +236,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Search merchant or description',
   'Search transactions…',
   'Select a custom category',
+  'Select all',
   'Settings',
   'Sign in',
   'Sign in to access your personal financial workspace.',
@@ -431,6 +435,8 @@ export const UKRAINIAN_MESSAGES = {
   'Accounts in view': 'Рахунки у вибірці',
   'Choose one, combine several, or return to the full picture.':
     'Виберіть один, поєднайте кілька або поверніться до загальної картини.',
+  'Choose Custom range to set exact dates.':
+    'Виберіть власний діапазон, щоб задати точні дати.',
   'Accounts could not be loaded. Try again later.':
     'Не вдалося завантажити рахунки. Спробуйте пізніше.',
   'Accounts could not be synchronized': 'Не вдалося синхронізувати рахунки',
@@ -442,6 +448,8 @@ export const UKRAINIAN_MESSAGES = {
   Adjusted: 'Скориговано',
   All: 'Усі',
   'All accounts': 'Усі рахунки',
+  'All accounts ({count})': 'Усі рахунки ({count})',
+  '{count} accounts selected': 'Вибрано рахунків: {count}',
   'All categories': 'Усі категорії',
   'All original currencies': 'Усі початкові валюти',
   'Analytics category': 'Категорія для аналітики',
@@ -613,6 +621,7 @@ export const UKRAINIAN_MESSAGES = {
   'Search merchant or description': 'Пошук продавця або опису',
   'Search transactions…': 'Пошук транзакцій…',
   'Select a custom category': 'Виберіть власну категорію',
+  'Select all': 'Вибрати всі',
   Settings: 'Налаштування',
   'Sign in': 'Увійти',
   'Sign in to access your personal financial workspace.':

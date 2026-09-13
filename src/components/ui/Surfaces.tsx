@@ -77,6 +77,7 @@ interface KpiCardProps {
   context?: ReactNode
   label: string
   description?: string
+  icon?: ReactNode
   value: ReactNode
 }
 
@@ -84,17 +85,25 @@ export function KpiCard({
   accent = 'cyan',
   context,
   description,
+  icon,
   label,
   value,
 }: KpiCardProps) {
   return (
     <section className={`ui-kpi ui-kpi--${accent}`}>
-      <h2>
-        {label}
-        {description === undefined ? null : (
-          <InfoTooltip description={description} label={label} />
+      <header className="ui-kpi__header">
+        <h2>
+          {label}
+          {description === undefined ? null : (
+            <InfoTooltip description={description} label={label} />
+          )}
+        </h2>
+        {icon === undefined ? null : (
+          <span aria-hidden="true" className="ui-kpi__icon">
+            {icon}
+          </span>
         )}
-      </h2>
+      </header>
       <div className="ui-kpi__value">{value}</div>
       {context === undefined ? null : (
         <div className="ui-kpi__context">{context}</div>

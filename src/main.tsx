@@ -8,6 +8,7 @@ import { registerServiceWorker } from './features/offline/service-worker-registr
 import './styles/index.css'
 import './styles/design-system.css'
 import './styles/screen-layouts.css'
+import './styles/overview.css'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15_000 } },

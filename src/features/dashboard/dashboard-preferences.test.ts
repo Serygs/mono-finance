@@ -18,7 +18,7 @@ describe('dashboard preferences', () => {
       'spending-trend',
       'monthly-trend',
     ])
-    expect(DEFAULT_DASHBOARD_PREFERENCES.recentTransactionsLimit).toBe(10)
+    expect(DEFAULT_DASHBOARD_PREFERENCES.recentTransactionsLimit).toBe(5)
   })
 
   it('persists user-selected widgets and layouts without touching analytics state', () => {

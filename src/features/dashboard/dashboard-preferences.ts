@@ -34,7 +34,7 @@ export const DEFAULT_DASHBOARD_PREFERENCES: DashboardPreferences = {
     'monthly-trend',
   ],
   layout: [],
-  recentTransactionsLimit: 10,
+  recentTransactionsLimit: 5,
 }
 
 const STORAGE_KEY = 'mono-finance.dashboard-preferences.v1'
