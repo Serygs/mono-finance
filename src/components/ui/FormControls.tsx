@@ -61,16 +61,22 @@ interface MultiSelectOption {
 interface MultiSelectProps {
   ariaLabel: string
   className?: string
+  menuLabel?: string
   onChange(values: string[]): void
   options: readonly MultiSelectOption[]
+  selectAllLabel?: string
+  triggerLabel?: string
   value: readonly string[]
 }
 
 export function MultiSelect({
   ariaLabel,
   className,
+  menuLabel,
   onChange,
   options,
+  selectAllLabel,
+  triggerLabel,
   value,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false)
@@ -112,7 +118,7 @@ export function MultiSelect({
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <span>{selectedLabels.join(', ') || ariaLabel}</span>
+        <span>{triggerLabel ?? (selectedLabels.join(', ') || ariaLabel)}</span>
         <span aria-hidden="true" className="ui-multi-select__indicator">
           ⌄
         </span>
@@ -124,6 +130,9 @@ export function MultiSelect({
           id={contentId}
           role="dialog"
         >
+          {menuLabel === undefined ? null : (
+            <strong className="ui-multi-select__title">{menuLabel}</strong>
+          )}
           {options.map((option) => {
             const selected = value.includes(option.value)
             return (
@@ -143,6 +152,15 @@ export function MultiSelect({
               </label>
             )
           })}
+          {selectAllLabel === undefined ? null : (
+            <button
+              className="ui-multi-select__select-all"
+              onClick={() => onChange(options.map((option) => option.value))}
+              type="button"
+            >
+              {selectAllLabel}
+            </button>
+          )}
         </div>
       ) : null}
     </div>

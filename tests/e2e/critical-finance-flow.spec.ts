@@ -135,6 +135,17 @@ test('overview switches to a single-column mobile composition without viewport o
     page.getByRole('heading', { name: 'Finance overview' }),
   ).toBeVisible()
   await expect(page.locator('.dashboard-kpis .ui-kpi')).toHaveCount(4)
+  await expect(
+    page.locator('.weekday-vertical-chart > div > span:first-child'),
+  ).toHaveCount(7)
+  expect(
+    await page
+      .locator('.weekday-vertical-chart > div > span:first-child')
+      .evaluateAll(
+        (bars) =>
+          bars.filter((bar) => bar.getBoundingClientRect().height > 3).length,
+      ),
+  ).toBeGreaterThan(0)
 
   const layout = await page.evaluate(() => ({
     appShell: document.querySelector('.app-shell')!.getBoundingClientRect(),
@@ -193,7 +204,7 @@ test('overview switches to a single-column mobile composition without viewport o
   expect(layout.headerActions.right).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
-  expect(layout.filterFields).toHaveLength(4)
+  expect(layout.filterFields).toHaveLength(3)
   expect(layout.primaryKpis).toHaveLength(4)
   expect(layout.syncActions).toHaveLength(2)
   expect(layout.undersizedControls).toEqual([])
@@ -514,8 +525,30 @@ const breakdowns = {
     },
   ],
   expensesByCurrency: [{ amountMinor: 4_000, currencyCode: 'UAH' }],
+  fixedVariableExpenses: [],
   incomeByCategory: [],
   largestTransactions: [],
+  recurringExpenses: [],
+  spendingByWeekday: [
+    {
+      amountMinor: -1_000,
+      currencyCode: 'UAH',
+      transactionCount: 1,
+      weekday: 1,
+    },
+    {
+      amountMinor: -2_500,
+      currencyCode: 'UAH',
+      transactionCount: 2,
+      weekday: 3,
+    },
+    {
+      amountMinor: -1_800,
+      currencyCode: 'UAH',
+      transactionCount: 1,
+      weekday: 6,
+    },
+  ],
   topMerchants: [
     {
       amountMinor: 4_000,
@@ -527,7 +560,22 @@ const breakdowns = {
 }
 const trends = {
   currencyConversion,
-  daily: [
+  daily: Array.from({ length: 7 }, (_, index) => ({
+    currencyCode: 'UAH',
+    expenseAmountMinor: 1_800 + index * 350,
+    incomeAmountMinor: index % 2 === 0 ? 3_000 + index * 300 : 800,
+    netAmountMinor:
+      (index % 2 === 0 ? 3_000 + index * 300 : 800) - (1_800 + index * 350),
+    periodStart: 1_735_689_600 + index * 86_400,
+  })),
+  monthly: [
+    {
+      currencyCode: 'UAH',
+      expenseAmountMinor: 2_800,
+      incomeAmountMinor: 4_200,
+      netAmountMinor: 1_400,
+      periodStart: 1_733_011_200,
+    },
     {
       currencyCode: 'UAH',
       expenseAmountMinor: 4_000,
@@ -536,8 +584,13 @@ const trends = {
       periodStart: 1_735_689_600,
     },
   ],
-  monthly: [],
-  spendingTrend: [],
+  spendingTrend: Array.from({ length: 7 }, (_, index) => ({
+    currencyCode: 'UAH',
+    expenseAmountMinor: 1_500 + (index % 3) * 900 + index * 200,
+    incomeAmountMinor: 0,
+    netAmountMinor: -(1_500 + (index % 3) * 900 + index * 200),
+    periodStart: 1_735_689_600 + index * 86_400,
+  })),
 }
 const categories = [
   { colorToken: 'orange', icon: 'fork', id: 'category-dining', name: 'Dining' },

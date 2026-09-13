@@ -90,6 +90,21 @@ const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
   'spending-trend': 'Spending trend help',
   'top-merchants': 'Top merchants help',
 }
+const WIDGET_TITLES: Record<DashboardWidgetId, TranslationKey> = {
+  'expense-distribution': 'Expense distribution',
+  'fixed-variable-expenses': 'Fixed vs variable expenses',
+  'income-expenses': 'Income vs expenses',
+  'largest-transactions': 'Largest transactions',
+  'monthly-trend': 'Monthly trend',
+  'recent-compensations': 'Recent compensations',
+  'recent-corrections': 'Recent corrections',
+  'recent-transactions': 'Recent transactions',
+  'recurring-expenses': 'Recurring expenses',
+  'spending-by-category': 'Spending by category',
+  'spending-by-weekday': 'Spending by weekday',
+  'spending-trend': 'Spending trend',
+  'top-merchants': 'Top merchants',
+}
 const DEFAULT_WIDGET_ORDER = [
   ...DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds,
   ...DASHBOARD_WIDGET_IDS.filter(
@@ -212,14 +227,7 @@ export function DashboardPage() {
   return (
     <PageSurface className="dashboard-page">
       <PageHeader
-        description={
-          <p>
-            {t(
-              DATE_PRESETS.find((item) => item.value === preset)?.label ??
-                'Custom range',
-            )}
-          </p>
-        }
+        description={<p>{t('Your money, in clear focus.')}</p>}
         id="dashboard-title"
         title={t('Finance overview')}
       />
@@ -250,6 +258,7 @@ export function DashboardPage() {
               type="button"
               variant="secondary"
             >
+              <span aria-hidden="true">↻</span>
               {t('Sync status')}
             </Button>
             {syncOpen ? (
@@ -285,6 +294,7 @@ export function DashboardPage() {
             type="button"
             variant="secondary"
           >
+            <span aria-hidden="true">⚙</span>
             {t('Customize dashboard')}
           </Button>
         </div>
@@ -373,6 +383,8 @@ function Toolbar({
     filter.mode === 'all'
       ? accounts.map((account) => account.id)
       : filter.accountIds
+  const chartCurrencies =
+    analytics === undefined ? [] : availableCurrencies(analytics)
   return (
     <section className="dashboard-toolbar" aria-label={t('Dashboard filters')}>
       <FormField label={t('Period')}>
@@ -392,6 +404,7 @@ function Toolbar({
       <FormField label={t('Accounts')}>
         <MultiSelect
           ariaLabel={t('Accounts')}
+          menuLabel={t('Accounts')}
           onChange={(selected) => {
             onFilter(
               selected.length === 0 || selected.length === accounts.length
@@ -403,24 +416,45 @@ function Toolbar({
             label: `${account.type} · ${account.currency.code}`,
             value: account.id,
           }))}
+          selectAllLabel={t('Select all')}
+          triggerLabel={
+            ids.length === accounts.length
+              ? t('All accounts ({count})', { count: accounts.length })
+              : t('{count} accounts selected', { count: ids.length })
+          }
           value={ids}
         />
       </FormField>
       <FormField label={t('Currency')}>
         <Select
-          onChange={(event) =>
-            onMode(event.target.value as 'base' | 'original')
-          }
-          value={mode}
+          onChange={(event) => {
+            const value = event.target.value
+            if (value === 'base') {
+              onMode('base')
+              onCurrency(null)
+              return
+            }
+            onMode('original')
+            onCurrency(value === 'original-all' ? null : value)
+          }}
+          value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
         >
-          <option value="original">{t('Original currencies')}</option>
+          <option value="original-all">{t('All original currencies')}</option>
+          {chartCurrencies.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
           <option value="base">
-            {t('Base currency')} · {baseCurrency}
+            {baseCurrency} · {t('Base currency')}
           </option>
         </Select>
       </FormField>
       <details className="dashboard-toolbar-menu">
-        <summary>{t('Filters')}</summary>
+        <summary>
+          <span aria-hidden="true">☷</span>
+          {t('Filters')}
+        </summary>
         {preset === 'custom' ? (
           <div>
             <FormField label={t('From')}>
@@ -438,24 +472,11 @@ function Toolbar({
               />
             </FormField>
           </div>
-        ) : null}
-        {mode === 'original' ? (
-          <FormField label={t('Original currency')}>
-            <Select
-              onChange={(event) => onCurrency(event.target.value || null)}
-              value={currency ?? ''}
-            >
-              <option value="">{t('All original currencies')}</option>
-              {analytics === undefined
-                ? null
-                : availableCurrencies(analytics).map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-            </Select>
-          </FormField>
-        ) : null}
+        ) : (
+          <p className="dashboard-filter-hint">
+            {t('Choose Custom range to set exact dates.')}
+          </p>
+        )}
       </details>
     </section>
   )
@@ -505,14 +526,14 @@ function Dashboard({
     setExpanded,
     recentLoading,
     transactions,
-    preferences.recentTransactionsLimit,
-    (recentTransactionsLimit) =>
-      onPreferences({ ...preferences, recentTransactionsLimit }),
   )
   const visible = widgets.filter((item) =>
     preferences.enabledWidgetIds.includes(item.id),
   )
-  const layout = visible.map(
+  const gridWidgets = visible.filter(
+    (item) => item.id !== 'recent-transactions',
+  )
+  const layout = gridWidgets.map(
     (item, index) =>
       preferences.layout.find((saved) => saved.i === item.id) ??
       defaultWidgetLayout(item, index),
@@ -529,6 +550,7 @@ function Dashboard({
             amountMinor: item.expenseAmountMinor,
             currencyCode: item.currencyCode,
           }))}
+          icon="−"
         />
         <Metric
           accent="blue"
@@ -539,6 +561,7 @@ function Dashboard({
             amountMinor: item.incomeAmountMinor,
             currencyCode: item.currencyCode,
           }))}
+          icon="↑"
         />
         <Metric
           accent="green"
@@ -549,6 +572,7 @@ function Dashboard({
             amountMinor: item.netAmountMinor,
             currencyCode: item.currencyCode,
           }))}
+          icon="↗"
         />
         <Metric
           accent="pink"
@@ -556,12 +580,59 @@ function Dashboard({
           title={t('Average spend / day')}
           units={units}
           values={displayed.overview.averageExpensePerDay}
+          icon="÷"
         />
       </section>
+      {preferences.enabledWidgetIds.includes('recent-transactions') ? (
+        <Card
+          actions={
+            <div className="recent-transactions-actions">
+              <label>
+                <span className="sr-only">{t('Show')}</span>
+                <Select
+                  aria-label={t('Show')}
+                  onChange={(event) =>
+                    onPreferences({
+                      ...preferences,
+                      recentTransactionsLimit: Number(event.target.value) as
+                        5 | 10 | 20,
+                    })
+                  }
+                  value={preferences.recentTransactionsLimit}
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </Select>
+              </label>
+              <Link to="/transactions">
+                {t('View all transactions')} <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          }
+          className="dashboard-recent-card"
+          title={
+            <>
+              {t('Recent transactions')}
+              <InfoTooltip
+                description={t('Recent transactions help')}
+                label={t('Recent transactions')}
+              />
+            </>
+          }
+        >
+          <Recent
+            limit={preferences.recentTransactionsLimit}
+            loading={recentLoading}
+            transactions={transactions}
+            units={units}
+          />
+        </Card>
+      ) : null}
       <div className="dashboard-grid-shell" ref={containerRef}>
         {!mounted ? null : width < 768 ? (
           <div className="dashboard-mobile-widgets">
-            {[...visible]
+            {[...gridWidgets]
               .sort((left, right) =>
                 compareWidgetOrder(left.id, right.id, preferences),
               )
@@ -573,7 +644,7 @@ function Dashboard({
           <GridLayout
             className="dashboard-grid"
             dragConfig={{ enabled: true, handle: '.dashboard-widget__handle' }}
-            gridConfig={{ cols: 12, margin: [16, 16], rowHeight: 42 }}
+            gridConfig={{ cols: 12, margin: [16, 16], rowHeight: 30 }}
             layout={layout}
             onLayoutChange={(next) =>
               onPreferences({ ...preferences, layout: next })
@@ -581,7 +652,7 @@ function Dashboard({
             resizeConfig={{ enabled: true }}
             width={width}
           >
-            {visible.map((item) => (
+            {gridWidgets.map((item) => (
               <div className="dashboard-widget" key={item.id}>
                 {item.content}
               </div>
@@ -633,8 +704,6 @@ function buildWidgets(
   setExpanded: (value: boolean | ((value: boolean) => boolean)) => void,
   loading: boolean,
   transactions: TransactionListItem[],
-  limit: 5 | 10 | 20,
-  onRecentLimit: (value: 5 | 10 | 20) => void,
 ) {
   const corrections = transactions
     .filter((item) => item.hasAdjustment)
@@ -643,20 +712,6 @@ function buildWidgets(
     .filter((item) => item.hasCompensation)
     .slice(0, 5)
   return [
-    box(
-      t,
-      'recent-transactions',
-      'Recent transactions',
-      <Recent
-        limit={limit}
-        loading={loading}
-        onLimit={onRecentLimit}
-        transactions={transactions}
-        units={units}
-      />,
-      6,
-      6,
-    ),
     box(
       t,
       'income-expenses',
@@ -854,7 +909,7 @@ function box(
             aria-label={t('Drag widget')}
             className="dashboard-widget__handle"
           >
-            ⋮⋮
+            ⋯
           </span>
         }
         title={
@@ -875,12 +930,14 @@ function box(
 function Metric({
   accent,
   description,
+  icon,
   title,
   units,
   values,
 }: {
   accent: 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
   description: string
+  icon: React.ReactNode
   title: string
   units: Map<string, number>
   values: CurrencyAmount[]
@@ -889,6 +946,7 @@ function Metric({
     <KpiCard
       accent={accent}
       description={description}
+      icon={icon}
       label={title}
       value={
         values.length === 0 ? (
@@ -913,32 +971,17 @@ function Metric({
 function Recent({
   limit,
   loading,
-  onLimit,
   transactions,
   units,
 }: {
   limit: 5 | 10 | 20
   loading: boolean
-  onLimit(value: 5 | 10 | 20): void
   transactions: TransactionListItem[]
   units: Map<string, number>
 }) {
   const { t } = useLocalization()
   return (
     <>
-      <label className="recent-transactions-limit">
-        {t('Show')}{' '}
-        <Select
-          onChange={(event) =>
-            onLimit(Number(event.target.value) as 5 | 10 | 20)
-          }
-          value={limit}
-        >
-          <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="20">20</option>
-        </Select>
-      </label>
       {loading ? (
         <Skeleton label={t('Loading transactions…')} lines={3} />
       ) : transactions.length === 0 ? (
@@ -947,12 +990,19 @@ function Recent({
         <ol className="recent-transactions-list">
           {transactions.slice(0, limit).map((item) => (
             <li key={item.id}>
-              <time>{formatPeriod(item.originalTimestamp, 'day')}</time>
-              <span>
+              <time>{formatTransactionDate(item.originalTimestamp)}</time>
+              <span className="recent-transaction-merchant">
                 <strong>{item.originalDescription}</strong>
-                <small>{item.category.name ?? t('Uncategorized')}</small>
+                <small>{item.account.type}</small>
               </span>
-              <b>
+              <span className="recent-transaction-category">
+                {item.category.name ?? t('Uncategorized')}
+              </span>
+              <b
+                className={
+                  item.effectiveAmountMinor >= 0 ? 'is-income' : undefined
+                }
+              >
                 {formatCurrencyAmount(
                   item.effectiveAmountMinor,
                   item.currencyCode,
@@ -963,7 +1013,6 @@ function Recent({
           ))}
         </ol>
       )}
-      <Link to="/transactions">{t('View all transactions')}</Link>
     </>
   )
 }
@@ -1059,20 +1108,22 @@ function Trend({
   points: TimeSeriesPoint[]
   units: Map<string, number>
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   if (currency === null || points.length === 0) return <Empty />
   if (points.length < 2)
     return <Empty message="Not enough data in this period." />
+  const buckets = groupTimeSeriesIntoBuckets(points, 8)
   const max = Math.max(
-    ...points.map((item) => Math.abs(item.expenseAmountMinor)),
+    ...buckets.map((item) => Math.abs(item.expenseAmountMinor)),
     1,
   )
-  const path = points
+  const path = buckets
     .map(
       (item, index) =>
-        `${index === 0 ? 'M' : 'L'} ${20 + (index / Math.max(points.length - 1, 1)) * 680} ${260 - (Math.abs(item.expenseAmountMinor) / max) * 220}`,
+        `${index === 0 ? 'M' : 'L'} ${20 + (index / Math.max(buckets.length - 1, 1)) * 680} ${250 - (Math.abs(item.expenseAmountMinor) / max) * 200}`,
     )
     .join(' ')
+  const areaPath = `${path} L 700 260 L 20 260 Z`
   return (
     <svg
       aria-label={t('Spending trend')}
@@ -1080,23 +1131,47 @@ function Trend({
       role="img"
       viewBox="0 0 720 300"
     >
+      <defs>
+        <linearGradient id="spending-trend-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="var(--color-action)" stopOpacity="0.2" />
+          <stop offset="1" stopColor="var(--color-action)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path className="line-chart-area" d={areaPath} />
       <path className="line-chart-path" d={path} />
-      {points.map((item, index) => (
-        <circle
-          cx={20 + (index / Math.max(points.length - 1, 1)) * 680}
-          cy={260 - (Math.abs(item.expenseAmountMinor) / max) * 220}
-          key={item.periodStart}
-          r="4"
-        >
-          <title>
-            {formatCurrencyAmount(
-              Math.abs(item.expenseAmountMinor),
-              currency,
-              units.get(currency) ?? 2,
-            )}
-          </title>
-        </circle>
-      ))}
+      {buckets.map((item, index) => {
+        const amount = formatCurrencyAmount(
+          Math.abs(item.expenseAmountMinor),
+          currency,
+          units.get(currency) ?? 2,
+          locale,
+        )
+        return (
+          <g key={item.periodStart}>
+            <circle
+              cx={20 + (index / Math.max(buckets.length - 1, 1)) * 680}
+              cy={250 - (Math.abs(item.expenseAmountMinor) / max) * 200}
+              r="4"
+            >
+              <title>{`${formatPeriodRange(item.periodStart, item.periodEnd, locale)}: ${amount}`}</title>
+            </circle>
+            <text
+              className="line-chart-axis-label"
+              textAnchor={
+                index === 0
+                  ? 'start'
+                  : index === buckets.length - 1
+                    ? 'end'
+                    : 'middle'
+              }
+              x={20 + (index / Math.max(buckets.length - 1, 1)) * 680}
+              y="286"
+            >
+              {formatPeriodRange(item.periodStart, item.periodEnd, locale)}
+            </text>
+          </g>
+        )
+      })}
     </svg>
   )
 }
@@ -1410,7 +1485,7 @@ function Customize({
                 }
                 type="checkbox"
               />
-              {id.replaceAll('-', ' ')}
+              {t(WIDGET_TITLES[id])}
             </label>
           ))}
         </div>
@@ -1463,4 +1538,13 @@ function storePreferences(preferences: DashboardPreferences) {
   } catch {
     /* Kept in memory. */
   }
+}
+
+function formatTransactionDate(timestamp: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  }).format(timestamp * 1_000)
 }
