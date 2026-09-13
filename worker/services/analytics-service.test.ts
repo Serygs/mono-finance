@@ -174,6 +174,67 @@ describe('AnalyticsService', () => {
       mode: 'base',
     })
   })
+
+  it('returns weekday, merchant, recurring, and fixed-versus-variable expense aggregates', async () => {
+    const service = new AnalyticsService(
+      new FakeAnalyticsRepository([
+        item({
+          id: 'rent-january',
+          amount: -12_000,
+          originalDescription: 'Rent',
+          timestamp: 1_704_067_200,
+        }),
+        item({
+          id: 'rent-february',
+          amount: -12_000,
+          originalDescription: 'Rent',
+          timestamp: 1_706_659_200,
+        }),
+        item({
+          id: 'groceries',
+          amount: -2_500,
+          originalDescription: 'Market',
+          timestamp: 1_706_745_600,
+        }),
+      ]),
+    )
+
+    const breakdowns = await service.breakdowns({
+      ...filters(),
+      dateFrom: 1_706_659_200,
+      dateTo: 1_706_800_000,
+    })
+
+    expect(breakdowns.spendingByWeekday).toContainEqual({
+      amountMinor: 2_500,
+      currencyCode: 'UAH',
+      transactionCount: 1,
+      weekday: 4,
+    })
+    expect(breakdowns.topMerchants[0]).toEqual({
+      amountMinor: 12_000,
+      currencyCode: 'UAH',
+      description: 'Rent',
+      transactionCount: 1,
+    })
+    expect(breakdowns.recurringExpenses).toEqual([
+      {
+        averageAmountMinor: 12_000,
+        currencyCode: 'UAH',
+        description: 'Rent',
+        frequencyDays: 30,
+        lastAmountMinor: 12_000,
+        transactionCount: 2,
+      },
+    ])
+    expect(breakdowns.fixedVariableExpenses).toEqual([
+      {
+        currencyCode: 'UAH',
+        fixedExpenseAmountMinor: 12_000,
+        variableExpenseAmountMinor: 2_500,
+      },
+    ])
+  })
 })
 
 function filters() {

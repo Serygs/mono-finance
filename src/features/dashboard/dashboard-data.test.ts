@@ -35,6 +35,16 @@ describe('dashboard data', () => {
         currencyCode: 'UAH',
       },
     ])
+    expect(filtered.breakdowns.spendingByWeekday).toEqual([
+      {
+        amountMinor: 4_000,
+        currencyCode: 'UAH',
+        transactionCount: 2,
+        weekday: 1,
+      },
+    ])
+    expect(filtered.breakdowns.recurringExpenses).toHaveLength(1)
+    expect(filtered.breakdowns.fixedVariableExpenses).toHaveLength(1)
   })
 
   it('provides stable display currencies without silently converting money', () => {
@@ -125,8 +135,52 @@ function analytics(): DashboardAnalytics {
         { amountMinor: 4_000, currencyCode: 'UAH' },
         { amountMinor: 500, currencyCode: 'USD' },
       ],
+      fixedVariableExpenses: [
+        {
+          currencyCode: 'UAH',
+          fixedExpenseAmountMinor: 2_000,
+          variableExpenseAmountMinor: 2_000,
+        },
+        {
+          currencyCode: 'USD',
+          fixedExpenseAmountMinor: 0,
+          variableExpenseAmountMinor: 500,
+        },
+      ],
       incomeByCategory: [],
       largestTransactions: [],
+      recurringExpenses: [
+        {
+          averageAmountMinor: 2_000,
+          currencyCode: 'UAH',
+          description: 'Subscription',
+          frequencyDays: 30,
+          lastAmountMinor: 2_000,
+          transactionCount: 2,
+        },
+        {
+          averageAmountMinor: 500,
+          currencyCode: 'USD',
+          description: 'Subscription',
+          frequencyDays: 30,
+          lastAmountMinor: 500,
+          transactionCount: 2,
+        },
+      ],
+      spendingByWeekday: [
+        {
+          amountMinor: 4_000,
+          currencyCode: 'UAH',
+          transactionCount: 2,
+          weekday: 1,
+        },
+        {
+          amountMinor: 500,
+          currencyCode: 'USD',
+          transactionCount: 1,
+          weekday: 1,
+        },
+      ],
       topMerchants: [],
     },
     overview: {
