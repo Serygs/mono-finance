@@ -456,7 +456,7 @@ function Dashboard({
   transactions: TransactionListItem[]
 }) {
   const { t } = useLocalization()
-  const { containerRef, width } = useContainerWidth()
+  const { containerRef, mounted, width } = useContainerWidth()
   const [expanded, setExpanded] = useState(false)
   const displayed = filterDashboardAnalytics(analytics, currency)
   const chartCurrency = currency ?? availableCurrencies(analytics)[0] ?? null
@@ -538,7 +538,7 @@ function Dashboard({
         />
       </section>
       <div className="dashboard-grid-shell" ref={containerRef}>
-        {width < 768 ? (
+        {!mounted ? null : width < 768 ? (
           <div className="dashboard-mobile-widgets">
             {visible.map((item) => (
               <div key={item.id}>{item.content}</div>
