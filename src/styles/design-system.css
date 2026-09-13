@@ -11,6 +11,22 @@
   clip-path: inset(50%);
 }
 
+/* Native form controls do not reliably inherit document typography. Keep every
+   control on the same type scale as the surrounding design-system field. */
+:where(button, input, select, textarea) {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
+/* Browser support for option styling varies, but inheriting where supported
+   keeps expanded single- and multi-select menus visually aligned as well. */
+:where(select option, select optgroup) {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
 .skip-link {
   position: fixed;
   z-index: 100;
