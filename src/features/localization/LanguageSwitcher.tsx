@@ -1,4 +1,4 @@
-import { useLocalization } from './localization'
+import { isLocale, useLocalization } from './localization'
 
 export function LanguageSwitcher() {
   const { locale, setLocale, t } = useLocalization()
@@ -8,7 +8,9 @@ export function LanguageSwitcher() {
       <select
         aria-label={t('Language')}
         name="language"
-        onChange={(event) => setLocale(event.target.value as 'en' | 'uk')}
+        onChange={(event) => {
+          if (isLocale(event.target.value)) setLocale(event.target.value)
+        }}
         value={locale}
       >
         <option value="en">EN</option>

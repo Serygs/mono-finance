@@ -8,22 +8,30 @@ import {
   type ReactNode,
 } from 'react'
 
-import { UKRAINIAN_MESSAGES } from './messages'
+import {
+  ENGLISH_MESSAGES,
+  type TranslationKey,
+  UKRAINIAN_MESSAGES,
+} from './messages'
 
-export type Locale = 'en' | 'uk'
+export type { TranslationKey } from './messages'
+
+export const LOCALES = ['en', 'uk'] as const
+export type Locale = (typeof LOCALES)[number]
 type Parameters = Readonly<Record<string, number | string>>
+export type Translate = (key: TranslationKey, parameters?: Parameters) => string
 
 interface LocalizationContextValue {
   locale: Locale
   setLocale(locale: Locale): void
-  t(key: string, parameters?: Parameters): string
+  t: Translate
 }
 
 const STORAGE_KEY = 'mono-finance-locale-v1'
 const LocalizationContext = createContext<LocalizationContextValue>({
   locale: 'en',
   setLocale: () => undefined,
-  t: (key, parameters) => interpolate(key, parameters),
+  t: (key, parameters) => interpolate(ENGLISH_MESSAGES[key], parameters),
 })
 
 export function LocalizationProvider({ children }: { children: ReactNode }) {
@@ -40,7 +48,8 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
       setLocale,
       t: (key, parameters) =>
         interpolate(
-          locale === 'uk' ? (UKRAINIAN_MESSAGES[key] ?? key) : key,
+          (locale === 'uk' ? UKRAINIAN_MESSAGES : ENGLISH_MESSAGES)[key] ??
+            `[Missing translation: ${key}]`,
           parameters,
         ),
     }),
@@ -68,6 +77,10 @@ export function resolveLocale(
   )
     ? 'uk'
     : 'en'
+}
+
+export function isLocale(value: string): value is Locale {
+  return LOCALES.includes(value as Locale)
 }
 
 export function interpolate(

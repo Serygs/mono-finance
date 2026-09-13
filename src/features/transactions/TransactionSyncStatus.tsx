@@ -1,7 +1,7 @@
 import type { TransactionSyncState } from './transaction-sync-types'
 import { EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { Card } from '../../components/ui/Surfaces'
-import { useLocalization } from '../localization/localization'
+import { type Translate, useLocalization } from '../localization/localization'
 
 interface TransactionSyncStatusProps {
   states: TransactionSyncState[] | null
@@ -29,7 +29,7 @@ export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
           {states.map((state) => (
             <li key={state.accountId}>
               <span>
-                {accountLabel(state)} · {state.currencyCode}
+                {accountLabel(state, t)} · {state.currencyCode}
               </span>
               <strong className={`sync-state sync-state-${state.status}`}>
                 {statusLabel(state, t, locale)}
@@ -42,16 +42,13 @@ export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
   )
 }
 
-function accountLabel(state: TransactionSyncState): string {
-  return `${state.accountType.charAt(0).toUpperCase()}${state.accountType.slice(1)} account`
+function accountLabel(state: TransactionSyncState, t: Translate): string {
+  return `${state.accountType.charAt(0).toUpperCase()}${state.accountType.slice(1)} ${t('account')}`
 }
 
 function statusLabel(
   state: TransactionSyncState,
-  t: (
-    key: string,
-    parameters?: Readonly<Record<string, string | number>>,
-  ) => string,
+  t: Translate,
   locale: string,
 ): string {
   if (state.status === 'running') return t('Sync in progress')

@@ -2,7 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { getOfflineStatus, subscribeOfflineStatus } from './offline-api'
-import { useLocalization } from '../localization/localization'
+import { type Translate, useLocalization } from '../localization/localization'
 
 export function OfflineStatus() {
   const queryClient = useQueryClient()
@@ -56,7 +56,7 @@ function useOnlineState(): boolean {
 function formatCachedAt(
   cachedAt: number | null,
   locale: string,
-  t: (key: string) => string,
+  t: Translate,
 ): string {
   if (cachedAt === null) return t('before this offline session')
   return new Intl.DateTimeFormat(locale, {

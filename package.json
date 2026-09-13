@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/run-vite-development.mjs",
-    "build": "tsc -b && node scripts/build-production.mjs",
+    "build": "npm run i18n:check && tsc -b && node scripts/build-production.mjs",
+    "i18n:check": "node scripts/check-localization.mjs",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

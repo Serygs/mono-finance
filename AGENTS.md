@@ -41,6 +41,20 @@
 - Every private API route must be protected by the authentication boundary.
 - Only explicitly public endpoints may bypass authentication.
 
+## Localization
+
+- The application supports exactly two UI locales: `uk` and `en`.
+- Every user-facing string must use the localization system.
+- Every translation key must exist in both locales; adding a key to only one locale is invalid.
+- Missing locale keys must fail `npm run i18n:check` and therefore fail the build/CI.
+- Do not use localization fallback to hide missing translations.
+- Do not add hardcoded user-facing strings to React components.
+- When changing UI copy, update both `uk` and `en` translations in the same change.
+- New pages, components, widgets, validation messages, tooltips, and empty states must include both languages.
+- Preserve the user's selected locale across reloads and sessions.
+- Before completing a frontend task that changes visible text, run the localization parity check.
+- Do not translate identifiers, API values, database values, MCC codes, currency codes, logs, or other technical values unless explicitly displayed as localized UI copy.
+
 ## Agent execution rules
 
 ### Scope
