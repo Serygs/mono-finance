@@ -3,7 +3,7 @@ import { formatAccountBalance } from './account-formatting'
 import type { AccountSummary } from './account-types'
 import { AccountChip } from '../../components/ui/Chips'
 import { EmptyState } from '../../components/ui/Feedback'
-import { useLocalization } from '../localization/localization'
+import { type Translate, useLocalization } from '../localization/localization'
 
 interface AccountSelectorProps {
   accounts: AccountSummary[]
@@ -82,17 +82,11 @@ export function AccountSelector({
   )
 }
 
-function accountName(
-  account: AccountSummary,
-  t: (key: string) => string,
-): string {
+function accountName(account: AccountSummary, t: Translate): string {
   return `${account.type.charAt(0).toUpperCase()}${account.type.slice(1)} ${t('account')}`
 }
 
-function cardDescription(
-  account: AccountSummary,
-  t: (key: string) => string,
-): string {
+function cardDescription(account: AccountSummary, t: Translate): string {
   const activeCard = account.cards.find((card) => card.isActive)
   if (activeCard === undefined) {
     return account.currency.displayName

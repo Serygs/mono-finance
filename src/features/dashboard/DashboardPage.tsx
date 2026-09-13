@@ -15,7 +15,10 @@ import {
   type AccountFilter,
 } from '../accounts/account-filter-storage'
 import type { AccountSummary } from '../accounts/account-types'
-import { useLocalization } from '../localization/localization'
+import {
+  type TranslationKey,
+  useLocalization,
+} from '../localization/localization'
 import { getCurrencyPreferences } from '../settings/currency-preferences-api'
 import {
   getTransactionSyncStatus,
@@ -54,7 +57,10 @@ import {
   type DashboardWidgetId,
 } from './dashboard-preferences'
 
-const DATE_PRESETS: Array<{ label: string; value: DashboardDatePreset }> = [
+const DATE_PRESETS: Array<{
+  label: TranslationKey
+  value: DashboardDatePreset
+}> = [
   { label: 'Last 7 days', value: '7d' },
   { label: 'Last 30 days', value: '30d' },
   { label: 'Last 90 days', value: '90d' },
@@ -86,7 +92,7 @@ export function DashboardPage() {
   const [syncStates, setSyncStates] = useState<TransactionSyncState[] | null>(
     null,
   )
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<TranslationKey | null>(null)
   const range = useMemo(
     () => resolveDashboardRange(preset, from, to),
     [from, preset, to],

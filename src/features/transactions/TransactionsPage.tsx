@@ -29,7 +29,10 @@ import type {
   TransactionListItem,
   TransactionPage,
 } from './transaction-types'
-import { useLocalization } from '../localization/localization'
+import {
+  type TranslationKey,
+  useLocalization,
+} from '../localization/localization'
 
 type DatePreset =
   | '7d'
@@ -40,7 +43,7 @@ type DatePreset =
   | 'current-year'
   | 'custom'
 
-const DATE_PRESETS: { label: string; value: DatePreset }[] = [
+const DATE_PRESETS: { label: TranslationKey; value: DatePreset }[] = [
   { label: '7 days', value: '7d' },
   { label: '30 days', value: '30d' },
   { label: '90 days', value: '90d' },
@@ -350,7 +353,7 @@ function TransactionIndicators({
     transaction.hasAdjustment ? 'Adjusted' : null,
     transaction.hasCompensation ? 'Compensated' : null,
     transaction.isExcluded ? 'Excluded' : null,
-  ].filter((label): label is string => label !== null)
+  ].filter((label): label is TranslationKey => label !== null)
   return labels.length === 0 ? null : (
     <span className="transaction-indicators">
       {labels.map((label) => (

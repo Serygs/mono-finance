@@ -97,6 +97,7 @@ test('language and category type mapping remain accessible', async ({
   await page.getByLabel('Пароль').fill('correct-password')
   await page.getByRole('button', { name: 'Увійти' }).click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
+
   await expect(
     page.getByRole('heading', { name: 'Огляд фінансів' }),
   ).toBeVisible()
@@ -112,6 +113,13 @@ test('language and category type mapping remain accessible', async ({
   await expect(
     page.getByRole('heading', { name: 'Налаштування' }),
   ).toBeVisible()
+  await page.getByLabel('\u041c\u043e\u0432\u0430').selectOption('en')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
 })
 
 test('overview switches to a single-column mobile composition without viewport overflow', async ({
