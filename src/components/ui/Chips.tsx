@@ -1,5 +1,18 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
+type StatusTone = 'neutral' | 'success' | 'warning' | 'danger'
+
+interface StatusBadgeProps {
+  label: string
+  tone?: StatusTone
+}
+
+export function StatusBadge({ label, tone = 'neutral' }: StatusBadgeProps) {
+  return (
+    <span className={`ui-status-badge ui-status-badge--${tone}`}>{label}</span>
+  )
+}
+
 interface AccountChipProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   'children'
