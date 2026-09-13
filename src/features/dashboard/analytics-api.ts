@@ -49,6 +49,11 @@ export interface AnalyticsBreakdowns {
     CurrencyAmount & { categoryId: string | null; categoryName: string }
   >
   expensesByCurrency: CurrencyAmount[]
+  fixedVariableExpenses: Array<{
+    currencyCode: string
+    fixedExpenseAmountMinor: number
+    variableExpenseAmountMinor: number
+  }>
   incomeByCategory: Array<
     CurrencyAmount & { categoryId: string | null; categoryName: string }
   >
@@ -59,6 +64,17 @@ export interface AnalyticsBreakdowns {
       timestamp: number
       transactionId: string
     }
+  >
+  recurringExpenses: Array<{
+    averageAmountMinor: number
+    currencyCode: string
+    description: string
+    frequencyDays: number
+    lastAmountMinor: number
+    transactionCount: number
+  }>
+  spendingByWeekday: Array<
+    CurrencyAmount & { transactionCount: number; weekday: number }
   >
   topMerchants: Array<
     CurrencyAmount & { description: string; transactionCount: number }

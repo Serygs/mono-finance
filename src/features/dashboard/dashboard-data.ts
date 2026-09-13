@@ -115,12 +115,24 @@ export function filterDashboardAnalytics(
         analytics.breakdowns.expensesByCurrency,
         currencyCode,
       ),
+      fixedVariableExpenses: byCurrency(
+        analytics.breakdowns.fixedVariableExpenses,
+        currencyCode,
+      ),
       incomeByCategory: byCurrency(
         analytics.breakdowns.incomeByCategory,
         currencyCode,
       ),
       largestTransactions: byCurrency(
         analytics.breakdowns.largestTransactions,
+        currencyCode,
+      ),
+      recurringExpenses: byCurrency(
+        analytics.breakdowns.recurringExpenses,
+        currencyCode,
+      ),
+      spendingByWeekday: byCurrency(
+        analytics.breakdowns.spendingByWeekday,
         currencyCode,
       ),
       topMerchants: byCurrency(analytics.breakdowns.topMerchants, currencyCode),

@@ -475,6 +475,8 @@ function Dashboard({
     recentLoading,
     transactions,
     preferences.recentTransactionsLimit,
+    (recentTransactionsLimit) =>
+      onPreferences({ ...preferences, recentTransactionsLimit }),
   )
   const visible = widgets.filter((item) =>
     preferences.enabledWidgetIds.includes(item.id),
@@ -570,6 +572,7 @@ function buildWidgets(
   loading: boolean,
   transactions: TransactionListItem[],
   limit: 5 | 10 | 20,
+  onRecentLimit: (value: 5 | 10 | 20) => void,
 ) {
   const corrections = transactions
     .filter((item) => item.hasAdjustment)
@@ -584,6 +587,7 @@ function buildWidgets(
       <Recent
         limit={limit}
         loading={loading}
+        onLimit={onRecentLimit}
         transactions={transactions}
         units={units}
       />,
@@ -595,7 +599,11 @@ function buildWidgets(
       'Income vs expenses',
       <GroupedBars
         currency={currency}
-        points={chart.trends.daily}
+        points={
+          chart.trends.daily.length > 90
+            ? chart.trends.monthly
+            : chart.trends.daily
+        }
         units={units}
       />,
       12,
@@ -659,7 +667,7 @@ function buildWidgets(
     box(
       'spending-by-weekday',
       'Spending by weekday',
-      <Weekdays points={chart.trends.daily} units={units} />,
+      <WeekdayBars units={units} values={chart.breakdowns.spendingByWeekday} />,
       6,
       7,
     ),
@@ -680,14 +688,20 @@ function buildWidgets(
     box(
       'recurring-expenses',
       'Recurring expenses',
-      <Unavailable message="Recurring-expense detection is not configured yet." />,
+      <RecurringExpenses
+        units={units}
+        values={chart.breakdowns.recurringExpenses}
+      />,
       6,
       5,
     ),
     box(
       'fixed-variable-expenses',
       'Fixed vs variable expenses',
-      <Unavailable message="Expense classification is not configured yet." />,
+      <FixedVariableExpenses
+        units={units}
+        values={chart.breakdowns.fixedVariableExpenses}
+      />,
       6,
       5,
     ),
@@ -794,29 +808,26 @@ function Metric({
 function Recent({
   limit,
   loading,
+  onLimit,
   transactions,
   units,
 }: {
   limit: 5 | 10 | 20
   loading: boolean
+  onLimit(value: 5 | 10 | 20): void
   transactions: TransactionListItem[]
   units: Map<string, number>
 }) {
   const { t } = useLocalization()
-  const [currentLimit, setCurrentLimit] = useState(limit)
-  function changeLimit(value: 5 | 10 | 20) {
-    setCurrentLimit(value)
-    storePreferences({ ...loadPreferences(), recentTransactionsLimit: value })
-  }
   return (
     <>
       <label className="recent-transactions-limit">
         {t('Show')}{' '}
         <Select
           onChange={(event) =>
-            changeLimit(Number(event.target.value) as 5 | 10 | 20)
+            onLimit(Number(event.target.value) as 5 | 10 | 20)
           }
-          value={currentLimit}
+          value={limit}
         >
           <option value="5">5</option>
           <option value="10">10</option>
@@ -827,7 +838,7 @@ function Recent({
         <Skeleton label={t('Loading transactions…')} lines={3} />
       ) : (
         <ol className="recent-transactions-list">
-          {transactions.slice(0, currentLimit).map((item) => (
+          {transactions.slice(0, limit).map((item) => (
             <li key={item.id}>
               <time>{formatPeriod(item.originalTimestamp, 'day')}</time>
               <span>
@@ -1003,27 +1014,124 @@ function Bars({
     </ol>
   )
 }
-function Weekdays({
-  points,
+function WeekdayBars({
   units,
+  values,
 }: {
-  points: TimeSeriesPoint[]
   units: Map<string, number>
+  values: Array<CurrencyAmount & { transactionCount: number; weekday: number }>
 }) {
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  if (values.length === 0) return <Empty />
+  const max = Math.max(...values.map((item) => item.amountMinor), 1)
+  return (
+    <div
+      className="weekday-vertical-chart"
+      role="img"
+      aria-label="Spending by weekday"
+    >
+      {labels.map((label, index) => {
+        const value = values.find((item) => item.weekday === index + 1)
+        const amountMinor = value?.amountMinor ?? 0
+        const currencyCode =
+          value?.currencyCode ?? values[0]?.currencyCode ?? 'UAH'
+        const transactionCount = value?.transactionCount ?? 0
+        const amount = formatCurrencyAmount(
+          amountMinor,
+          currencyCode,
+          units.get(currencyCode) ?? 2,
+        )
+        return (
+          <div key={label}>
+            <span
+              style={{ height: `${(amountMinor / max) * 100}%` }}
+              title={`${label}: ${amount} (${transactionCount} transactions)`}
+            />
+            <small>{label}</small>
+            <span className="sr-only">
+              {amount}, {transactionCount} transactions
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+function RecurringExpenses({
+  units,
+  values,
+}: {
+  units: Map<string, number>
+  values: Array<{
+    averageAmountMinor: number
+    currencyCode: string
+    description: string
+    frequencyDays: number
+    lastAmountMinor: number
+    transactionCount: number
+  }>
+}) {
+  return values.length === 0 ? (
+    <Empty />
+  ) : (
+    <ol className="evidence-list recurring-expenses-list">
+      {values.slice(0, 5).map((item) => (
+        <li key={`${item.description}-${item.currencyCode}`}>
+          <span>
+            <strong>{item.description}</strong>
+            <small>
+              About every {item.frequencyDays} days · {item.transactionCount}{' '}
+              payments
+            </small>
+          </span>
+          <b>
+            Avg{' '}
+            {formatCurrencyAmount(
+              item.averageAmountMinor,
+              item.currencyCode,
+              units.get(item.currencyCode) ?? 2,
+            )}
+            <small>
+              Last{' '}
+              {formatCurrencyAmount(
+                item.lastAmountMinor,
+                item.currencyCode,
+                units.get(item.currencyCode) ?? 2,
+              )}
+            </small>
+          </b>
+        </li>
+      ))}
+    </ol>
+  )
+}
+function FixedVariableExpenses({
+  units,
+  values,
+}: {
+  units: Map<string, number>
+  values: Array<{
+    currencyCode: string
+    fixedExpenseAmountMinor: number
+    variableExpenseAmountMinor: number
+  }>
+}) {
+  if (values.length === 0) return <Empty />
   return (
     <Bars
       units={units}
-      values={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-        (label, day) => ({
-          amountMinor: points
-            .filter(
-              (item) => new Date(item.periodStart * 1000).getDay() === day,
-            )
-            .reduce((sum, item) => sum + item.expenseAmountMinor, 0),
-          currencyCode: points[0]?.currencyCode ?? 'UAH',
-          label,
-        }),
-      )}
+      values={values.flatMap((item) => [
+        {
+          amountMinor: item.fixedExpenseAmountMinor,
+          currencyCode: item.currencyCode,
+          label: 'Recurring / fixed',
+        },
+        {
+          amountMinor: item.variableExpenseAmountMinor,
+          currencyCode: item.currencyCode,
+          label: 'Variable',
+        },
+      ])}
     />
   )
 }
@@ -1086,9 +1194,6 @@ function TransactionEvidence({
 function Empty() {
   const { t } = useLocalization()
   return <p className="chart-empty">{t('No data in this period.')}</p>
-}
-function Unavailable({ message }: { message: string }) {
-  return <p className="metric-empty">{message}</p>
 }
 function SyncSummary({ states }: { states: TransactionSyncState[] | null }) {
   const { t, locale } = useLocalization()

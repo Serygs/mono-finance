@@ -58,8 +58,11 @@ export interface AnalyticsBreakdowns {
   expensesByAccount: AccountAmount[]
   expensesByCategory: CategoryAmount[]
   expensesByCurrency: CurrencyAmount[]
+  fixedVariableExpenses: FixedVariableExpenseAmount[]
   incomeByCategory: CategoryAmount[]
   largestTransactions: LargestTransaction[]
+  recurringExpenses: RecurringExpense[]
+  spendingByWeekday: WeekdayAmount[]
   topMerchants: MerchantAmount[]
   currencyConversion: CurrencyConversion
 }
@@ -91,6 +94,23 @@ export interface CategoryAmount extends CurrencyAmount {
 export interface MerchantAmount extends CurrencyAmount {
   description: string
   transactionCount: number
+}
+export interface WeekdayAmount extends CurrencyAmount {
+  transactionCount: number
+  weekday: number
+}
+export interface RecurringExpense {
+  averageAmountMinor: number
+  currencyCode: string
+  description: string
+  frequencyDays: number
+  lastAmountMinor: number
+  transactionCount: number
+}
+export interface FixedVariableExpenseAmount {
+  currencyCode: string
+  fixedExpenseAmountMinor: number
+  variableExpenseAmountMinor: number
 }
 export interface LargestTransaction extends CurrencyAmount {
   description: string
@@ -176,17 +196,29 @@ export class AnalyticsService {
   }
 
   async breakdowns(filters: AnalyticsFilters): Promise<AnalyticsBreakdowns> {
-    const transactions = await this.repository.listResolvedTransactions(filters)
+    const [transactions, historicalTransactions] = await Promise.all([
+      this.repository.listResolvedTransactions(filters),
+      this.repository.listResolvedTransactions(recurrenceHistory(filters)),
+    ])
     const converted = await this.convertGroups(filters.baseCurrencyCode, [
       transactions,
+      historicalTransactions,
     ])
-    const [currentTransactions] = converted.groups
+    const [currentTransactions, historicalTransactionsConverted] =
+      converted.groups
     const [currentConversion] = converted.conversions
     const included = (currentTransactions ?? []).filter(
       (transaction) => !transaction.isExcluded,
     )
     const expenses = included.filter(
       (transaction) => transaction.direction === 'expense',
+    )
+    const recurringExpenses = recurringExpenseAmounts(
+      (historicalTransactionsConverted ?? []).filter(
+        (transaction) =>
+          !transaction.isExcluded && transaction.direction === 'expense',
+      ),
+      expenses,
     )
     return {
       expensesByAccount: groupAmounts(
@@ -199,6 +231,10 @@ export class AnalyticsService {
       })),
       expensesByCategory: categoryAmounts(expenses),
       expensesByCurrency: currencyAmounts(expenses),
+      fixedVariableExpenses: fixedVariableExpenseAmounts(
+        expenses,
+        recurringExpenses,
+      ),
       incomeByCategory: categoryAmounts(
         included.filter((transaction) => transaction.direction === 'income'),
       ),
@@ -219,6 +255,8 @@ export class AnalyticsService {
           timestamp: transaction.originalTimestamp,
           transactionId: transaction.id,
         })),
+      recurringExpenses,
+      spendingByWeekday: weekdayAmounts(expenses),
       topMerchants: merchantAmounts(expenses),
       currencyConversion: currentConversion ?? originalCurrencyConversion(),
     }
@@ -447,6 +485,118 @@ function merchantAmounts(
     )
     .slice(0, 10)
 }
+function weekdayAmounts(
+  transactions: ResolvedAnalyticsTransaction[],
+): WeekdayAmount[] {
+  const currencies = [...new Set(transactions.map((item) => item.currencyCode))]
+  const values = new Map<string, WeekdayAmount>()
+  for (const currencyCode of currencies) {
+    for (let weekday = 1; weekday <= 7; weekday += 1) {
+      values.set(`${currencyCode}\u0000${weekday}`, {
+        amountMinor: 0,
+        currencyCode,
+        transactionCount: 0,
+        weekday,
+      })
+    }
+  }
+  for (const transaction of transactions) {
+    const weekday = weekdayNumber(transaction.originalTimestamp)
+    const current = values.get(`${transaction.currencyCode}\u0000${weekday}`)
+    if (current === undefined) continue
+    current.amountMinor += -transaction.effectiveAmountMinor
+    current.transactionCount += 1
+  }
+  return [...values.values()].sort(
+    (left, right) =>
+      left.currencyCode.localeCompare(right.currencyCode) ||
+      left.weekday - right.weekday,
+  )
+}
+function recurringExpenseAmounts(
+  transactions: ResolvedAnalyticsTransaction[],
+  selectedExpenses: ResolvedAnalyticsTransaction[],
+): RecurringExpense[] {
+  const values = new Map<string, ResolvedAnalyticsTransaction[]>()
+  for (const transaction of transactions) {
+    const key = `${transaction.currencyCode}\u0000${transaction.originalDescription}`
+    const group = values.get(key) ?? []
+    group.push(transaction)
+    values.set(key, group)
+  }
+  const selectedMerchantKeys = new Set(
+    selectedExpenses.map(
+      (transaction) =>
+        `${transaction.currencyCode}\u0000${transaction.originalDescription}`,
+    ),
+  )
+  return [...values.entries()]
+    .filter(([key]) => selectedMerchantKeys.has(key))
+    .map(([, group]) => group)
+    .filter((group) => group.length >= 2)
+    .map((group) => {
+      const sorted = [...group].sort(
+        (left, right) => left.originalTimestamp - right.originalTimestamp,
+      )
+      const first = sorted[0]
+      const last = sorted.at(-1)
+      if (first === undefined || last === undefined) {
+        throw new Error('Recurring expense group must contain transactions.')
+      }
+      return {
+        averageAmountMinor: Math.round(
+          sorted.reduce(
+            (total, transaction) => total + -transaction.effectiveAmountMinor,
+            0,
+          ) / sorted.length,
+        ),
+        currencyCode: first.currencyCode,
+        description: first.originalDescription,
+        frequencyDays: Math.max(
+          1,
+          Math.round(
+            (last.originalTimestamp - first.originalTimestamp) /
+              (86_400 * (sorted.length - 1)),
+          ),
+        ),
+        lastAmountMinor: -last.effectiveAmountMinor,
+        transactionCount: sorted.length,
+      }
+    })
+    .sort(
+      (left, right) =>
+        right.averageAmountMinor - left.averageAmountMinor ||
+        right.transactionCount - left.transactionCount ||
+        left.description.localeCompare(right.description),
+    )
+}
+function fixedVariableExpenseAmounts(
+  transactions: ResolvedAnalyticsTransaction[],
+  recurringExpenses: RecurringExpense[],
+): FixedVariableExpenseAmount[] {
+  const recurring = new Set(
+    recurringExpenses.map(
+      (item) => `${item.currencyCode}\u0000${item.description}`,
+    ),
+  )
+  const values = new Map<string, FixedVariableExpenseAmount>()
+  for (const transaction of transactions) {
+    const current = values.get(transaction.currencyCode) ?? {
+      currencyCode: transaction.currencyCode,
+      fixedExpenseAmountMinor: 0,
+      variableExpenseAmountMinor: 0,
+    }
+    if (
+      recurring.has(
+        `${transaction.currencyCode}\u0000${transaction.originalDescription}`,
+      )
+    )
+      current.fixedExpenseAmountMinor += -transaction.effectiveAmountMinor
+    else current.variableExpenseAmountMinor += -transaction.effectiveAmountMinor
+    values.set(transaction.currencyCode, current)
+  }
+  return [...values.values()].sort(byCurrency)
+}
 function groupAmounts(
   transactions: ResolvedAnalyticsTransaction[],
   key: (transaction: ResolvedAnalyticsTransaction) => string,
@@ -512,8 +662,18 @@ function previousPeriod(filters: AnalyticsFilters): AnalyticsFilters {
     dateTo: filters.dateFrom - 1,
   }
 }
+function recurrenceHistory(filters: AnalyticsFilters): AnalyticsFilters {
+  return {
+    ...filters,
+    dateFrom: Math.max(0, filters.dateTo - 365 * 86_400 + 1),
+  }
+}
 function dayStart(timestamp: number): number {
   return Math.floor(timestamp / 86_400) * 86_400
+}
+function weekdayNumber(timestamp: number): number {
+  const day = new Date(timestamp * 1_000).getUTCDay()
+  return day === 0 ? 7 : day
 }
 function monthStart(timestamp: number): number {
   const date = new Date(timestamp * 1_000)
