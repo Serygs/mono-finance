@@ -1,6 +1,7 @@
 import { CategoryManagement } from '../categories/CategoryManagement'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { CurrencyPreferences } from './CurrencyPreferences'
+import { SettingsSyncStatus } from './SettingsSyncStatus'
 import { useLocalization } from '../localization/localization'
 
 export function SettingsPage() {
@@ -20,6 +21,7 @@ export function SettingsPage() {
         title={t('Settings')}
       />
       <CurrencyPreferences />
+      <SettingsSyncStatus />
       <CategoryManagement />
     </PageSurface>
   )

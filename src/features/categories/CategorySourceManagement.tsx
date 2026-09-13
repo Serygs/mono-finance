@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { Button } from '../../components/ui/Controls'
+import { CompactTable } from '../../components/ui/Collections'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
@@ -123,7 +124,7 @@ export function CategorySourceManagement({
               <p>{t('Try a different search or filter.')}</p>
             </EmptyState>
           ) : (
-            <div className="category-source-table-wrap">
+            <CompactTable className="category-source-table-wrap">
               <table className="category-source-table">
                 <thead>
                   <tr>
@@ -177,7 +178,7 @@ export function CategorySourceManagement({
                   })}
                 </tbody>
               </table>
-            </div>
+            </CompactTable>
           )}
           <nav
             aria-label={t('Pagination')}

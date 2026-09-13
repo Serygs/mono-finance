@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CategoryChip } from '../../components/ui/Chips'
+import { CompactList } from '../../components/ui/Collections'
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { Dialog } from '../../components/ui/Overlay'
+import { Popover } from '../../components/ui/Popover'
 import { useLocalization } from '../localization/localization'
 import {
   createCategory,
@@ -170,7 +172,7 @@ export function CategoryManagement() {
           <p>{t('Add a category to personalize transaction analytics.')}</p>
         </EmptyState>
       ) : null}
-      <ul className="category-list category-list--compact">
+      <CompactList className="category-list category-list--compact">
         {categories.data?.map((category) => (
           <li key={category.id}>
             <CategoryChip
@@ -178,55 +180,35 @@ export function CategoryManagement() {
               icon={<CategoryIcon token={category.icon} />}
               label={category.name}
             />
-            <div className="category-list-actions">
-              <Button
-                size="small"
-                type="button"
-                onClick={() => {
-                  mutation.reset()
-                  setIsCreating(false)
-                  setEditing({
-                    id: category.id,
-                    input: {
-                      name: category.name,
-                      icon: category.icon,
-                      colorToken: category.colorToken,
-                    },
-                  })
-                }}
-                variant="secondary"
-              >
-                {t('Edit')}
-              </Button>
-              <Button
-                disabled={(categories.data?.length ?? 0) < 2}
-                size="small"
-                type="button"
-                onClick={() => {
-                  merge.reset()
-                  setMergeTargetId('')
-                  setPendingMerge({ id: category.id, name: category.name })
-                }}
-                variant="secondary"
-              >
-                {t('Merge')}
-              </Button>
-              <Button
-                disabled={removal.isPending}
-                size="small"
-                type="button"
-                onClick={() => {
-                  removal.reset()
-                  setPendingDelete({ id: category.id, name: category.name })
-                }}
-                variant="danger"
-              >
-                {t('Delete')}
-              </Button>
-            </div>
+            <CategoryRowActions
+              categoryCount={categories.data?.length ?? 0}
+              deletePending={removal.isPending}
+              onDelete={() => {
+                removal.reset()
+                setPendingDelete({ id: category.id, name: category.name })
+              }}
+              onEdit={() => {
+                mutation.reset()
+                setIsCreating(false)
+                setEditing({
+                  id: category.id,
+                  input: {
+                    name: category.name,
+                    icon: category.icon,
+                    colorToken: category.colorToken,
+                  },
+                })
+              }}
+              onMerge={() => {
+                merge.reset()
+                setMergeTargetId('')
+                setPendingMerge({ id: category.id, name: category.name })
+              }}
+              translate={t}
+            />
           </li>
         ))}
-      </ul>
+      </CompactList>
       <CategorySourceManagement categories={categories.data ?? []} />
       <Dialog
         onClose={() => {
@@ -329,4 +311,92 @@ export function CategoryManagement() {
 }
 function optional(value: string): string | null {
   return value.trim() || null
+}
+
+interface CategoryRowActionsProps {
+  categoryCount: number
+  deletePending: boolean
+  onDelete(): void
+  onEdit(): void
+  onMerge(): void
+  translate: ReturnType<typeof useLocalization>['t']
+}
+
+function CategoryRowActions({
+  categoryCount,
+  deletePending,
+  onDelete,
+  onEdit,
+  onMerge,
+  translate,
+}: CategoryRowActionsProps) {
+  const actions = (
+    <CategoryActionButtons
+      canMerge={categoryCount > 1}
+      deletePending={deletePending}
+      onDelete={onDelete}
+      onEdit={onEdit}
+      onMerge={onMerge}
+      translate={translate}
+    />
+  )
+
+  return (
+    <>
+      <div className="category-list-actions category-list-actions--direct">
+        {actions}
+      </div>
+      <Popover
+        className="category-list-actions--overflow"
+        content={<span className="category-action-menu">{actions}</span>}
+        label={translate('Category actions')}
+      >
+        <span aria-hidden="true">•••</span>
+      </Popover>
+    </>
+  )
+}
+
+interface CategoryActionButtonsProps {
+  canMerge: boolean
+  deletePending: boolean
+  onDelete(): void
+  onEdit(): void
+  onMerge(): void
+  translate: ReturnType<typeof useLocalization>['t']
+}
+
+function CategoryActionButtons({
+  canMerge,
+  deletePending,
+  onDelete,
+  onEdit,
+  onMerge,
+  translate,
+}: CategoryActionButtonsProps) {
+  return (
+    <>
+      <Button onClick={onEdit} size="small" type="button" variant="secondary">
+        {translate('Edit')}
+      </Button>
+      <Button
+        disabled={!canMerge}
+        onClick={onMerge}
+        size="small"
+        type="button"
+        variant="secondary"
+      >
+        {translate('Merge')}
+      </Button>
+      <Button
+        disabled={deletePending}
+        onClick={onDelete}
+        size="small"
+        type="button"
+        variant="danger"
+      >
+        {translate('Delete')}
+      </Button>
+    </>
+  )
 }
