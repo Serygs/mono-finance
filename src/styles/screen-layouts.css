@@ -1334,6 +1334,7 @@
 
 @media (max-width: 47.99rem) {
   .language-switcher select,
+  .ui-select,
   .ui-field .ui-select,
   .ui-field input,
   .ui-field textarea,
