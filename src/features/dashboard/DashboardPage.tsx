@@ -223,69 +223,71 @@ export function DashboardPage() {
         id="dashboard-title"
         title={t('Finance overview')}
       />
-      <Toolbar
-        accounts={accounts ?? []}
-        analytics={analytics.data}
-        baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
-        currency={currency}
-        filter={filter}
-        from={from}
-        mode={mode}
-        onCurrency={setCurrency}
-        onFilter={setFilter}
-        onFrom={setFrom}
-        onMode={setMode}
-        onPreset={setPreset}
-        onTo={setTo}
-        preset={preset}
-        to={to}
-      />
-      <section className="dashboard-toolbar-actions">
-        <div className="dashboard-sync-popover">
+      <section className="dashboard-command-bar">
+        <Toolbar
+          accounts={accounts ?? []}
+          analytics={analytics.data}
+          baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
+          currency={currency}
+          filter={filter}
+          from={from}
+          mode={mode}
+          onCurrency={setCurrency}
+          onFilter={setFilter}
+          onFrom={setFrom}
+          onMode={setMode}
+          onPreset={setPreset}
+          onTo={setTo}
+          preset={preset}
+          to={to}
+        />
+        <div className="dashboard-toolbar-actions">
+          <div className="dashboard-sync-popover">
+            <Button
+              aria-expanded={syncOpen}
+              onClick={() => setSyncOpen(!syncOpen)}
+              size="small"
+              type="button"
+              variant="secondary"
+            >
+              {t('Sync status')}
+            </Button>
+            {syncOpen ? (
+              <div className="dashboard-popover" role="dialog">
+                <div className="dashboard-sync-actions">
+                  <Button
+                    disabled={syncingAccounts}
+                    loading={syncingAccounts}
+                    onClick={() => void syncAccounts()}
+                    size="small"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {t('Sync accounts')}
+                  </Button>
+                  <Button
+                    disabled={syncingTransactions}
+                    loading={syncingTransactions}
+                    onClick={() => void syncTransactions()}
+                    size="small"
+                    type="button"
+                  >
+                    {t('Refresh transactions')}
+                  </Button>
+                </div>
+                <SyncSummary states={syncStates} />
+              </div>
+            ) : null}
+          </div>
           <Button
-            aria-expanded={syncOpen}
-            onClick={() => setSyncOpen(!syncOpen)}
+            onClick={() => setCustomizing(true)}
             size="small"
             type="button"
             variant="secondary"
           >
-            {t('Sync status')}
+            {t('Customize dashboard')}
           </Button>
-          {syncOpen ? (
-            <div className="dashboard-popover" role="dialog">
-              <div className="dashboard-sync-actions">
-                <Button
-                  disabled={syncingAccounts}
-                  loading={syncingAccounts}
-                  onClick={() => void syncAccounts()}
-                  size="small"
-                  type="button"
-                  variant="secondary"
-                >
-                  {t('Sync accounts')}
-                </Button>
-                <Button
-                  disabled={syncingTransactions}
-                  loading={syncingTransactions}
-                  onClick={() => void syncTransactions()}
-                  size="small"
-                  type="button"
-                >
-                  {t('Refresh transactions')}
-                </Button>
-              </div>
-              <SyncSummary states={syncStates} />
-            </div>
-          ) : null}
         </div>
-        <Button
-          onClick={() => setCustomizing(true)}
-          size="small"
-          type="button"
-          variant="secondary"
-        >
-          {t('Customize dashboard')}
-        </Button>
       </section>
       {error === null ? null : (
         <Alert tone="danger" title={t('Dashboard update failed')}>
@@ -512,15 +514,8 @@ function Dashboard({
   )
   const layout = visible.map(
     (item, index) =>
-      preferences.layout.find((saved) => saved.i === item.id) ?? {
-        h: item.h,
-        i: item.id,
-        minH: 4,
-        minW: 3,
-        w: item.w,
-        x: (index % 2) * 6,
-        y: Math.floor(index / 2) * 7,
-      },
+      preferences.layout.find((saved) => saved.i === item.id) ??
+      defaultWidgetLayout(item, index),
   )
   return (
     <>
@@ -596,6 +591,32 @@ function Dashboard({
       </div>
     </>
   )
+}
+
+function defaultWidgetLayout(
+  item: { h: number; id: DashboardWidgetId; w: number },
+  index: number,
+) {
+  const priority: Partial<Record<DashboardWidgetId, { x: number; y: number }>> =
+    {
+      'recent-transactions': { x: 0, y: 0 },
+      'income-expenses': { x: 0, y: 7 },
+      'spending-by-weekday': { x: 6, y: 7 },
+      'spending-by-category': { x: 0, y: 15 },
+      'spending-trend': { x: 6, y: 15 },
+    }
+  const position = priority[item.id] ?? {
+    x: (index % 2) * 6,
+    y: 23 + Math.floor(index / 2) * 7,
+  }
+  return {
+    h: item.id === 'recent-transactions' ? 6 : item.h,
+    i: item.id,
+    minH: 4,
+    minW: 3,
+    w: item.id === 'recent-transactions' ? 12 : item.w,
+    ...position,
+  }
 }
 
 function buildWidgets(
