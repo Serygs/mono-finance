@@ -11,7 +11,11 @@ import type { AccountSummary } from '../accounts/account-types'
 import { getCategories } from '../categories/categories-api'
 import { Button, SegmentedControl } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
-import { FormField, Select } from '../../components/ui/FormControls'
+import {
+  FormField,
+  MultiSelect,
+  Select,
+} from '../../components/ui/FormControls'
 import { BottomSheet } from '../../components/ui/Overlay'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 
@@ -378,21 +382,15 @@ function AccountMultiSelector({
       className="filter-field transaction-account-filter"
       label={t('Accounts')}
     >
-      <Select
-        multiple
-        onChange={(event) =>
-          onChange(
-            [...event.target.selectedOptions].map((option) => option.value),
-          )
-        }
+      <MultiSelect
+        ariaLabel={t('Accounts')}
+        onChange={onChange}
+        options={accounts.map((account) => ({
+          label: `${account.type} · ${account.currency.code}`,
+          value: account.id,
+        }))}
         value={selectedIds}
-      >
-        {accounts.map((account) => (
-          <option key={account.id} value={account.id}>
-            {account.type} · {account.currency.code}
-          </option>
-        ))}
-      </Select>
+      />
     </FormField>
   )
 }

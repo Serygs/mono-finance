@@ -2,11 +2,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
 import { Alert, EmptyState, Skeleton } from './ui/Feedback'
-import { FormField, Select } from './ui/FormControls'
+import { FormField, MultiSelect, Select } from './ui/FormControls'
 import { BottomSheet, Dialog } from './ui/Overlay'
 import { PageHeader, PageSurface } from './ui/Page'
 import { Button, IconButton, SegmentedControl } from './ui/Controls'
-import { AccountChip, CategoryChip } from './ui/Chips'
+import { AccountChip, CategoryChip, StatusBadge } from './ui/Chips'
+import { CompactList, CompactTable } from './ui/Collections'
+import { Popover } from './ui/Popover'
 import { Card, ChartContainer, KpiCard } from './ui/Surfaces'
 
 describe('design system', () => {
@@ -42,6 +44,15 @@ describe('design system', () => {
             <option value="all">All</option>
           </Select>
         </FormField>
+        <MultiSelect
+          ariaLabel="Accounts"
+          onChange={() => undefined}
+          options={[{ label: 'UAH account', value: 'uah' }]}
+          value={[]}
+        />
+        <Popover content="Choose one or more accounts" label="Accounts">
+          Accounts
+        </Popover>
       </>,
     )
 
@@ -50,6 +61,8 @@ describe('design system', () => {
     expect(markup).toContain('aria-pressed="true"')
     expect(markup).toContain('<label')
     expect(markup).toContain('Optional')
+    expect(markup).toContain('ui-multi-select')
+    expect(markup).toContain('ui-popover')
   })
 
   it('keeps chips and feedback states explicit', () => {
@@ -57,6 +70,19 @@ describe('design system', () => {
       <>
         <AccountChip label="UAH account" selected />
         <CategoryChip color="blue" label="Dining" />
+        <StatusBadge label="Active" tone="success" />
+        <CompactList label="Recent items">
+          <li>Item</li>
+        </CompactList>
+        <CompactTable>
+          <table>
+            <tbody>
+              <tr>
+                <td>Item</td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactTable>
         <Alert tone="danger" title="Could not load">
           Try again.
         </Alert>
@@ -69,6 +95,8 @@ describe('design system', () => {
     expect(markup).toContain('ui-chip--blue')
     expect(markup).toContain('role="alert"')
     expect(markup).toContain('Loading dashboard')
+    expect(markup).toContain('ui-status-badge--success')
+    expect(markup).toContain('ui-compact-table')
   })
 
   it('provides financial and chart surfaces with accessible summaries', () => {

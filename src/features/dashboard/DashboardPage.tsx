@@ -5,7 +5,11 @@ import { Link } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
-import { FormField, Select } from '../../components/ui/FormControls'
+import {
+  FormField,
+  MultiSelect,
+  Select,
+} from '../../components/ui/FormControls'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { Card, InfoTooltip, KpiCard } from '../../components/ui/Surfaces'
 import { getAccounts, synchronizeAccounts } from '../accounts/accounts-api'
@@ -377,27 +381,21 @@ function Toolbar({
         </Select>
       </FormField>
       <FormField label={t('Accounts')}>
-        <select
-          className="ui-select"
-          multiple
-          onChange={(event) => {
-            const selected = Array.from(
-              event.currentTarget.selectedOptions,
-            ).map((option) => option.value)
+        <MultiSelect
+          ariaLabel={t('Accounts')}
+          onChange={(selected) => {
             onFilter(
               selected.length === 0 || selected.length === accounts.length
                 ? { mode: 'all' }
                 : { accountIds: selected, mode: 'selected' },
             )
           }}
+          options={accounts.map((account) => ({
+            label: `${account.type} · ${account.currency.code}`,
+            value: account.id,
+          }))}
           value={ids}
-        >
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.type} · {account.currency.code}
-            </option>
-          ))}
-        </select>
+        />
       </FormField>
       <FormField label={t('Currency')}>
         <Select

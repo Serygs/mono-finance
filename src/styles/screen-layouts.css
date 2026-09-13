@@ -1241,6 +1241,8 @@
   .ui-field .ui-select,
   .ui-field input,
   .ui-field textarea,
+  .ui-multi-select__trigger,
+  .ui-popover__trigger,
   .transaction-search input,
   .filter-field select,
   .custom-date-fields input {
@@ -1572,6 +1574,18 @@
     right: max(0.75rem, env(safe-area-inset-right));
     bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
+
+  .ui-popover__content {
+    right: auto;
+    left: 0;
+  }
+
+  .ui-info-tooltip__content {
+    right: 0;
+    left: auto;
+    width: min(18rem, calc(100vw - 2rem));
+    transform: none;
+  }
 }
 
 @media (max-width: 30rem) {
@@ -1750,7 +1764,9 @@
     transform: none;
   }
   .ui-overlay__surface,
-  .ui-skeleton > span:not(.sr-only) {
+  .ui-skeleton > span:not(.sr-only),
+  .ui-multi-select__menu,
+  .ui-popover__content {
     animation: none;
   }
 }
