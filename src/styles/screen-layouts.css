@@ -880,6 +880,51 @@
   width: 7.5rem;
 }
 
+.settings-sync-status {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-raised);
+  padding: 0.8rem 1rem;
+}
+
+.settings-sync-status h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.settings-sync-status p {
+  margin: 0.2rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.settings-sync-status__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-sync-status__list li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2);
+}
+
+.settings-sync-status__list li > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .section-heading h2 {
   margin: 0;
   font-size: clamp(1.35rem, 2.5vw, 1.85rem);
@@ -1053,6 +1098,20 @@
   flex-wrap: wrap;
   justify-content: end;
   gap: 0.45rem;
+}
+
+.category-list-actions--overflow {
+  display: none;
+}
+
+.category-action-menu {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.category-action-menu .ui-button {
+  width: 100%;
+  justify-content: start;
 }
 
 .category-list--compact .ui-button {
@@ -1435,7 +1494,8 @@
   }
 
   .currency-preferences,
-  .currency-preferences__form {
+  .currency-preferences__form,
+  .settings-sync-status {
     grid-template-columns: 1fr;
     width: 100%;
   }
@@ -1446,7 +1506,9 @@
 
   .currency-preferences__form .ui-field,
   .currency-preferences__form .transaction-correction-actions,
-  .currency-preferences__form .ui-button {
+  .currency-preferences__form .ui-button,
+  .settings-sync-status > .ui-popover,
+  .settings-sync-status > .ui-popover .ui-popover__trigger {
     width: 100%;
   }
 
@@ -1687,6 +1749,19 @@
 
   .category-list-actions {
     justify-content: start;
+  }
+
+  .category-list-actions--direct {
+    display: none;
+  }
+
+  .category-list-actions--overflow {
+    display: inline-flex;
+  }
+
+  .category-list-actions--overflow .ui-popover__trigger {
+    min-height: 2.2rem;
+    padding-inline: 0.7rem;
   }
 
   .category-source-filters {

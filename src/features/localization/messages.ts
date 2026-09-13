@@ -91,6 +91,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Categories could not be loaded.',
   'Category',
   'Category could not be saved.',
+  'Category actions',
   'Category is still in use',
   'Checking your secure session…',
   'Change the filters or refresh transactions to build this dashboard.',
@@ -461,6 +462,7 @@ export const UKRAINIAN_MESSAGES = {
   'Categories could not be loaded.': 'Не вдалося завантажити категорії.',
   Category: 'Категорія',
   'Category could not be saved.': 'Не вдалося зберегти категорію.',
+  'Category actions': 'Дії категорії',
   'Category is still in use': 'Категорія все ще використовується',
   'Checking your secure session…': 'Перевірка захищеного сеансу…',
   'Change the filters or refresh transactions to build this dashboard.':
