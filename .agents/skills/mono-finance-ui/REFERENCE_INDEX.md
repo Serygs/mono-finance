@@ -2,17 +2,19 @@
 
 ## Desktop
 
-- `01-overview.png` — Overview/dashboard composition, KPI cards, analytics layout.
-- `02-transactions.png` — Transactions table/list, filters, transaction detail panel.
-- `03-analytics.png` — Analytics layout, chart hierarchy, filter density.
-- `04-categories-settings-accounts-recurring.png` — Four management-page references in one board.
+- `desktop/overview.jpg` — Overview/dashboard composition, KPI cards, analytics layout.
+- `desktop/transactions.jpg` — Transactions table/list, filters, and transaction detail panel.
+- `desktop/categories.jpg` — Categories management layout, compact rows, and category actions.
+- `desktop/bills.jpg` — Recurring payments/bills layout, status, and payment information density.
+- `desktop/more.jpg` — Additional management/settings-page visual direction.
 
 ## Mobile
 
-- `01-mobile-reference-board.png` — Mobile Overview, Categories, Accounts, Recurring Payments, Settings and dark-mode direction.
-- `02-mobile-overview-and-management.png` — Mobile information hierarchy and dedicated screen composition.
-- `03-mobile-light-dark-and-core-pages.png` — Light/dark mobile Overview plus core management pages.
-- `04-responsive-mobile-reference.png` — Mobile Overview/Categories/Accounts/Recurring/Settings plus responsive examples.
+- `mobile/overview.jpg` — Mobile Overview hierarchy, KPI density, and dashboard composition.
+- `mobile/transactions.jpg` — Mobile transaction list, filtering, and detail presentation.
+- `mobile/categories.jpg` — Mobile category-management composition and compact category rows.
+- `mobile/bills.jpg` — Mobile recurring payments/bills composition and status presentation.
+- `mobile/more.jpg` — Additional mobile management/settings-page visual direction.
 
 ## Usage
 
