@@ -11,26 +11,66 @@ Use this skill for frontend visual/design work in Mono Finance.
 This skill defines the UI/UX system and the implementation workflow for visual tasks.
 
 
-## Reference assets bundled with this skill
+## Canonical visual references
 
-Before a redesign or visual-polish task, inspect only the reference assets relevant to that screen.
+Before changing a page, open `REFERENCE_INDEX.md` and inspect the exact desktop/mobile references for that page.
 
-Desktop references:
-- `references/desktop/01-overview.png`
-- `references/desktop/02-transactions.png`
-- `references/desktop/03-analytics.png`
-- `references/desktop/04-categories-settings-accounts-recurring.png`
+### Desktop
+- `references/desktop/overview.jpg`
+- `references/desktop/transactions.jpg`
+- `references/desktop/categories.jpg`
+- `references/desktop/accounts.jpg`
+- `references/desktop/settings.jpg`
 
-Mobile references:
-- `references/mobile/01-mobile-reference-board.png`
-- `references/mobile/02-mobile-overview-and-management.png`
-- `references/mobile/03-mobile-light-dark-and-core-pages.png`
-- `references/mobile/04-responsive-mobile-reference.png`
+### Mobile
+- `references/mobile/overview.jpg`
+- `references/mobile/transactions.jpg`
+- `references/mobile/categories.jpg`
+- `references/mobile/accounts.jpg`
+- `references/mobile/settings.jpg`
 
-The mobile references are not scaled desktop mockups. Treat them as evidence for a dedicated `<768px` composition.
-Use the images for hierarchy, density, spacing, component proportions, navigation, and interaction patterns. Do not copy generated text, fake data, or unsupported features literally.
+These references are the primary visual source of truth, not loose inspiration.
 
-The staged redesign prompts are bundled at `prompts/redesign-3-phases.md`.
+Reference mapping:
+- Overview / Огляд → `overview.jpg`
+- Transactions / Транзакції → `transactions.jpg`
+- Categories / Категорії → `categories.jpg`
+- Accounts / Рахунки → `accounts.jpg`
+- Settings / налаштування → `settings.jpg`
+
+For each page, match the corresponding desktop/mobile references as closely as practical in:
+- composition;
+- hierarchy;
+- spacing;
+- density;
+- typography scale;
+- card proportions;
+- toolbar/filter structure;
+- tables/lists;
+- chart/widget proportions;
+- navigation;
+- icon sizing;
+- borders and shadows;
+- responsive behavior.
+
+Preserve real Mono Finance data, APIs, routing, calculations, auth and i18n.
+
+Do not preserve legacy presentation merely because it already works.
+
+If current markup, layout, CSS, or components conflict with the matching reference, replace them.
+
+The current UI is a behavior/data source, not a visual source of truth.
+
+Do not copy fake balances, fake transactions, generated text mistakes, or unsupported actions from reference images.
+
+Desktop and mobile are separate intentional compositions.
+
+For `<768px`, use the matching mobile reference instead of shrinking the desktop implementation.
+
+Before declaring a page complete:
+1. compare desktop at 1440px against its desktop reference;
+2. compare mobile at 390px against its mobile reference;
+3. continue iterating if the implementation still visually resembles the legacy UI more than the reference.
 
 ## 1. Core product design direction
 
