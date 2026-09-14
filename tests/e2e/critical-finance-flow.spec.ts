@@ -102,7 +102,7 @@ test('language and category type mapping remain accessible', async ({
     page.getByRole('heading', { name: 'Огляд фінансів' }),
   ).toBeVisible()
 
-  await page.getByRole('link', { name: 'Налаштування' }).first().click()
+  await page.getByRole('link', { name: 'Категорії' }).first().click()
   const sourceSelect = page.getByLabel('Категорія для mcc-5812')
   await expect(sourceSelect).toBeVisible()
   await sourceSelect.selectOption('category-dining')
@@ -111,15 +111,20 @@ test('language and category type mapping remain accessible', async ({
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
   await expect(
-    page.getByRole('heading', { name: 'Налаштування' }),
+    page.getByRole('heading', { name: 'Категорії', exact: true }),
   ).toBeVisible()
-  await page.getByLabel('\u041c\u043e\u0432\u0430').selectOption('en')
+  await page.getByRole('link', { name: 'Ще' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Ще' })).toBeVisible()
+  await page
+    .locator('.settings-page--v6')
+    .getByLabel('\u041c\u043e\u0432\u0430')
+    .selectOption('en')
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
 })
 
 test('overview switches to a single-column mobile composition without viewport overflow', async ({
@@ -260,7 +265,7 @@ test('core finance screens fit a narrow mobile viewport', async ({ page }) => {
   }
 
   await page.setViewportSize({ width: 540, height: 720 })
-  await page.goto('/settings')
+  await page.goto('/settings#categories')
   const sourceTableWidth = await page
     .locator('.category-source-table-wrap')
     .evaluate((element) => ({
@@ -279,7 +284,7 @@ test('custom category form stays compact until the owner opens it', async ({
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await page.getByRole('link', { name: 'Settings' }).first().click()
+  await page.getByRole('link', { name: 'Categories' }).first().click()
   await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
     0,
   )

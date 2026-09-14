@@ -116,7 +116,11 @@ type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
   const location = useLocation()
-  return location.hash === '#accounts' ? <AccountsPage /> : <DashboardPageContent />
+  return location.hash === '#accounts' ? (
+    <AccountsPage />
+  ) : (
+    <DashboardPageContent />
+  )
 }
 
 function DashboardPageContent() {

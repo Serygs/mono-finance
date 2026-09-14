@@ -42,7 +42,9 @@ export function AccountsPage() {
             {t('Sync accounts')}
           </Button>
         }
-        description={<p>{t('Your synchronized balances, by account and currency.')}</p>}
+        description={
+          <p>{t('Your synchronized balances, by account and currency.')}</p>
+        }
         id="accounts-title"
         title={t('Accounts')}
       />
@@ -50,8 +52,15 @@ export function AccountsPage() {
         <Skeleton label={t('Loading accounts…')} lines={5} />
       ) : null}
       {accounts.isError ? (
-        <Alert tone="danger" title={t('Accounts could not be loaded. Try again later.')}>
-          <Button onClick={() => void accounts.refetch()} size="small" type="button">
+        <Alert
+          tone="danger"
+          title={t('Accounts could not be loaded. Try again later.')}
+        >
+          <Button
+            onClick={() => void accounts.refetch()}
+            size="small"
+            type="button"
+          >
             {t('Retry')}
           </Button>
         </Alert>
@@ -74,7 +83,9 @@ export function AccountsPage() {
           }
           title={t('No synchronized accounts')}
         >
-          <p>{t('Use Sync accounts to import the latest Monobank accounts.')}</p>
+          <p>
+            {t('Use Sync accounts to import the latest Monobank accounts.')}
+          </p>
         </EmptyState>
       ) : null}
       {accounts.data === undefined || accounts.data.length === 0 ? null : (
@@ -88,18 +99,25 @@ export function AccountsPage() {
                 <h2 id="account-balance-summary-title">
                   {t('Account balances')}
                   <InfoTooltip
-                    description={t('Balances are shown in their original currencies.')}
+                    description={t(
+                      'Balances are shown in their original currencies.',
+                    )}
                     label={t('Account balances')}
                   />
                 </h2>
                 <p>{t('Balances are shown in their original currencies.')}</p>
               </div>
-              <span>{t('{count} accounts', { count: accounts.data.length })}</span>
+              <span>
+                {t('{count} accounts', { count: accounts.data.length })}
+              </span>
             </header>
             <ul className="accounts-currency-summary">
               {balances.map((balance) => (
                 <li key={balance.code}>
-                  <span aria-hidden="true" className="accounts-currency-summary__icon">
+                  <span
+                    aria-hidden="true"
+                    className="accounts-currency-summary__icon"
+                  >
                     {balance.code.slice(0, 1)}
                   </span>
                   <span className="accounts-currency-summary__copy">

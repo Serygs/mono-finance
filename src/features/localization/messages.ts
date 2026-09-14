@@ -353,6 +353,20 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Transaction sync is unavailable. Try again later.',
   'Transaction sync status could not be loaded.',
   'View all transactions',
+  'Appearance',
+  'App',
+  'App interface language.',
+  'Currency used for converted analytics.',
+  'Data and sync',
+  'End this session on this device.',
+  'English',
+  'Matches your device setting.',
+  'Personalize your workspace and keep your data current.',
+  'Review imported transaction sync status.',
+  'System',
+  'Theme',
+  'Ukrainian',
+  'Your private personal finance workspace.',
 ] as const
 
 export type TranslationKey = (typeof ENGLISH_MESSAGE_KEYS)[number]
@@ -791,4 +805,22 @@ export const UKRAINIAN_MESSAGES = {
   'Transaction sync status could not be loaded.':
     'Не вдалося завантажити стан синхронізації транзакцій.',
   'View all transactions': 'Переглянути всі транзакції',
+  Appearance: 'Зовнішній вигляд',
+  App: 'Застосунок',
+  'App interface language.': 'Мова інтерфейсу застосунку.',
+  'Currency used for converted analytics.':
+    'Валюта для конвертованої аналітики.',
+  'Data and sync': 'Дані та синхронізація',
+  'End this session on this device.': 'Завершити сеанс на цьому пристрої.',
+  English: 'Англійська',
+  'Matches your device setting.': 'Відповідає налаштуванню пристрою.',
+  'Personalize your workspace and keep your data current.':
+    'Налаштуйте робочий простір і підтримуйте дані актуальними.',
+  'Review imported transaction sync status.':
+    'Перегляньте стан синхронізації імпортованих транзакцій.',
+  System: 'Системна',
+  Theme: 'Тема',
+  Ukrainian: 'Українська',
+  'Your private personal finance workspace.':
+    'Ваш приватний простір для особистих фінансів.',
 } satisfies Readonly<Record<TranslationKey, string>>

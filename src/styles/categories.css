@@ -130,17 +130,29 @@
 
 .category-list-row__icon--mint,
 .category-list-row__icon--green {
-  --category-icon-background: color-mix(in srgb, var(--accent-green), transparent 84%);
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--accent-green),
+    transparent 84%
+  );
   --category-icon-color: var(--accent-green);
 }
 
 .category-list-row__icon--blue {
-  --category-icon-background: color-mix(in srgb, var(--accent-blue), transparent 84%);
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--accent-blue),
+    transparent 84%
+  );
   --category-icon-color: var(--accent-blue);
 }
 
 .category-list-row__icon--cyan {
-  --category-icon-background: color-mix(in srgb, var(--accent-cyan), transparent 84%);
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--accent-cyan),
+    transparent 84%
+  );
   --category-icon-color: var(--accent-cyan);
 }
 
@@ -150,13 +162,21 @@
 }
 
 .category-list-row__icon--pink {
-  --category-icon-background: color-mix(in srgb, var(--accent-pink), transparent 84%);
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--accent-pink),
+    transparent 84%
+  );
   --category-icon-color: var(--accent-pink);
 }
 
 .category-list-row__icon--purple,
 .category-list-row__icon--violet {
-  --category-icon-background: color-mix(in srgb, var(--accent-violet), transparent 84%);
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--accent-violet),
+    transparent 84%
+  );
   --category-icon-color: var(--accent-violet);
 }
 
@@ -428,7 +448,9 @@
     padding: var(--space-3);
   }
 
-  .categories-source-management--v4 .category-source-table :where(td, td:nth-child(n)) {
+  .categories-source-management--v4
+    .category-source-table
+    :where(td, td:nth-child(n)) {
     width: auto;
     min-width: 0;
     border: 0;
@@ -469,7 +491,9 @@
     grid-row: 4;
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(4)::before {
+  .categories-source-management--v4
+    .category-source-table
+    td:nth-child(4)::before {
     content: attr(data-label) ': ';
     color: var(--color-text-tertiary);
   }

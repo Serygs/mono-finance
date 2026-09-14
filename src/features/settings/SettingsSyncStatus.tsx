@@ -6,6 +6,7 @@ import { Popover } from '../../components/ui/Popover'
 import { useLocalization, type Translate } from '../localization/localization'
 import { getTransactionSyncStatus } from '../transactions/transaction-sync-api'
 import type { TransactionSyncState } from '../transactions/transaction-sync-types'
+import { SettingsRowContent } from './SettingsSections'
 
 export function SettingsSyncStatus() {
   const { locale, t } = useLocalization()
@@ -16,32 +17,27 @@ export function SettingsSyncStatus() {
   })
 
   return (
-    <section
-      aria-labelledby="sync-status-title"
-      className="settings-sync-status"
-    >
-      <div>
-        <h2 id="sync-status-title">{t('Sync status')}</h2>
-        <p>
-          {t(
-            'Imported data stays in D1; refreshes run one safe account window at a time.',
-          )}
-        </p>
-      </div>
-      <Popover
-        content={
-          status.isPending ? (
-            <Skeleton label={t('Loading transaction sync status…')} lines={2} />
-          ) : status.isError ? (
-            <Alert tone="danger">
-              {t('Transaction sync status could not be loaded.')}
-            </Alert>
-          ) : status.data?.length === 0 ? (
-            <EmptyState title={t('No accounts ready for sync')}>
-              <p>{t('Synchronize accounts before importing transactions.')}</p>
-            </EmptyState>
-          ) : (
-            <ul className="settings-sync-status__list">
+    <Popover
+      className="settings-row-popover"
+      content={
+        status.isPending ? (
+          <Skeleton label={t('Loading transaction sync status…')} lines={2} />
+        ) : status.isError ? (
+          <Alert tone="danger">
+            {t('Transaction sync status could not be loaded.')}
+          </Alert>
+        ) : status.data?.length === 0 ? (
+          <EmptyState title={t('No accounts ready for sync')}>
+            <p>{t('Synchronize accounts before importing transactions.')}</p>
+          </EmptyState>
+        ) : (
+          <div className="settings-sync-details">
+            <p>
+              {t(
+                'Imported data stays in D1; refreshes run one safe account window at a time.',
+              )}
+            </p>
+            <ul className="settings-sync-details__list">
               {status.data?.map((state) => (
                 <li key={state.accountId}>
                   <span>
@@ -54,16 +50,22 @@ export function SettingsSyncStatus() {
                 </li>
               ))}
             </ul>
-          )
+          </div>
+        )
+      }
+      label={t('Sync status')}
+    >
+      <SettingsRowContent
+        icon="↻"
+        subtitle={t('Review imported transaction sync status.')}
+        title={t('Sync status')}
+        trailing={
+          <span aria-hidden="true" className="settings-row__chevron">
+            ›
+          </span>
         }
-        label={t('Sync status')}
-      >
-        <span>{t('Sync status')}</span>
-        <span aria-hidden="true" className="ui-multi-select__indicator">
-          ›
-        </span>
-      </Popover>
-    </section>
+      />
+    </Popover>
   )
 }
 

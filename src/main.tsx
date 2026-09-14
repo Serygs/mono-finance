@@ -12,6 +12,7 @@ import './styles/overview.css'
 import './styles/transactions.css'
 import './styles/categories.css'
 import './styles/accounts.css'
+import './styles/settings.css'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15_000 } },

@@ -5,7 +5,11 @@ import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { CompactList } from '../../components/ui/Collections'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
-import { FormField, SearchField, Select } from '../../components/ui/FormControls'
+import {
+  FormField,
+  SearchField,
+  Select,
+} from '../../components/ui/FormControls'
 import { Dialog } from '../../components/ui/Overlay'
 import { OverflowMenu } from '../../components/ui/Popover'
 import { useLocalization } from '../localization/localization'
@@ -211,7 +215,9 @@ export function CategoryManagement() {
                     >
                       <CategoryIcon token={category.icon} />
                     </span>
-                    <span className="category-list-row__name">{category.name}</span>
+                    <span className="category-list-row__name">
+                      {category.name}
+                    </span>
                   </div>
                   <span className="category-list-row__type">
                     {t('Custom category')}

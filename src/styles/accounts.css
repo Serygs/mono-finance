@@ -155,7 +155,10 @@
 .account-row {
   display: grid;
   min-width: 0;
-  grid-template-columns: 2.9rem minmax(0, 1fr) minmax(9.5rem, auto) minmax(7rem, auto);
+  grid-template-columns: 2.9rem minmax(0, 1fr) minmax(9.5rem, auto) minmax(
+      7rem,
+      auto
+    );
   gap: 0.75rem;
   align-items: center;
   min-height: 5.4rem;
