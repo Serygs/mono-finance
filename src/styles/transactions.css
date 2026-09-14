@@ -22,7 +22,10 @@
 
 .transactions-toolbar {
   display: grid;
-  grid-template-columns: minmax(8.75rem, 0.7fr) minmax(11rem, 1fr) minmax(10rem, 0.85fr) minmax(12rem, 1.45fr);
+  grid-template-columns: minmax(8.75rem, 0.7fr) minmax(11rem, 1fr) minmax(
+      10rem,
+      0.85fr
+    ) minmax(12rem, 1.45fr);
   align-items: end;
   gap: 0.6rem;
   border: 1px solid var(--color-border);
@@ -37,7 +40,13 @@
   font-size: 0.72rem;
 }
 
-.transactions-toolbar :is(.ui-select, .ui-multi-select__trigger, .ui-search-field, .ui-popover__trigger) {
+.transactions-toolbar
+  :is(
+    .ui-select,
+    .ui-multi-select__trigger,
+    .ui-search-field,
+    .ui-popover__trigger
+  ) {
   min-height: 2.5rem;
   border-color: var(--color-border);
   background: var(--color-surface);
@@ -116,7 +125,10 @@
 .transactions-ledger__header,
 .transactions-ledger-row {
   display: grid;
-  grid-template-columns: minmax(13rem, 1.55fr) minmax(7rem, 0.85fr) minmax(8rem, 0.95fr) minmax(9rem, 0.95fr) minmax(7rem, 0.75fr) 3.75rem;
+  grid-template-columns: minmax(13rem, 1.55fr) minmax(7rem, 0.85fr) minmax(
+      8rem,
+      0.95fr
+    ) minmax(9rem, 0.95fr) minmax(7rem, 0.75fr) 3.75rem;
   gap: 0.75rem;
 }
 
@@ -203,7 +215,12 @@
   padding: 0.1rem 0.32rem;
 }
 
-.transactions-ledger-row :is(.transactions-ledger-row__category, .transactions-ledger-row__account, .transactions-ledger-row__date) {
+.transactions-ledger-row
+  :is(
+    .transactions-ledger-row__category,
+    .transactions-ledger-row__account,
+    .transactions-ledger-row__date
+  ) {
   min-width: 0;
   overflow: hidden;
   color: var(--color-text-secondary);
@@ -288,7 +305,10 @@
 
   .transactions-ledger__header,
   .transactions-ledger-row {
-    grid-template-columns: minmax(11rem, 1.35fr) minmax(6rem, 0.75fr) minmax(7rem, 0.85fr) minmax(6rem, auto);
+    grid-template-columns: minmax(11rem, 1.35fr) minmax(6rem, 0.75fr) minmax(
+        7rem,
+        0.85fr
+      ) minmax(6rem, auto);
   }
 
   .transactions-ledger__header > :nth-child(3),
@@ -327,7 +347,13 @@
     padding: 0;
   }
 
-  .transactions-toolbar :is(.ui-select, .ui-multi-select__trigger, .ui-search-field, .ui-popover__trigger) {
+  .transactions-toolbar
+    :is(
+      .ui-select,
+      .ui-multi-select__trigger,
+      .ui-search-field,
+      .ui-popover__trigger
+    ) {
     min-height: 2.75rem;
     font-size: 1rem;
   }

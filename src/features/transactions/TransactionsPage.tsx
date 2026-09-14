@@ -262,7 +262,9 @@ export function TransactionsPage() {
                 >
                   <h2>
                     <span>
-                      {formatTransactionDate(firstTransaction.originalTimestamp)}
+                      {formatTransactionDate(
+                        firstTransaction.originalTimestamp,
+                      )}
                     </span>
                     <span>{formatDateGroupAmount(group.transactions)}</span>
                   </h2>
@@ -302,7 +304,9 @@ export function TransactionsPage() {
                           {formatTransactionTime(transaction.originalTimestamp)}
                         </span>
                         <span className="transactions-ledger-row__mobile-time">
-                          {formatTransactionClock(transaction.originalTimestamp)}
+                          {formatTransactionClock(
+                            transaction.originalTimestamp,
+                          )}
                         </span>
                       </span>
                       <span
