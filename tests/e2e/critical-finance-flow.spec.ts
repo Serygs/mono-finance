@@ -78,6 +78,7 @@ test('an owner can complete the critical private-finance workflow', async ({
     page.getByRole('heading', { name: 'Recent compensations' }),
   ).toBeVisible()
 
+  await page.getByRole('button', { name: 'Profile' }).click()
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(
     page.getByRole('heading', { name: 'Your finances, kept private.' }),
@@ -165,7 +166,11 @@ test('overview switches to a single-column mobile composition without viewport o
     filterFields: Array.from(
       document.querySelectorAll('.dashboard-toolbar .ui-field'),
       (field) => field.getBoundingClientRect(),
-    ),
+    ).filter((field) => field.width > 0 && field.height > 0),
+    visibleFilterMenuTriggers: Array.from(
+      document.querySelectorAll('.dashboard-toolbar-menu__trigger'),
+      (trigger) => trigger.getBoundingClientRect(),
+    ).filter((trigger) => trigger.width > 0 && trigger.height > 0),
     primaryKpis: Array.from(
       document.querySelectorAll('.dashboard-kpis .ui-kpi'),
       (card) => card.getBoundingClientRect(),
@@ -209,7 +214,8 @@ test('overview switches to a single-column mobile composition without viewport o
   expect(layout.headerActions.right).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.dashboardRight).toBeLessThanOrEqual(layout.clientWidth)
   expect(layout.filtersRight).toBeLessThanOrEqual(layout.clientWidth)
-  expect(layout.filterFields).toHaveLength(3)
+  expect(layout.filterFields).toHaveLength(2)
+  expect(layout.visibleFilterMenuTriggers).toHaveLength(1)
   expect(layout.primaryKpis).toHaveLength(4)
   expect(layout.syncActions).toHaveLength(2)
   expect(layout.undersizedControls).toEqual([])
