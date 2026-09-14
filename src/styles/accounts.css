@@ -1,0 +1,427 @@
+/* Accounts: a dedicated composition for the existing /#accounts route. */
+.accounts-page--v5 {
+  width: 100%;
+  max-width: 75rem;
+  margin-inline: auto;
+  gap: 1rem;
+}
+
+.accounts-page--v5 > .ui-page-header {
+  padding: 0.25rem 0 0.45rem;
+}
+
+.accounts-page--v5 > .ui-page-header h1 {
+  max-width: none;
+  font-size: clamp(2rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.accounts-balance-summary {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.accounts-balance-summary__heading {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.accounts-balance-summary__heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.accounts-balance-summary__heading p,
+.accounts-balance-summary__heading > span {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.accounts-balance-summary__heading > span {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.accounts-currency-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accounts-currency-summary li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  grid-template-areas: 'icon copy' 'icon value';
+  column-gap: 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-surface);
+  padding: 0.8rem;
+}
+
+.accounts-currency-summary__icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  grid-area: icon;
+  align-self: center;
+  border-radius: 0.75rem;
+  background: var(--color-action-soft);
+  color: var(--color-action);
+  font-size: 0.84rem;
+  font-weight: 750;
+  place-items: center;
+}
+
+.accounts-currency-summary__copy {
+  display: grid;
+  min-width: 0;
+  grid-area: copy;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.accounts-currency-summary small {
+  overflow: hidden;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accounts-currency-summary strong {
+  grid-area: value;
+  overflow: hidden;
+  margin-top: 0.18rem;
+  font-size: 1.06rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accounts-list-card {
+  box-shadow: var(--shadow-card);
+}
+
+.accounts-list-card .ui-card__header {
+  min-height: 3.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.accounts-list-card .ui-card__header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.accounts-list-card__count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.accounts-list-card .ui-card__body {
+  padding: 0.35rem 1rem;
+}
+
+.accounts-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.9rem minmax(0, 1fr) minmax(9.5rem, auto) minmax(7rem, auto);
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 5.4rem;
+  border-radius: 0.9rem;
+  padding: 0.65rem 0.35rem;
+  transition: background-color var(--motion-fast);
+}
+
+.account-row + .account-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.account-row:hover {
+  background: var(--color-surface-soft);
+}
+
+.account-row__icon {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  align-self: center;
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--color-text), transparent 92%);
+  color: var(--color-text);
+  font-size: 0.86rem;
+  font-weight: 750;
+  place-items: center;
+}
+
+.account-row__identity,
+.account-row__balance,
+.account-row__status {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.account-row__identity > strong {
+  overflow: hidden;
+  font-size: 0.94rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row__identity > :is(span, small) {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row__identity small {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.account-row__balance {
+  justify-items: end;
+  text-align: right;
+}
+
+.account-row__balance strong {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 1.08rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row__balance span {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 650;
+}
+
+.account-row__status {
+  justify-items: end;
+}
+
+@media (max-width: 74.99rem) and (min-width: 48rem) {
+  .accounts-currency-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .accounts-page--v5 {
+    gap: 0.85rem;
+  }
+
+  .accounts-page--v5 > .ui-page-header {
+    display: flex;
+    align-items: center;
+    padding: 0;
+  }
+
+  .accounts-page--v5 > .ui-page-header h1 {
+    font-size: clamp(1.625rem, 7vw, 1.875rem);
+  }
+
+  .accounts-page--v5 .ui-page-description {
+    margin-top: 0.3rem;
+    font-size: 0.86rem;
+  }
+
+  .accounts-page--v5 .ui-page-header__actions {
+    flex: 0 0 auto;
+  }
+
+  .accounts-page--v5 .ui-page-header__actions .ui-button {
+    width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .accounts-page--v5 .ui-page-header__actions .ui-button::before {
+    color: #fff;
+    content: '↻';
+    font-size: 1.35rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .accounts-balance-summary {
+    gap: 0.75rem;
+    border-radius: 1.1rem;
+    padding: 0.9rem;
+  }
+
+  .accounts-balance-summary__heading {
+    align-items: start;
+  }
+
+  .accounts-balance-summary__heading h2 {
+    font-size: 1.05rem;
+  }
+
+  .accounts-balance-summary__heading p {
+    max-width: 15rem;
+    font-size: 0.78rem;
+  }
+
+  .accounts-currency-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .accounts-currency-summary li {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    column-gap: 0.5rem;
+    border-radius: 0.8rem;
+    padding: 0.65rem;
+  }
+
+  .accounts-currency-summary__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.65rem;
+    font-size: 0.74rem;
+  }
+
+  .accounts-currency-summary__copy {
+    font-size: 0.76rem;
+  }
+
+  .accounts-currency-summary strong {
+    font-size: 0.94rem;
+  }
+
+  .accounts-list-card {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .accounts-list-card .ui-card__header {
+    min-height: auto;
+    border: 0;
+    padding: 0.6rem 0 0.1rem;
+  }
+
+  .accounts-list-card .ui-card__header h2 {
+    font-size: 1.35rem;
+    letter-spacing: -0.035em;
+  }
+
+  .accounts-list-card .ui-card__body {
+    padding: 0.35rem 0 0;
+  }
+
+  .accounts-list {
+    gap: 0.65rem;
+  }
+
+  .account-row,
+  .account-row + .account-row {
+    grid-template-columns: 3.1rem minmax(0, 1fr) auto;
+    grid-template-areas: 'icon identity status' 'icon balance balance';
+    gap: 0.18rem 0.7rem;
+    min-height: 7.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1.1rem;
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-card);
+    padding: 0.85rem;
+  }
+
+  .account-row__icon {
+    grid-area: icon;
+    width: 3.1rem;
+    height: 3.1rem;
+    align-self: start;
+    border-radius: 0.95rem;
+  }
+
+  .account-row__identity {
+    grid-area: identity;
+    align-self: end;
+  }
+
+  .account-row__identity > strong {
+    font-size: 1rem;
+  }
+
+  .account-row__balance {
+    grid-area: balance;
+    justify-items: start;
+    margin-top: 0.6rem;
+    text-align: left;
+  }
+
+  .account-row__balance strong {
+    font-size: 1.25rem;
+  }
+
+  .account-row__balance span {
+    display: none;
+  }
+
+  .account-row__status {
+    grid-area: status;
+    align-self: start;
+  }
+}
+
+@media (max-width: 22rem) {
+  .accounts-currency-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .accounts-balance-summary__heading > span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-row {
+    transition: none;
+  }
+}

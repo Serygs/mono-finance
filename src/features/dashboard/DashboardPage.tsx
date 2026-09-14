@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { GridLayout, useContainerWidth } from 'react-grid-layout'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
@@ -13,6 +13,7 @@ import {
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { Card, InfoTooltip, KpiCard } from '../../components/ui/Surfaces'
 import { getAccounts, synchronizeAccounts } from '../accounts/accounts-api'
+import { AccountsPage } from '../accounts/AccountsPage'
 import {
   loadAccountFilter,
   saveAccountFilter,
@@ -114,6 +115,11 @@ const DEFAULT_WIDGET_ORDER = [
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
+  const location = useLocation()
+  return location.hash === '#accounts' ? <AccountsPage /> : <DashboardPageContent />
+}
+
+function DashboardPageContent() {
   const { t } = useLocalization()
   const client = useQueryClient()
   const [accounts, setAccounts] = useState<AccountSummary[] | null>(null)

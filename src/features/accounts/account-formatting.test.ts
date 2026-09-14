@@ -11,6 +11,10 @@ describe('account balance formatting', () => {
     expect(formatAccountBalance(1_200, 0, 'JPY')).toBe('1,200 JPY')
   })
 
+  it('formats an exact aggregated bigint balance', () => {
+    expect(formatAccountBalance(2_000n, 2, 'UAH')).toBe('20.00 UAH')
+  })
+
   it('keeps unknown numeric currencies in explicit minor units', () => {
     expect(formatAccountBalance(125_050, 0, '999')).toBe(
       '125,050 minor units · ISO 999',

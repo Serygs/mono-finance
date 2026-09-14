@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { Button } from '../../components/ui/Controls'
+import { StatusBadge } from '../../components/ui/Chips'
 import { CompactTable } from '../../components/ui/Collections'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
-import { FormField, Select } from '../../components/ui/FormControls'
+import { FormField, SearchField, Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
 import {
   getCategorySources,
@@ -61,16 +62,18 @@ export function CategorySourceManagement({
 
   return (
     <section
-      className="category-management"
+      className="category-management category-source-management categories-source-management--v4"
       aria-labelledby="category-sources-title"
     >
-      <header className="section-heading">
-        <h2 id="category-sources-title">{t('Bank transaction types')}</h2>
-        <p>
-          {t(
-            'Assign a clear name to every transaction with the same imported MCC type. The bank value remains unchanged.',
-          )}
-        </p>
+      <header className="categories-section-heading categories-section-heading--source">
+        <div>
+          <h2 id="category-sources-title">{t('Bank transaction types')}</h2>
+          <p>
+            {t(
+              'Assign a clear name to every transaction with the same imported MCC type. The bank value remains unchanged.',
+            )}
+          </p>
+        </div>
       </header>
       {sources.isPending ? (
         <Skeleton label={t('Loading transaction types…')} lines={3} />
@@ -94,17 +97,15 @@ export function CategorySourceManagement({
       {(sources.data?.totalItems ?? 0) > 0 ? (
         <>
           <div className="category-source-filters">
-            <FormField label={t('Search MCC or name')}>
-              <input
-                onChange={(event) => {
-                  setPage(1)
-                  setQuery(event.target.value)
-                }}
-                placeholder={t('Search MCC or name…')}
-                type="search"
-                value={query}
-              />
-            </FormField>
+            <SearchField
+              label={t('Search MCC or name')}
+              onChange={(event) => {
+                setPage(1)
+                setQuery(event.target.value)
+              }}
+              placeholder={t('Search MCC or name…')}
+              value={query}
+            />
             <FormField label={t('Mapping status')}>
               <Select
                 onChange={(event) => {
@@ -130,6 +131,7 @@ export function CategorySourceManagement({
                   <tr>
                     <th scope="col">{t('MCC')}</th>
                     <th scope="col">{t('Imported name')}</th>
+                    <th scope="col">{t('Mapping status')}</th>
                     <th scope="col">{t('Transactions')}</th>
                     <th scope="col">{t('Assigned category')}</th>
                   </tr>
@@ -146,6 +148,20 @@ export function CategorySourceManagement({
                           <div className="category-source-copy">
                             <span>{source.originalName || '—'}</span>
                           </div>
+                        </td>
+                        <td data-label={t('Mapping status')}>
+                          <StatusBadge
+                            label={
+                              source.mappedCategory === null
+                                ? t('Unmapped')
+                                : t('Mapped')
+                            }
+                            tone={
+                              source.mappedCategory === null
+                                ? 'neutral'
+                                : 'success'
+                            }
+                          />
                         </td>
                         <td data-label={t('Transactions')}>
                           {source.transactionCount}

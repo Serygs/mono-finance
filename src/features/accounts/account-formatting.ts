@@ -1,7 +1,7 @@
 const ISO_ALPHA_CODE = /^[A-Z]{3}$/
 
 export function formatAccountBalance(
-  amountMinor: number,
+  amountMinor: bigint | number,
   minorUnit: number,
   currencyCode: string,
 ): string {
