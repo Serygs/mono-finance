@@ -91,7 +91,11 @@ export function CategoryManagement() {
     })
   }
   return (
-    <section className="category-management" aria-labelledby="categories-title">
+    <section
+      className="category-management"
+      id="categories"
+      aria-labelledby="categories-title"
+    >
       <header className="section-heading">
         <h2 id="categories-title">{t('Custom categories')}</h2>
         <p>

@@ -2,13 +2,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
 import { Alert, EmptyState, Skeleton } from './ui/Feedback'
-import { FormField, MultiSelect, Select } from './ui/FormControls'
+import { FormField, MultiSelect, SearchField, Select } from './ui/FormControls'
 import { BottomSheet, Dialog } from './ui/Overlay'
 import { PageHeader, PageSurface } from './ui/Page'
 import { Button, IconButton, SegmentedControl } from './ui/Controls'
 import { AccountChip, CategoryChip, StatusBadge } from './ui/Chips'
 import { CompactList, CompactTable } from './ui/Collections'
-import { Popover } from './ui/Popover'
+import { OverflowMenu, Popover } from './ui/Popover'
 import { Card, ChartContainer, KpiCard } from './ui/Surfaces'
 
 describe('design system', () => {
@@ -44,6 +44,7 @@ describe('design system', () => {
             <option value="all">All</option>
           </Select>
         </FormField>
+        <SearchField label="Search transactions" placeholder="Search" />
         <MultiSelect
           ariaLabel="Accounts"
           onChange={() => undefined}
@@ -53,6 +54,9 @@ describe('design system', () => {
         <Popover content="Choose one or more accounts" label="Accounts">
           Accounts
         </Popover>
+        <OverflowMenu content="Actions" label="More actions">
+          More actions
+        </OverflowMenu>
       </>,
     )
 
@@ -63,6 +67,8 @@ describe('design system', () => {
     expect(markup).toContain('Optional')
     expect(markup).toContain('ui-multi-select')
     expect(markup).toContain('ui-popover')
+    expect(markup).toContain('ui-search-field')
+    expect(markup).toContain('ui-overflow-menu')
   })
 
   it('keeps chips and feedback states explicit', () => {

@@ -28,7 +28,11 @@ export function AccountSelector({
   }
 
   return (
-    <section className="account-filter" aria-labelledby="account-filter-title">
+    <section
+      className="account-filter"
+      id="accounts"
+      aria-labelledby="account-filter-title"
+    >
       <div className="account-filter-heading">
         <div>
           <h2 id="account-filter-title">{t('Accounts in view')}</h2>

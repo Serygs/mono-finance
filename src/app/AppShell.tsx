@@ -1,20 +1,50 @@
-import { NavLink, Outlet, useNavigate } from 'react-router'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 
 import { useAuth } from '../features/auth/auth-context'
 import { OfflineStatus } from '../features/offline/OfflineStatus'
 import { Button } from '../components/ui/Controls'
 import { LanguageSwitcher } from '../features/localization/LanguageSwitcher'
 import { useLocalization } from '../features/localization/localization'
+import { Popover } from '../components/ui/Popover'
 
 export function AppShell() {
   const { logout } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const { t } = useLocalization()
   const navigationItems = [
-    { label: t('Overview'), to: '/' },
-    { label: t('Transactions'), to: '/transactions' },
-    { label: t('Settings'), to: '/settings' },
-  ] as const
+    {
+      active: location.pathname === '/' && location.hash === '',
+      icon: '⌂',
+      label: t('Overview'),
+      to: '/',
+    },
+    {
+      active: location.pathname === '/transactions',
+      icon: '≡',
+      label: t('Transactions'),
+      to: '/transactions',
+    },
+    {
+      active:
+        location.pathname === '/settings' && location.hash === '#categories',
+      icon: '◔',
+      label: t('Categories'),
+      to: '/settings#categories',
+    },
+    {
+      active: location.pathname === '/' && location.hash === '#accounts',
+      icon: '▱',
+      label: t('Accounts'),
+      to: '/#accounts',
+    },
+    {
+      active: location.pathname === '/settings' && location.hash === '',
+      icon: '•••',
+      label: t('More'),
+      to: '/settings',
+    },
+  ]
 
   async function handleLogout() {
     await logout()
@@ -31,13 +61,13 @@ export function AppShell() {
           <span className="brand-mark" aria-hidden="true">
             MF
           </span>
-          <NavLink
+          <Link
             className="brand"
             to="/"
             aria-label={t('Mono Finance overview')}
           >
             Mono Finance
-          </NavLink>
+          </Link>
         </div>
         <nav
           aria-label={t('Primary navigation')}
@@ -46,22 +76,34 @@ export function AppShell() {
           <ul className="primary-navigation">
             {navigationItems.map((item) => (
               <li key={item.to}>
-                <NavLink to={item.to}>{item.label}</NavLink>
+                <Link aria-current={item.active ? 'page' : undefined} to={item.to}>
+                  {item.label}
+                </Link>
               </li>
             ))}
           </ul>
         </nav>
         <div className="app-header-actions">
           <LanguageSwitcher />
-          <Button
-            className="sign-out-button"
-            onClick={() => void handleLogout()}
-            size="small"
-            type="button"
-            variant="quiet"
+          <Popover
+            className="profile-menu"
+            content={
+              <Button
+                className="profile-menu__sign-out"
+                onClick={() => void handleLogout()}
+                size="small"
+                type="button"
+                variant="quiet"
+              >
+                {t('Sign out')}
+              </Button>
+            }
+            label={t('Profile')}
           >
-            {t('Sign out')}
-          </Button>
+            <span aria-hidden="true" className="profile-menu__avatar">
+              MF
+            </span>
+          </Popover>
         </div>
       </header>
       <OfflineStatus />
@@ -70,9 +112,16 @@ export function AppShell() {
       </main>
       <nav aria-label={t('Primary navigation')} className="mobile-navigation">
         {navigationItems.map((item) => (
-          <NavLink key={item.to} to={item.to}>
-            {item.label}
-          </NavLink>
+          <Link
+            aria-current={item.active ? 'page' : undefined}
+            key={item.to}
+            to={item.to}
+          >
+            <span aria-hidden="true" className="mobile-navigation__icon">
+              {item.icon}
+            </span>
+            <span>{item.label}</span>
+          </Link>
         ))}
       </nav>
     </div>

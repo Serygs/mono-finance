@@ -16,6 +16,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Merge into',
   'Merge category explanation',
   'Monthly trend help',
+  'More',
   'Net cash flow help',
   'No expenses in this period.',
   'Recent compensations help',
@@ -218,6 +219,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Previous month',
   'Previous period change',
   'Period summary',
+  'Profile',
   'Recent adjusted transactions',
   'Recent compensations',
   'Refresh transactions',
@@ -375,6 +377,7 @@ export const UKRAINIAN_MESSAGES = {
   'Merge category explanation':
     'Усі перевизначення транзакцій і зіставлення MCC з цієї категорії буде перенесено до вибраної. Початкову категорію буде видалено.',
   'Monthly trend help': 'Витрати за місяцями у вибраному періоді.',
+  More: 'Ще',
   'Net cash flow help':
     'Доходи мінус витрати. Від’ємне значення означає, що витрати перевищили доходи.',
   'No expenses in this period.': 'У цьому періоді немає витрат.',
@@ -603,6 +606,7 @@ export const UKRAINIAN_MESSAGES = {
   'Previous month': 'Попередній місяць',
   'Previous period change': 'Зміна до попереднього періоду',
   'Period summary': 'Підсумок періоду',
+  Profile: 'Профіль',
   'Recent adjusted transactions': 'Останні скориговані транзакції',
   'Recent compensations': 'Останні компенсації',
   'Refresh transactions': 'Оновити транзакції',

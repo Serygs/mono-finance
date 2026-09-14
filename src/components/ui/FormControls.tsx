@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type InputHTMLAttributes,
   type SelectHTMLAttributes,
 } from 'react'
 
@@ -50,6 +51,22 @@ export function Select({
     >
       {children}
     </select>
+  )
+}
+
+interface SearchFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  label: string
+}
+
+export function SearchField({ className, label, ...props }: SearchFieldProps) {
+  return (
+    <label className={['ui-search-field', className].filter(Boolean).join(' ')}>
+      <span className="sr-only">{label}</span>
+      <span aria-hidden="true" className="ui-search-field__icon">
+        ⌕
+      </span>
+      <input {...props} aria-label={props['aria-label'] ?? label} type="search" />
+    </label>
   )
 }
 

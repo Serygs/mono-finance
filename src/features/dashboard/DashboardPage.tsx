@@ -128,6 +128,7 @@ export function DashboardPage() {
   const [preferences, setPreferences] =
     useState<DashboardPreferences>(loadPreferences)
   const [customizing, setCustomizing] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [syncOpen, setSyncOpen] = useState(false)
   const [syncingAccounts, setSyncingAccounts] = useState(false)
   const [syncingTransactions, setSyncingTransactions] = useState(false)
@@ -242,11 +243,13 @@ export function DashboardPage() {
           mode={mode}
           onCurrency={setCurrency}
           onFilter={setFilter}
+          onFiltersOpen={setFiltersOpen}
           onFrom={setFrom}
           onMode={setMode}
           onPreset={setPreset}
           onTo={setTo}
           preset={preset}
+          filtersOpen={filtersOpen}
           to={to}
         />
         <div className="dashboard-toolbar-actions">
@@ -355,11 +358,13 @@ function Toolbar({
   mode,
   onCurrency,
   onFilter,
+  onFiltersOpen,
   onFrom,
   onMode,
   onPreset,
   onTo,
   preset,
+  filtersOpen,
   to,
 }: {
   accounts: AccountSummary[]
@@ -371,11 +376,13 @@ function Toolbar({
   mode: 'base' | 'original'
   onCurrency(value: string | null): void
   onFilter(value: AccountFilter): void
+  onFiltersOpen(value: boolean): void
   onFrom(value: string): void
   onMode(value: 'base' | 'original'): void
   onPreset(value: DashboardDatePreset): void
   onTo(value: string): void
   preset: DashboardDatePreset
+  filtersOpen: boolean
   to: string
 }) {
   const { t } = useLocalization()
@@ -450,13 +457,47 @@ function Toolbar({
           </option>
         </Select>
       </FormField>
-      <details className="dashboard-toolbar-menu">
-        <summary>
+      <div
+        className={`dashboard-toolbar-menu${filtersOpen ? ' is-open' : ''}`}
+      >
+        <button
+          aria-label={t('Filters')}
+          aria-expanded={filtersOpen}
+          className="dashboard-toolbar-menu__trigger"
+          onClick={() => onFiltersOpen(!filtersOpen)}
+          type="button"
+        >
           <span aria-hidden="true">☷</span>
           {t('Filters')}
-        </summary>
-        {preset === 'custom' ? (
-          <div>
+        </button>
+        <div className="dashboard-toolbar-menu__content">
+          <FormField className="dashboard-mobile-currency" label={t('Currency')}>
+            <Select
+              onChange={(event) => {
+                const value = event.target.value
+                if (value === 'base') {
+                  onMode('base')
+                  onCurrency(null)
+                  return
+                }
+                onMode('original')
+                onCurrency(value === 'original-all' ? null : value)
+              }}
+              value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
+            >
+              <option value="original-all">{t('All original currencies')}</option>
+              {chartCurrencies.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+              <option value="base">
+                {baseCurrency} · {t('Base currency')}
+              </option>
+            </Select>
+          </FormField>
+          {preset === 'custom' ? (
+            <div>
             <FormField label={t('From')}>
               <input
                 onChange={(event) => onFrom(event.target.value)}
@@ -472,12 +513,13 @@ function Toolbar({
               />
             </FormField>
           </div>
-        ) : (
-          <p className="dashboard-filter-hint">
-            {t('Choose Custom range to set exact dates.')}
-          </p>
-        )}
-      </details>
+          ) : (
+            <p className="dashboard-filter-hint">
+              {t('Choose Custom range to set exact dates.')}
+            </p>
+          )}
+        </div>
+      </div>
     </section>
   )
 }

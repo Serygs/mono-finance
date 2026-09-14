@@ -59,3 +59,30 @@ export function Popover({ children, className, content, label }: PopoverProps) {
     </span>
   )
 }
+
+interface OverflowMenuProps {
+  children: ReactNode
+  className?: string
+  content: ReactNode
+  label: string
+}
+
+export function OverflowMenu({
+  children,
+  className,
+  content,
+  label,
+}: OverflowMenuProps) {
+  return (
+    <Popover
+      className={['ui-overflow-menu', className].filter(Boolean).join(' ')}
+      content={content}
+      label={label}
+    >
+      <span aria-hidden="true" className="ui-overflow-menu__indicator">
+        •••
+      </span>
+      <span className="sr-only">{children}</span>
+    </Popover>
+  )
+}
