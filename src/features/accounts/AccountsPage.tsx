@@ -31,7 +31,7 @@ export function AccountsPage() {
   )
 
   return (
-    <PageSurface className="accounts-page accounts-page--v5">
+    <PageSurface className="accounts-page accounts-page--summary">
       <PageHeader
         actions={
           <Button

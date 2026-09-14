@@ -66,7 +66,7 @@ export function CategorySourceManagement({
 
   return (
     <section
-      className="category-management category-source-management categories-source-management--v4"
+      className="category-management category-source-management"
       aria-labelledby="category-sources-title"
     >
       <header className="categories-section-heading categories-section-heading--source">

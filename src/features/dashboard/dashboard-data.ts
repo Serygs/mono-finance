@@ -276,8 +276,9 @@ export function formatCurrencyAmount(
 export function formatPeriod(
   timestamp: number,
   granularity: 'day' | 'month',
+  locale?: string,
 ): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     day: granularity === 'day' ? 'numeric' : undefined,
     month: granularity === 'day' ? 'short' : 'short',
     year: granularity === 'day' ? undefined : 'numeric',

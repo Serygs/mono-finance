@@ -1,11 +1,11 @@
-/* Categories v4: an intentionally dense management surface. */
+/* Dense category management surface. */
 
-.categories-page--v4 {
+.categories-page {
   gap: var(--space-5);
 }
 
-.categories-management--v4,
-.categories-source-management.categories-source-management--v4 {
+.categories-management,
+.category-source-management {
   display: grid;
   gap: var(--space-4);
 }
@@ -44,7 +44,7 @@
 }
 
 .categories-list-panel,
-.categories-source-management--v4 .category-source-table-wrap {
+.category-source-management .category-source-table-wrap {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -68,7 +68,7 @@
 }
 
 .categories-list-columns,
-.category-list--v4 > li {
+.category-list > li {
   display: grid;
   grid-template-columns: minmax(14rem, 1fr) minmax(8rem, 0.34fr) auto;
   gap: var(--space-4);
@@ -89,19 +89,19 @@
   text-align: right;
 }
 
-.category-list--v4 {
+.category-list {
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-.category-list--v4 > li {
+.category-list > li {
   min-height: 3.8rem;
   padding: var(--space-2) var(--space-4);
   transition: background-color var(--motion-fast);
 }
 
-.category-list--v4 > li:hover {
+.category-list > li:hover {
   background: var(--color-surface-soft);
 }
 
@@ -232,85 +232,85 @@
   width: 100%;
 }
 
-.categories-management--v4 .category-form {
+.categories-management .category-form {
   width: min(100%, 42rem);
   border-color: var(--color-border);
   background: var(--color-surface-raised);
   box-shadow: var(--shadow-card);
 }
 
-.categories-source-management--v4 {
+.category-source-management {
   padding-top: var(--space-4);
 }
 
-.categories-source-management--v4 .category-source-filters {
+.category-source-management .category-source-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(11rem, 13rem);
   gap: var(--space-3);
 }
 
-.categories-source-management--v4 .category-source-table-wrap {
+.category-source-management .category-source-table-wrap {
   overflow: hidden;
 }
 
-.categories-source-management--v4 .category-source-table {
+.category-source-management .category-source-table {
   width: 100%;
   min-width: 0;
   table-layout: fixed;
 }
 
-.categories-source-management--v4 .category-source-table :where(th, td) {
+.category-source-management .category-source-table :where(th, td) {
   padding: 0.65rem var(--space-3);
 }
 
-.categories-source-management--v4 .category-source-table th {
+.category-source-management .category-source-table th {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
   font-weight: 650;
 }
 
-.categories-source-management--v4 .category-source-table th:nth-child(1),
-.categories-source-management--v4 .category-source-table td:nth-child(1) {
+.category-source-management .category-source-table th:nth-child(1),
+.category-source-management .category-source-table td:nth-child(1) {
   width: 5.8rem;
 }
 
-.categories-source-management--v4 .category-source-table th:nth-child(3),
-.categories-source-management--v4 .category-source-table td:nth-child(3) {
+.category-source-management .category-source-table th:nth-child(3),
+.category-source-management .category-source-table td:nth-child(3) {
   width: 8.8rem;
 }
 
-.categories-source-management--v4 .category-source-table th:nth-child(4),
-.categories-source-management--v4 .category-source-table td:nth-child(4) {
+.category-source-management .category-source-table th:nth-child(4),
+.category-source-management .category-source-table td:nth-child(4) {
   width: 6.4rem;
 }
 
-.categories-source-management--v4 .category-source-table th:nth-child(5),
-.categories-source-management--v4 .category-source-table td:nth-child(5) {
+.category-source-management .category-source-table th:nth-child(5),
+.category-source-management .category-source-table td:nth-child(5) {
   width: min(15rem, 28%);
 }
 
-.categories-source-management--v4 .category-source-table tbody tr {
+.category-source-management .category-source-table tbody tr {
   transition: background-color var(--motion-fast);
 }
 
-.categories-source-management--v4 .category-source-table tbody tr:hover {
+.category-source-management .category-source-table tbody tr:hover {
   background: var(--color-surface-soft);
 }
 
-.categories-source-management--v4 .category-source-table .ui-select {
+.category-source-management .category-source-table .ui-select {
   min-height: 2.25rem;
   font-size: var(--font-size-sm);
   padding-block: 0.45rem;
 }
 
-.categories-source-management--v4 .category-source-pagination {
+.category-source-management .category-source-pagination {
   justify-content: end;
   margin-top: var(--space-1);
 }
 
 @media (max-width: 74.9375rem) {
   .categories-list-columns,
-  .category-list--v4 > li {
+  .category-list > li {
     grid-template-columns: minmax(12rem, 1fr) minmax(7rem, 0.32fr) auto;
   }
 
@@ -320,15 +320,15 @@
 }
 
 @media (max-width: 47.9375rem) {
-  .categories-page--v4 {
+  .categories-page {
     gap: var(--space-4);
   }
 
-  .categories-page--v4 .ui-page-header {
+  .categories-page .ui-page-header {
     padding-top: var(--space-2);
   }
 
-  .categories-page--v4 .ui-page-description {
+  .categories-page .ui-page-description {
     max-width: 26rem;
   }
 
@@ -372,7 +372,7 @@
     display: none;
   }
 
-  .category-list--v4 > li {
+  .category-list > li {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-2);
     min-height: 4.1rem;
@@ -399,30 +399,30 @@
     min-height: 2.75rem;
   }
 
-  .categories-source-management--v4 .category-source-filters {
+  .category-source-management .category-source-filters {
     grid-template-columns: minmax(0, 1fr) 8.8rem;
   }
 
-  .categories-source-management--v4 .category-source-filters .ui-search-field {
+  .category-source-management .category-source-filters .ui-search-field {
     min-height: 2.75rem;
   }
 
-  .categories-source-management--v4 .category-source-table-wrap {
+  .category-source-management .category-source-table-wrap {
     overflow: visible;
     border: 0;
     background: transparent;
     box-shadow: none;
   }
 
-  .categories-source-management--v4 .category-source-table,
-  .categories-source-management--v4 .category-source-table tbody,
-  .categories-source-management--v4 .category-source-table tr,
-  .categories-source-management--v4 .category-source-table td {
+  .category-source-management .category-source-table,
+  .category-source-management .category-source-table tbody,
+  .category-source-management .category-source-table tr,
+  .category-source-management .category-source-table td {
     display: block;
     width: 100%;
   }
 
-  .categories-source-management--v4 .category-source-table thead {
+  .category-source-management .category-source-table thead {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -432,12 +432,12 @@
     clip-path: inset(50%);
   }
 
-  .categories-source-management--v4 .category-source-table tbody {
+  .category-source-management .category-source-table tbody {
     display: grid;
     gap: var(--space-2);
   }
 
-  .categories-source-management--v4 .category-source-table tbody tr {
+  .category-source-management .category-source-table tbody tr {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--space-2) var(--space-3);
@@ -448,7 +448,7 @@
     padding: var(--space-3);
   }
 
-  .categories-source-management--v4
+  .category-source-management
     .category-source-table
     :where(td, td:nth-child(n)) {
     width: auto;
@@ -457,16 +457,16 @@
     padding: 0;
   }
 
-  .categories-source-management--v4 .category-source-table td::before {
+  .category-source-management .category-source-table td::before {
     content: none;
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(1) {
+  .category-source-management .category-source-table td:nth-child(1) {
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(2) {
+  .category-source-management .category-source-table td:nth-child(2) {
     grid-column: 1 / span 2;
     grid-row: 2;
     color: var(--color-text);
@@ -474,35 +474,33 @@
     font-weight: 650;
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(3) {
+  .category-source-management .category-source-table td:nth-child(3) {
     grid-column: 2;
     grid-row: 1;
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(4) {
+  .category-source-management .category-source-table td:nth-child(4) {
     grid-column: 1;
     grid-row: 3;
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
   }
 
-  .categories-source-management--v4 .category-source-table td:nth-child(5) {
+  .category-source-management .category-source-table td:nth-child(5) {
     grid-column: 1 / span 2;
     grid-row: 4;
   }
 
-  .categories-source-management--v4
-    .category-source-table
-    td:nth-child(4)::before {
+  .category-source-management .category-source-table td:nth-child(4)::before {
     content: attr(data-label) ': ';
     color: var(--color-text-tertiary);
   }
 
-  .categories-source-management--v4 .category-source-table .ui-select {
+  .category-source-management .category-source-table .ui-select {
     min-height: 2.75rem;
   }
 
-  .categories-source-management--v4 .category-source-pagination {
+  .category-source-management .category-source-pagination {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: var(--space-2);
@@ -511,7 +509,7 @@
     margin-top: var(--space-2);
   }
 
-  .categories-source-management--v4 .category-source-pagination span {
+  .category-source-management .category-source-pagination span {
     overflow: hidden;
     text-align: center;
     text-overflow: ellipsis;
@@ -520,23 +518,23 @@
 }
 
 @media (max-width: 22rem) {
-  .categories-source-management--v4 .category-source-filters {
+  .category-source-management .category-source-filters {
     grid-template-columns: 1fr;
   }
 
-  .categories-source-management--v4 .category-source-pagination {
+  .category-source-management .category-source-pagination {
     grid-template-columns: 1fr 1fr;
   }
 
-  .categories-source-management--v4 .category-source-pagination span {
+  .category-source-management .category-source-pagination span {
     grid-column: 1 / span 2;
     grid-row: 2;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .category-list--v4 > li,
-  .categories-source-management--v4 .category-source-table tbody tr {
+  .category-list > li,
+  .category-source-management .category-source-table tbody tr {
     transition: none;
   }
 }

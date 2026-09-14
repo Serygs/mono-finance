@@ -364,6 +364,10 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Personalize your workspace and keep your data current.',
   'Review imported transaction sync status.',
   'System',
+  'Light',
+  'Dark',
+  'Today',
+  'Yesterday',
   'Theme',
   'Ukrainian',
   'Your private personal finance workspace.',
@@ -378,6 +382,10 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
   >
 
 export const UKRAINIAN_MESSAGES = {
+  Light: 'Світла',
+  Dark: 'Темна',
+  Today: 'Сьогодні',
+  Yesterday: 'Вчора',
   'About every {days} days · {count} payments':
     'Приблизно кожні {days} днів · {count} платежів',
   Average: 'Середнє',

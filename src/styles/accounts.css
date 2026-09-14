@@ -1,16 +1,16 @@
 /* Accounts: a dedicated composition for the existing /#accounts route. */
-.accounts-page--v5 {
+.accounts-page--summary {
   width: 100%;
   max-width: 75rem;
   margin-inline: auto;
   gap: 1rem;
 }
 
-.accounts-page--v5 > .ui-page-header {
+.accounts-page--summary > .ui-page-header {
   padding: 0.25rem 0 0.45rem;
 }
 
-.accounts-page--v5 > .ui-page-header h1 {
+.accounts-page--summary > .ui-page-header h1 {
   max-width: none;
   font-size: clamp(2rem, 3vw, 2.25rem);
   font-weight: 700;
@@ -252,37 +252,37 @@
 }
 
 @media (max-width: 47.99rem) {
-  .accounts-page--v5 {
+  .accounts-page--summary {
     gap: 0.85rem;
   }
 
-  .accounts-page--v5 > .ui-page-header {
+  .accounts-page--summary > .ui-page-header {
     display: flex;
     align-items: center;
     padding: 0;
   }
 
-  .accounts-page--v5 > .ui-page-header h1 {
+  .accounts-page--summary > .ui-page-header h1 {
     font-size: clamp(1.625rem, 7vw, 1.875rem);
   }
 
-  .accounts-page--v5 .ui-page-description {
+  .accounts-page--summary .ui-page-description {
     margin-top: 0.3rem;
     font-size: 0.86rem;
   }
 
-  .accounts-page--v5 .ui-page-header__actions {
+  .accounts-page--summary .ui-page-header__actions {
     flex: 0 0 auto;
   }
 
-  .accounts-page--v5 .ui-page-header__actions .ui-button {
+  .accounts-page--summary .ui-page-header__actions .ui-button {
     width: 2.75rem;
     min-height: 2.75rem;
     padding: 0;
     font-size: 0;
   }
 
-  .accounts-page--v5 .ui-page-header__actions .ui-button::before {
+  .accounts-page--summary .ui-page-header__actions .ui-button::before {
     color: #fff;
     content: '↻';
     font-size: 1.35rem;

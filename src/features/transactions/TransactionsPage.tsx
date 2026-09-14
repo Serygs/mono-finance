@@ -24,11 +24,11 @@ import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { TransactionDetails } from './TransactionDetails'
 import {
   accountLabel,
-  formatTransactionDate,
+  formatTransactionDateGroup,
   formatTransactionAmount,
-  formatTransactionTime,
   groupTransactionsByDate,
 } from './transaction-formatting'
+import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { getTransactions } from './transactions-api'
 import type {
   TransactionListFilters,
@@ -66,7 +66,7 @@ const DIRECTION_OPTIONS = [
 ] as const
 
 export function TransactionsPage() {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   const [datePreset, setDatePreset] = useState<DatePreset>('30d')
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
@@ -117,6 +117,7 @@ export function TransactionsPage() {
   const transactions =
     transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
   const transactionGroups = groupTransactionsByDate(transactions)
+  const dateGroupNow = new Date()
   const categories = [
     ...(customCategoriesQuery.data ?? []).map((item) => item.name),
     ...new Set(
@@ -129,7 +130,7 @@ export function TransactionsPage() {
     .sort()
 
   return (
-    <PageSurface className="transactions-page transactions-page--v3">
+    <PageSurface className="transactions-page transactions-page--ledger">
       <PageHeader
         description={
           <p>
@@ -262,9 +263,12 @@ export function TransactionsPage() {
                 >
                   <h2>
                     <span>
-                      {formatTransactionDate(
-                        firstTransaction.originalTimestamp,
-                      )}
+                      {formatTransactionDateGroup(group.dateKey, {
+                        locale,
+                        now: dateGroupNow,
+                        today: t('Today'),
+                        yesterday: t('Yesterday'),
+                      })}
                     </span>
                     <span>{formatDateGroupAmount(group.transactions)}</span>
                   </h2>
@@ -278,13 +282,9 @@ export function TransactionsPage() {
                     >
                       <span
                         aria-hidden="true"
-                        className={
-                          transaction.effectiveAmountMinor < 0
-                            ? 'transaction-avatar transaction-avatar--expense'
-                            : 'transaction-avatar transaction-avatar--income'
-                        }
+                        className={`transaction-avatar transaction-avatar--${categoryVisual(transaction.category.name).tone}`}
                       >
-                        {transaction.originalDescription.slice(0, 1)}
+                        <TransactionCategoryVisual transaction={transaction} />
                       </span>
                       <span className="transactions-ledger-row__transaction">
                         <strong>{transaction.originalDescription}</strong>
@@ -301,7 +301,9 @@ export function TransactionsPage() {
                       </span>
                       <span className="transactions-ledger-row__date">
                         <span className="transactions-ledger-row__desktop-time">
-                          {formatTransactionTime(transaction.originalTimestamp)}
+                          {formatTransactionClock(
+                            transaction.originalTimestamp,
+                          )}
                         </span>
                         <span className="transactions-ledger-row__mobile-time">
                           {formatTransactionClock(
@@ -399,6 +401,48 @@ function TransactionIndicators({
       ))}
     </span>
   )
+}
+
+function TransactionCategoryVisual({
+  transaction,
+}: {
+  transaction: TransactionListItem
+}) {
+  const visual = categoryVisual(transaction.category.name)
+  return visual.icon === null ? (
+    <span>{transaction.originalDescription.slice(0, 1)}</span>
+  ) : (
+    <CategoryIcon token={visual.icon} />
+  )
+}
+
+function categoryVisual(category: string | null): {
+  icon: Parameters<typeof CategoryIcon>[0]['token']
+  tone: string
+} {
+  const normalized = category?.toLocaleLowerCase() ?? ''
+  if (/grocer|продукт/.test(normalized)) {
+    return { icon: 'groceries', tone: 'groceries' }
+  }
+  if (/fuel|gas|transport|палив|транспорт/.test(normalized)) {
+    return { icon: 'transport', tone: 'transport' }
+  }
+  if (/housing|home|rent|житл|дім/.test(normalized)) {
+    return { icon: 'home', tone: 'housing' }
+  }
+  if (/restaurant|dining|cafe|food|ресторан|кафе/.test(normalized)) {
+    return { icon: 'dining', tone: 'dining' }
+  }
+  if (/subscription|entertainment|підпис|розваг/.test(normalized)) {
+    return { icon: 'entertainment', tone: 'subscriptions' }
+  }
+  if (/health|medical|здоров/.test(normalized)) {
+    return { icon: 'health', tone: 'health' }
+  }
+  if (/transfer|income|переказ|дохід/.test(normalized)) {
+    return { icon: 'wallet', tone: 'transfer' }
+  }
+  return { icon: null, tone: 'neutral' }
 }
 
 function AccountMultiSelector({

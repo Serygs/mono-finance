@@ -554,7 +554,7 @@ function Dashboard({
   recentLoading: boolean
   transactions: TransactionListItem[]
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   const { containerRef, mounted, width } = useContainerWidth()
   const [expanded, setExpanded] = useState(false)
   const displayed = filterDashboardAnalytics(analytics, currency)
@@ -581,6 +581,7 @@ function Dashboard({
     setExpanded,
     recentLoading,
     transactions,
+    locale,
   )
   const visible = widgets.filter((item) =>
     preferences.enabledWidgetIds.includes(item.id),
@@ -759,6 +760,7 @@ function buildWidgets(
   setExpanded: (value: boolean | ((value: boolean) => boolean)) => void,
   loading: boolean,
   transactions: TransactionListItem[],
+  locale: string,
 ) {
   const corrections = transactions
     .filter((item) => item.hasAdjustment)
@@ -895,7 +897,7 @@ function buildWidgets(
         units={units}
         values={chart.breakdowns.largestTransactions.map((item) => ({
           ...item,
-          detail: formatPeriod(item.timestamp, 'day'),
+          detail: formatPeriod(item.timestamp, 'day', locale),
           label: item.description,
         }))}
       />,
@@ -911,6 +913,7 @@ function buildWidgets(
         loading={loading}
         transactions={corrections}
         units={units}
+        locale={locale}
       />,
       6,
       6,
@@ -924,6 +927,7 @@ function buildWidgets(
         loading={loading}
         transactions={compensations}
         units={units}
+        locale={locale}
       />,
       6,
       6,
@@ -959,6 +963,7 @@ function box(
   return {
     content: (
       <Card
+        className={`dashboard-widget-card dashboard-widget-card--${id}`}
         actions={
           <span
             aria-label={t('Drag widget')}
@@ -997,6 +1002,7 @@ function Metric({
   units: Map<string, number>
   values: CurrencyAmount[]
 }) {
+  const { locale } = useLocalization()
   return (
     <KpiCard
       accent={accent}
@@ -1014,6 +1020,7 @@ function Metric({
                   item.amountMinor,
                   item.currencyCode,
                   units.get(item.currencyCode) ?? 2,
+                  locale,
                 )}
               </strong>
             ))}
@@ -1034,7 +1041,7 @@ function Recent({
   transactions: TransactionListItem[]
   units: Map<string, number>
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   return (
     <>
       {loading ? (
@@ -1045,14 +1052,26 @@ function Recent({
         <ol className="recent-transactions-list">
           {transactions.slice(0, limit).map((item) => (
             <li key={item.id}>
-              <time>{formatTransactionDate(item.originalTimestamp)}</time>
+              <span
+                aria-hidden="true"
+                className={
+                  item.effectiveAmountMinor >= 0
+                    ? 'recent-transaction-icon is-income'
+                    : 'recent-transaction-icon'
+                }
+              >
+                {item.originalDescription.slice(0, 1)}
+              </span>
               <span className="recent-transaction-merchant">
                 <strong>{item.originalDescription}</strong>
-                <small>{item.account.type}</small>
+                <small>
+                  {item.category.name ?? t('Uncategorized')} ·{' '}
+                  {item.account.type}
+                </small>
               </span>
-              <span className="recent-transaction-category">
-                {item.category.name ?? t('Uncategorized')}
-              </span>
+              <time>
+                {formatDashboardTransactionDate(item.originalTimestamp, locale)}
+              </time>
               <b
                 className={
                   item.effectiveAmountMinor >= 0 ? 'is-income' : undefined
@@ -1165,7 +1184,10 @@ function Trend({
 }) {
   const { locale, t } = useLocalization()
   if (currency === null || points.length === 0) return <Empty />
-  if (points.length < 2)
+  const usefulPoints = points.filter(
+    (point) => Math.abs(point.expenseAmountMinor) > 0,
+  )
+  if (points.length < 3 || usefulPoints.length < 3)
     return <Empty message="Not enough data in this period." />
   const buckets = groupTimeSeriesIntoBuckets(points, 8)
   const max = Math.max(
@@ -1188,10 +1210,15 @@ function Trend({
     >
       <defs>
         <linearGradient id="spending-trend-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="var(--color-action)" stopOpacity="0.2" />
-          <stop offset="1" stopColor="var(--color-action)" stopOpacity="0" />
+          <stop offset="0" stopColor="var(--chart-expense)" stopOpacity="0.2" />
+          <stop offset="1" stopColor="var(--chart-expense)" stopOpacity="0" />
         </linearGradient>
       </defs>
+      <g aria-hidden="true" className="line-chart-grid">
+        {[50, 100, 150, 200, 250].map((position) => (
+          <line key={position} x1="20" x2="700" y1={position} y2={position} />
+        ))}
+      </g>
       <path className="line-chart-area" d={areaPath} />
       <path className="line-chart-path" d={path} />
       {buckets.map((item, index) => {
@@ -1237,6 +1264,7 @@ function Bars({
   units: Map<string, number>
   values: Array<CurrencyAmount & { label: string }>
 }) {
+  const { locale } = useLocalization()
   if (values.length === 0) return <Empty />
   const max = Math.max(...values.map((item) => item.amountMinor), 1)
   return (
@@ -1246,7 +1274,7 @@ function Bars({
           <span>{item.label}</span>
           <div>
             <i
-              className={`donut-segment-${chartAccentIndex(item.label)}`}
+              className={`dashboard-rank-bar dashboard-rank-bar--${chartAccentIndex(item.label)}`}
               style={{ width: `${(item.amountMinor / max) * 100}%` }}
             />
           </div>
@@ -1255,6 +1283,7 @@ function Bars({
               item.amountMinor,
               item.currencyCode,
               units.get(item.currencyCode) ?? 2,
+              locale,
             )}
           </strong>
         </li>
@@ -1269,7 +1298,7 @@ function WeekdayBars({
   units: Map<string, number>
   values: Array<CurrencyAmount & { transactionCount: number; weekday: number }>
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   const labels: TranslationKey[] = [
     'Mon',
     'Tue',
@@ -1302,6 +1331,7 @@ function WeekdayBars({
           amountMinor,
           currencyCode,
           units.get(currencyCode) ?? 2,
+          locale,
         )
         return (
           <div key={label}>
@@ -1341,11 +1371,11 @@ function RecurringExpenses({
     transactionCount: number
   }>
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   return values.length === 0 ? (
     <Empty />
   ) : (
-    <ol className="evidence-list recurring-expenses-list">
+    <ol className="dashboard-evidence-list recurring-expenses-list">
       {values.slice(0, 5).map((item) => (
         <li key={`${item.description}-${item.currencyCode}`}>
           <span>
@@ -1363,6 +1393,7 @@ function RecurringExpenses({
               item.averageAmountMinor,
               item.currencyCode,
               units.get(item.currencyCode) ?? 2,
+              locale,
             )}
             <small>
               {t('Last')}{' '}
@@ -1370,6 +1401,7 @@ function RecurringExpenses({
                 item.lastAmountMinor,
                 item.currencyCode,
                 units.get(item.currencyCode) ?? 2,
+                locale,
               )}
             </small>
           </b>
@@ -1416,21 +1448,23 @@ function Evidence({
   units: Map<string, number>
   values: Array<CurrencyAmount & { detail: string; label: string }>
 }) {
+  const { locale } = useLocalization()
   return values.length === 0 ? (
     <Empty />
   ) : (
-    <ol className="evidence-list">
+    <ol className="dashboard-evidence-list">
       {values.slice(0, 5).map((item) => (
         <li key={`${item.label}-${item.currencyCode}`}>
           <span>
             <strong>{item.label}</strong>
             <small>{item.detail}</small>
           </span>
-          <b>
+          <b className={item.amountMinor > 0 ? 'is-income' : undefined}>
             {formatCurrencyAmount(
               item.amountMinor,
               item.currencyCode,
               units.get(item.currencyCode) ?? 2,
+              locale,
             )}
           </b>
         </li>
@@ -1441,6 +1475,7 @@ function Evidence({
 function TransactionEvidence({
   empty,
   loading,
+  locale,
   transactions,
   units,
 }: {
@@ -1448,6 +1483,7 @@ function TransactionEvidence({
   loading: boolean
   transactions: TransactionListItem[]
   units: Map<string, number>
+  locale: string
 }) {
   const { t } = useLocalization()
   return loading ? (
@@ -1460,11 +1496,23 @@ function TransactionEvidence({
       values={transactions.map((item) => ({
         amountMinor: item.effectiveAmountMinor,
         currencyCode: item.currencyCode,
-        detail: formatPeriod(item.originalTimestamp, 'day'),
+        detail: formatPeriod(item.originalTimestamp, 'day', locale),
         label: item.originalDescription,
       }))}
     />
   )
+}
+
+function formatDashboardTransactionDate(
+  timestamp: number,
+  locale: string,
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  }).format(timestamp * 1_000)
 }
 function Empty({
   message = 'No data in this period.',
@@ -1593,13 +1641,4 @@ function storePreferences(preferences: DashboardPreferences) {
   } catch {
     /* Kept in memory. */
   }
-}
-
-function formatTransactionDate(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: 'short',
-  }).format(timestamp * 1_000)
 }

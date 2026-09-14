@@ -27,21 +27,52 @@ export function formatTransactionDate(epochSeconds: number): string {
   )
 }
 
+export function formatTransactionDateGroup(
+  dateKey: string,
+  input: {
+    locale: string
+    now: Date
+    today: string
+    yesterday: string
+  },
+): string {
+  const todayKey = localDateKey(input.now.getTime() / 1_000)
+  if (dateKey === todayKey) return input.today
+
+  const yesterday = new Date(input.now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (dateKey === localDateKey(yesterday.getTime() / 1_000)) {
+    return input.yesterday
+  }
+
+  const date = localDateFromKey(dateKey)
+  const includeYear = date.getFullYear() !== input.now.getFullYear()
+  return new Intl.DateTimeFormat(input.locale, {
+    ...(includeYear ? { year: 'numeric' as const } : {}),
+    day: 'numeric',
+    month: 'long',
+  }).format(date)
+}
+
 export function groupTransactionsByDate<
   T extends { originalTimestamp: number },
 >(transactions: readonly T[]): Array<{ dateKey: string; transactions: T[] }> {
-  return transactions.reduce<Array<{ dateKey: string; transactions: T[] }>>(
-    (groups, transaction) => {
-      const dateKey = localDateKey(transaction.originalTimestamp)
-      const currentGroup = groups.at(-1)
-      if (currentGroup?.dateKey === dateKey) {
-        currentGroup.transactions.push(transaction)
-        return groups
-      }
-      return groups.concat({ dateKey, transactions: [transaction] })
-    },
-    [],
-  )
+  const groups = new Map<string, T[]>()
+  for (const transaction of transactions) {
+    const dateKey = localDateKey(transaction.originalTimestamp)
+    const group = groups.get(dateKey)
+    if (group === undefined) groups.set(dateKey, [transaction])
+    else group.push(transaction)
+  }
+
+  return [...groups.entries()]
+    .sort(([left], [right]) => right.localeCompare(left))
+    .map(([dateKey, group]) => ({
+      dateKey,
+      transactions: group.sort(
+        (left, right) => right.originalTimestamp - left.originalTimestamp,
+      ),
+    }))
 }
 
 export function accountLabel(transaction: TransactionListItem): string {
@@ -56,6 +87,11 @@ function localDateKey(epochSeconds: number): string {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
     .map((value) => String(value).padStart(2, '0'))
     .join('-')
+}
+
+function localDateFromKey(dateKey: string): Date {
+  const [year, month, day] = dateKey.split('-').map(Number)
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1)
 }
 
 export function parseAmountInputToMinor(

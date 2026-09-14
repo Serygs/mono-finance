@@ -116,7 +116,7 @@ test('language and category type mapping remain accessible', async ({
   await page.getByRole('link', { name: 'Ще' }).first().click()
   await expect(page.getByRole('heading', { name: 'Ще' })).toBeVisible()
   await page
-    .locator('.settings-page--v6')
+    .locator('.settings-page--grouped')
     .getByLabel('\u041c\u043e\u0432\u0430')
     .selectOption('en')
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')

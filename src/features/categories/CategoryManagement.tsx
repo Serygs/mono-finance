@@ -110,7 +110,7 @@ export function CategoryManagement() {
   return (
     <section
       aria-labelledby="categories-title"
-      className="category-management categories-management--v4"
+      className="category-management categories-management"
     >
       <header className="categories-section-heading">
         <h2>{t('Custom categories')}</h2>
@@ -205,7 +205,7 @@ export function CategoryManagement() {
               <p>{t('Try a different search or filter.')}</p>
             </EmptyState>
           ) : (
-            <CompactList className="category-list category-list--v4">
+            <CompactList className="category-list">
               {visibleCategories.map((category) => (
                 <li key={category.id}>
                   <div className="category-list-row__identity">

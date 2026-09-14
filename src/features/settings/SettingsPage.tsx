@@ -6,9 +6,12 @@ import { useLocalization } from '../localization/localization'
 import { useAuth } from '../auth/auth-context'
 import { SettingsGroup, SettingsRow } from './SettingsSections'
 import { useLocation, useNavigate } from 'react-router'
+import { SegmentedControl } from '../../components/ui/Controls'
+import { THEME_MODES, useTheme } from '../theme/theme'
 
 export function SettingsPage() {
   const { t } = useLocalization()
+  const { mode, setMode } = useTheme()
   const { logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -20,7 +23,7 @@ export function SettingsPage() {
 
   if (location.hash === '#categories') {
     return (
-      <PageSurface className="categories-page categories-page--v4">
+      <PageSurface className="categories-page">
         <PageHeader
           description={
             <p>
@@ -38,7 +41,7 @@ export function SettingsPage() {
   }
 
   return (
-    <PageSurface className="settings-page settings-page--v6">
+    <PageSurface className="settings-page settings-page--grouped">
       <PageHeader
         description={
           <p>{t('Personalize your workspace and keep your data current.')}</p>
@@ -58,10 +61,13 @@ export function SettingsPage() {
       <div className="settings-layout">
         <SettingsGroup title={t('Appearance')}>
           <SettingsRow
+            className="settings-row--theme"
             icon="☼"
-            subtitle={t('Matches your device setting.')}
+            {...(mode === 'system'
+              ? { subtitle: t('Matches your device setting.') }
+              : {})}
             title={t('Theme')}
-            trailing={t('System')}
+            trailing={<ThemeControl mode={mode} onChange={setMode} />}
           />
           <LanguageSettingsRow />
           <CurrencyPreferences />
@@ -94,6 +100,29 @@ export function SettingsPage() {
         </span>
       </button>
     </PageSurface>
+  )
+}
+
+function ThemeControl({
+  mode,
+  onChange,
+}: {
+  mode: ReturnType<typeof useTheme>['mode']
+  onChange: ReturnType<typeof useTheme>['setMode']
+}) {
+  const { t } = useLocalization()
+  return (
+    <SegmentedControl
+      label={t('Theme')}
+      onChange={onChange}
+      options={THEME_MODES.map((value) => ({
+        label: t(
+          value === 'system' ? 'System' : value === 'light' ? 'Light' : 'Dark',
+        ),
+        value,
+      }))}
+      value={mode}
+    />
   )
 }
 

@@ -1,22 +1,22 @@
 /* Transactions: a dense desktop ledger and a separately composed mobile feed. */
-.transactions-page--v3 {
+.transactions-page--ledger {
   width: 100%;
   max-width: 75rem;
   margin-inline: auto;
   gap: 1rem;
 }
 
-.transactions-page--v3 > .ui-page-header {
+.transactions-page--ledger > .ui-page-header {
   padding: 0.25rem 0 0.5rem;
 }
 
-.transactions-page--v3 .ui-page-header h1 {
+.transactions-page--ledger .ui-page-header h1 {
   max-width: none;
   font-size: clamp(2rem, 3vw, 2.25rem);
   letter-spacing: -0.045em;
 }
 
-.transactions-page--v3 .ui-page-description {
+.transactions-page--ledger .ui-page-description {
   margin-top: 0.3rem;
 }
 
@@ -114,19 +114,16 @@
 }
 
 .transactions-ledger {
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 0.75rem;
 }
 
 .transactions-ledger__header,
 .transactions-ledger-row {
   display: grid;
   grid-template-columns:
-    minmax(13rem, 1.55fr) minmax(7rem, 0.85fr) minmax(8rem, 0.95fr)
-    minmax(9rem, 0.95fr) minmax(7rem, 0.75fr) 3.75rem;
+    2.15rem minmax(13rem, 1.55fr) minmax(7rem, 0.85fr)
+    minmax(8rem, 0.95fr) minmax(9rem, 0.95fr) minmax(7rem, 0.75fr) 3.75rem;
   gap: 0.75rem;
 }
 
@@ -137,6 +134,13 @@
   font-size: 0.75rem;
   font-weight: 650;
   padding: 0.68rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-secondary);
+}
+
+.transactions-ledger__header::before {
+  content: '';
 }
 
 .transactions-ledger__header > :last-child,
@@ -144,8 +148,34 @@
   text-align: right;
 }
 
+.transactions-date-group {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
 .transactions-date-group h2 {
-  display: none;
+  display: flex;
+  min-height: 2.85rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0.55rem 1rem;
+}
+
+.transactions-date-group h2 > :last-child {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .transactions-date-group + .transactions-date-group .transactions-ledger-row {
@@ -177,7 +207,68 @@
 }
 
 .transaction-avatar {
-  display: none;
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  grid-column: 1;
+  border-radius: 0.72rem;
+  color: var(--transaction-icon-color, var(--color-text-secondary));
+  background: var(--transaction-icon-background, var(--surface-secondary));
+  font-size: 0.82rem;
+  font-weight: 700;
+  place-items: center;
+}
+
+.transaction-avatar svg {
+  width: 1.12rem;
+  height: 1.12rem;
+}
+
+.transaction-avatar--groceries {
+  --transaction-icon-color: var(--chart-mint);
+  --transaction-icon-background: color-mix(
+    in srgb,
+    var(--chart-mint),
+    transparent 84%
+  );
+}
+
+.transaction-avatar--transport {
+  --transaction-icon-color: var(--chart-cyan);
+  --transaction-icon-background: color-mix(
+    in srgb,
+    var(--chart-cyan),
+    transparent 84%
+  );
+}
+
+.transaction-avatar--housing,
+.transaction-avatar--subscriptions {
+  --transaction-icon-color: var(--chart-violet);
+  --transaction-icon-background: color-mix(
+    in srgb,
+    var(--chart-violet),
+    transparent 84%
+  );
+}
+
+.transaction-avatar--dining {
+  --transaction-icon-color: var(--chart-coral);
+  --transaction-icon-background: color-mix(
+    in srgb,
+    var(--chart-coral),
+    transparent 84%
+  );
+}
+
+.transaction-avatar--health {
+  --transaction-icon-color: var(--negative);
+  --transaction-icon-background: var(--negative-soft);
+}
+
+.transaction-avatar--transfer {
+  --transaction-icon-color: var(--positive);
+  --transaction-icon-background: var(--positive-soft);
 }
 
 .transactions-ledger-row__transaction {
@@ -304,8 +395,8 @@
   .transactions-ledger__header,
   .transactions-ledger-row {
     grid-template-columns:
-      minmax(11rem, 1.35fr) minmax(6rem, 0.75fr) minmax(7rem, 0.85fr)
-      minmax(6rem, auto);
+      2.15rem minmax(11rem, 1.35fr) minmax(6rem, 0.75fr)
+      minmax(7rem, 0.85fr) minmax(6rem, auto);
   }
 
   .transactions-ledger__header > :nth-child(3),
@@ -317,19 +408,19 @@
 }
 
 @media (max-width: 47.99rem) {
-  .transactions-page--v3 {
+  .transactions-page--ledger {
     gap: 0.9rem;
   }
 
-  .transactions-page--v3 > .ui-page-header {
+  .transactions-page--ledger > .ui-page-header {
     padding: 0;
   }
 
-  .transactions-page--v3 .ui-page-header h1 {
+  .transactions-page--ledger .ui-page-header h1 {
     font-size: clamp(1.625rem, 7vw, 1.875rem);
   }
 
-  .transactions-page--v3 .ui-page-description {
+  .transactions-page--ledger .ui-page-description {
     margin-top: 0.25rem;
     font-size: 0.85rem;
   }
@@ -450,15 +541,10 @@
     display: none;
   }
 
-  .transactions-date-group {
-    overflow: hidden;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-card);
-  }
-
   .transactions-date-group h2 {
+    position: sticky;
+    z-index: 2;
+    top: 0;
     display: flex;
     min-height: 3rem;
     align-items: center;
@@ -495,7 +581,6 @@
   }
 
   .transaction-avatar {
-    display: grid;
     width: 2.35rem;
     height: 2.35rem;
     grid-column: 1;
