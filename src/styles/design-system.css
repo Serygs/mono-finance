@@ -338,13 +338,13 @@
 }
 
 :where(
-  .ui-select,
-  .ui-field input,
-  .ui-field textarea,
-  .ui-multi-select__trigger,
-  .ui-popover__trigger,
-  .ui-search-field
-):not(:disabled):hover {
+    .ui-select,
+    .ui-field input,
+    .ui-field textarea,
+    .ui-multi-select__trigger,
+    .ui-popover__trigger,
+    .ui-search-field
+  ):not(:disabled):hover {
   border-color: var(--color-action);
 }
 

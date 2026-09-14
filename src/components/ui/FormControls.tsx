@@ -65,7 +65,11 @@ export function SearchField({ className, label, ...props }: SearchFieldProps) {
       <span aria-hidden="true" className="ui-search-field__icon">
         ⌕
       </span>
-      <input {...props} aria-label={props['aria-label'] ?? label} type="search" />
+      <input
+        {...props}
+        aria-label={props['aria-label'] ?? label}
+        type="search"
+      />
     </label>
   )
 }

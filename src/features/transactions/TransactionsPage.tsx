@@ -14,9 +14,11 @@ import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import {
   FormField,
   MultiSelect,
+  SearchField,
   Select,
 } from '../../components/ui/FormControls'
 import { BottomSheet } from '../../components/ui/Overlay'
+import { Popover } from '../../components/ui/Popover'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 
 import { TransactionDetails } from './TransactionDetails'
@@ -127,72 +129,88 @@ export function TransactionsPage() {
     .sort()
 
   return (
-    <PageSurface className="transactions-page">
+    <PageSurface className="transactions-page transactions-page--v3">
       <PageHeader
         description={
           <p>
             {t(
-              'Your imported bank records, in order. Adjustments and relationships remain visible without rewriting the original entry.',
+              'Imported transactions, shaped by your adjustments and compensation links.',
             )}
           </p>
         }
-        eyebrow={t('Ledger')}
         id="transactions-title"
         title={t('Transactions')}
       />
 
       <section
-        className="transaction-filters"
+        className="transactions-toolbar"
         aria-label={t('Transaction filters')}
       >
-        <FormField
-          className="transaction-search"
+        <SearchField
+          autoComplete="off"
+          className="transactions-toolbar__search"
           label={t('Search merchant or description')}
+          name="transaction-search"
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={t('Search transactions…')}
+          value={search}
+        />
+        <DatePresetField
+          className="transactions-toolbar__period"
+          datePreset={datePreset}
+          onChange={setDatePreset}
+          t={t}
+        />
+        <AccountMultiSelector
+          accounts={accountsQuery.data ?? []}
+          className="transactions-toolbar__account"
+          onChange={setAccountIds}
+          selectedIds={accountIds}
+        />
+        <CategoryField
+          categories={categories}
+          className="transactions-toolbar__category"
+          onChange={setCategory}
+          t={t}
+          value={category}
+        />
+        <Popover
+          className="transactions-toolbar__more-filters"
+          content={
+            <div className="transactions-filter-popover">
+              <CategoryField
+                categories={categories}
+                onChange={setCategory}
+                t={t}
+                value={category}
+              />
+              {datePreset === 'custom' ? (
+                <CustomDateFields
+                  customDateFrom={customDateFrom}
+                  customDateTo={customDateTo}
+                  onFromChange={setCustomDateFrom}
+                  onToChange={setCustomDateTo}
+                  t={t}
+                />
+              ) : null}
+            </div>
+          }
+          label={t('Filters')}
         >
-          <input
-            autoComplete="off"
-            name="transaction-search"
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('Search transactions…')}
-            type="search"
-            value={search}
-          />
-        </FormField>
-        <FormField className="filter-field" label={t('Date range')}>
-          <Select
-            onChange={(event) =>
-              setDatePreset(event.target.value as DatePreset)
-            }
-            value={datePreset}
-          >
-            {DATE_PRESETS.map((preset) => (
-              <option key={preset.value} value={preset.value}>
-                {t(preset.label)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
+          <span aria-hidden="true" className="transactions-filter-icon">
+            ☷
+          </span>
+          <span className="sr-only">{t('Filters')}</span>
+        </Popover>
         {datePreset === 'custom' ? (
-          <div className="custom-date-fields">
-            <FormField label={t('From')}>
-              <input
-                autoComplete="off"
-                name="transactions-from"
-                onChange={(event) => setCustomDateFrom(event.target.value)}
-                type="date"
-                value={customDateFrom}
-              />
-            </FormField>
-            <FormField label={t('To')}>
-              <input
-                autoComplete="off"
-                name="transactions-to"
-                onChange={(event) => setCustomDateTo(event.target.value)}
-                type="date"
-                value={customDateTo}
-              />
-            </FormField>
-          </div>
+          <CustomDateFields
+            className="transactions-toolbar__custom-dates"
+            customDateFrom={customDateFrom}
+            customDateTo={customDateTo}
+            onFromChange={setCustomDateFrom}
+            onToChange={setCustomDateTo}
+            t={t}
+          />
         ) : null}
         <SegmentedControl
           label={t('Direction')}
@@ -202,24 +220,6 @@ export function TransactionsPage() {
             label: t(option.label),
           }))}
           value={direction ?? 'all'}
-        />
-        <FormField className="filter-field" label={t('Category')}>
-          <Select
-            onChange={(event) => setCategory(event.target.value || null)}
-            value={category ?? ''}
-          >
-            <option value="">{t('All categories')}</option>
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <AccountMultiSelector
-          accounts={accountsQuery.data ?? []}
-          selectedIds={accountIds}
-          onChange={setAccountIds}
         />
       </section>
 
@@ -239,55 +239,86 @@ export function TransactionsPage() {
         </EmptyState>
       ) : null}
       {transactions.length > 0 ? (
-        <div className="transaction-layout">
+        <div className="transactions-ledger-shell">
           <div
-            className="transaction-list"
+            className="transactions-ledger"
             aria-label={t('Transactions in chronological order')}
           >
-            <div className="transaction-table-header" aria-hidden="true">
-              <span>{t('Date and time')}</span>
-              <span>{t('Name')}</span>
+            <div className="transactions-ledger__header" aria-hidden="true">
+              <span>{t('Transactions')}</span>
               <span>{t('Category')}</span>
               <span>{t('Account')}</span>
+              <span>{t('Date and time')}</span>
               <span>{t('Effective amount')}</span>
+              <span>{t('Actions')}</span>
             </div>
             {transactionGroups.map((group) => {
               const firstTransaction = group.transactions[0]
               if (firstTransaction === undefined) return null
               return (
-                <section className="transaction-date-group" key={group.dateKey}>
+                <section
+                  className="transactions-date-group"
+                  key={group.dateKey}
+                >
                   <h2>
-                    {formatTransactionDate(firstTransaction.originalTimestamp)}
+                    <span>
+                      {formatTransactionDate(firstTransaction.originalTimestamp)}
+                    </span>
+                    <span>{formatDateGroupAmount(group.transactions)}</span>
                   </h2>
                   {group.transactions.map((transaction) => (
                     <button
                       aria-pressed={selectedTransaction?.id === transaction.id}
-                      className="transaction-row"
+                      className="transactions-ledger-row"
                       key={transaction.id}
                       onClick={() => setSelectedTransaction(transaction)}
                       type="button"
                     >
-                      <span className="transaction-date">
-                        {formatTransactionTime(transaction.originalTimestamp)}
+                      <span
+                        aria-hidden="true"
+                        className={
+                          transaction.effectiveAmountMinor < 0
+                            ? 'transaction-avatar transaction-avatar--expense'
+                            : 'transaction-avatar transaction-avatar--income'
+                        }
+                      >
+                        {transaction.originalDescription.slice(0, 1)}
                       </span>
-                      <span className="transaction-main">
+                      <span className="transactions-ledger-row__transaction">
                         <strong>{transaction.originalDescription}</strong>
                         <TransactionIndicators transaction={transaction} />
                       </span>
-                      <span className="transaction-category">
+                      <span
+                        className="transactions-ledger-row__category"
+                        data-account={accountLabel(transaction)}
+                      >
                         {transaction.category.name ?? t('Uncategorized')}
                       </span>
-                      <span className="transaction-account">
+                      <span className="transactions-ledger-row__account">
                         {accountLabel(transaction)}
+                      </span>
+                      <span className="transactions-ledger-row__date">
+                        <span className="transactions-ledger-row__desktop-time">
+                          {formatTransactionTime(transaction.originalTimestamp)}
+                        </span>
+                        <span className="transactions-ledger-row__mobile-time">
+                          {formatTransactionClock(transaction.originalTimestamp)}
+                        </span>
                       </span>
                       <span
                         className={
                           transaction.effectiveAmountMinor < 0
-                            ? 'transaction-amount expense'
-                            : 'transaction-amount income'
+                            ? 'transactions-ledger-row__amount is-expense'
+                            : 'transactions-ledger-row__amount is-income'
                         }
                       >
                         {formatTransactionAmount(transaction)}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="transactions-ledger-row__action"
+                      >
+                        •••
                       </span>
                     </button>
                   ))}
@@ -295,53 +326,52 @@ export function TransactionsPage() {
               )
             })}
           </div>
-          <BottomSheet
-            onClose={() => setSelectedTransaction(null)}
-            open={selectedTransaction !== null}
-            title={
-              selectedTransaction?.originalDescription ??
-              t('Transaction details')
-            }
-          >
-            <TransactionDetails
-              onTransactionUpdated={(correction, metadata) =>
-                setSelectedTransaction((current) =>
-                  current === null || current.id !== correction.id
-                    ? current
-                    : {
-                        ...current,
-                        ...metadata,
-                        ...(correction.effectiveAmountMinor === undefined
-                          ? {}
-                          : {
-                              effectiveAmountMinor:
-                                correction.effectiveAmountMinor,
-                            }),
-                        ...(correction.hasAdjustment === undefined
-                          ? {}
-                          : { hasAdjustment: correction.hasAdjustment }),
-                        ...(correction.isExcluded === undefined
-                          ? {}
-                          : { isExcluded: correction.isExcluded }),
-                      },
-                )
-              }
-              transaction={selectedTransaction}
-            />
-          </BottomSheet>
         </div>
       ) : null}
+      <BottomSheet
+        onClose={() => setSelectedTransaction(null)}
+        open={selectedTransaction !== null}
+        title={
+          selectedTransaction?.originalDescription ?? t('Transaction details')
+        }
+      >
+        <TransactionDetails
+          onTransactionUpdated={(correction, metadata) =>
+            setSelectedTransaction((current) =>
+              current === null || current.id !== correction.id
+                ? current
+                : {
+                    ...current,
+                    ...metadata,
+                    ...(correction.effectiveAmountMinor === undefined
+                      ? {}
+                      : {
+                          effectiveAmountMinor: correction.effectiveAmountMinor,
+                        }),
+                    ...(correction.hasAdjustment === undefined
+                      ? {}
+                      : { hasAdjustment: correction.hasAdjustment }),
+                    ...(correction.isExcluded === undefined
+                      ? {}
+                      : { isExcluded: correction.isExcluded }),
+                  },
+            )
+          }
+          transaction={selectedTransaction}
+        />
+      </BottomSheet>
       {transactionsQuery.hasNextPage ? (
-        <Button
-          className="load-more-button"
-          disabled={transactionsQuery.isFetchingNextPage}
-          loading={transactionsQuery.isFetchingNextPage}
-          onClick={() => void transactionsQuery.fetchNextPage()}
-          type="button"
-          variant="secondary"
-        >
-          {t(transactionsQuery.isFetchingNextPage ? 'Loading…' : 'Load more')}
-        </Button>
+        <nav className="transactions-pagination" aria-label={t('Pagination')}>
+          <Button
+            disabled={transactionsQuery.isFetchingNextPage}
+            loading={transactionsQuery.isFetchingNextPage}
+            onClick={() => void transactionsQuery.fetchNextPage()}
+            type="button"
+            variant="secondary"
+          >
+            {t(transactionsQuery.isFetchingNextPage ? 'Loading…' : 'Load more')}
+          </Button>
+        </nav>
       ) : null}
     </PageSurface>
   )
@@ -369,19 +399,18 @@ function TransactionIndicators({
 
 function AccountMultiSelector({
   accounts,
+  className,
   onChange,
   selectedIds,
 }: {
   accounts: AccountSummary[]
+  className?: string
   onChange(ids: string[]): void
   selectedIds: string[]
 }) {
   const { t } = useLocalization()
   return (
-    <FormField
-      className="filter-field transaction-account-filter"
-      label={t('Accounts')}
-    >
+    <FormField className={className ?? ''} label={t('Accounts')}>
       <MultiSelect
         ariaLabel={t('Accounts')}
         onChange={onChange}
@@ -392,6 +421,137 @@ function AccountMultiSelector({
         value={selectedIds}
       />
     </FormField>
+  )
+}
+
+function DatePresetField({
+  className,
+  datePreset,
+  onChange,
+  t,
+}: {
+  className?: string
+  datePreset: DatePreset
+  onChange(value: DatePreset): void
+  t: ReturnType<typeof useLocalization>['t']
+}) {
+  return (
+    <FormField className={className ?? ''} label={t('Date range')}>
+      <Select
+        onChange={(event) => onChange(event.target.value as DatePreset)}
+        value={datePreset}
+      >
+        {DATE_PRESETS.map((preset) => (
+          <option key={preset.value} value={preset.value}>
+            {t(preset.label)}
+          </option>
+        ))}
+      </Select>
+    </FormField>
+  )
+}
+
+function CategoryField({
+  categories,
+  className,
+  onChange,
+  t,
+  value,
+}: {
+  categories: string[]
+  className?: string
+  onChange(value: string | null): void
+  t: ReturnType<typeof useLocalization>['t']
+  value: string | null
+}) {
+  return (
+    <FormField className={className ?? ''} label={t('Category')}>
+      <Select
+        onChange={(event) => onChange(event.target.value || null)}
+        value={value ?? ''}
+      >
+        <option value="">{t('All categories')}</option>
+        {categories.map((item) => (
+          <option key={item} value={item}>
+            {item}
+          </option>
+        ))}
+      </Select>
+    </FormField>
+  )
+}
+
+function CustomDateFields({
+  className,
+  customDateFrom,
+  customDateTo,
+  onFromChange,
+  onToChange,
+  t,
+}: {
+  className?: string
+  customDateFrom: string
+  customDateTo: string
+  onFromChange(value: string): void
+  onToChange(value: string): void
+  t: ReturnType<typeof useLocalization>['t']
+}) {
+  return (
+    <div
+      className={['transactions-custom-dates', className]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <FormField label={t('From')}>
+        <input
+          autoComplete="off"
+          name="transactions-from"
+          onChange={(event) => onFromChange(event.target.value)}
+          type="date"
+          value={customDateFrom}
+        />
+      </FormField>
+      <FormField label={t('To')}>
+        <input
+          autoComplete="off"
+          name="transactions-to"
+          onChange={(event) => onToChange(event.target.value)}
+          type="date"
+          value={customDateTo}
+        />
+      </FormField>
+    </div>
+  )
+}
+
+function formatDateGroupAmount(transactions: TransactionListItem[]): string {
+  const [firstTransaction] = transactions
+  if (
+    firstTransaction === undefined ||
+    transactions.some(
+      (transaction) =>
+        transaction.currencyCode !== firstTransaction.currencyCode ||
+        transaction.currencyMinorUnit !== firstTransaction.currencyMinorUnit,
+    )
+  ) {
+    return ''
+  }
+  const amountMinor = transactions.reduce(
+    (sum, transaction) => sum + transaction.effectiveAmountMinor,
+    0,
+  )
+  return new Intl.NumberFormat(undefined, {
+    currency: firstTransaction.currencyCode,
+    currencyDisplay: 'code',
+    maximumFractionDigits: firstTransaction.currencyMinorUnit,
+    minimumFractionDigits: firstTransaction.currencyMinorUnit,
+    style: 'currency',
+  }).format(amountMinor / 10 ** firstTransaction.currencyMinorUnit)
+}
+
+function formatTransactionClock(epochSeconds: number): string {
+  return new Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format(
+    epochSeconds * 1_000,
   )
 }
 

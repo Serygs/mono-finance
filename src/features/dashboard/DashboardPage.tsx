@@ -457,9 +457,7 @@ function Toolbar({
           </option>
         </Select>
       </FormField>
-      <div
-        className={`dashboard-toolbar-menu${filtersOpen ? ' is-open' : ''}`}
-      >
+      <div className={`dashboard-toolbar-menu${filtersOpen ? ' is-open' : ''}`}>
         <button
           aria-label={t('Filters')}
           aria-expanded={filtersOpen}
@@ -471,7 +469,10 @@ function Toolbar({
           {t('Filters')}
         </button>
         <div className="dashboard-toolbar-menu__content">
-          <FormField className="dashboard-mobile-currency" label={t('Currency')}>
+          <FormField
+            className="dashboard-mobile-currency"
+            label={t('Currency')}
+          >
             <Select
               onChange={(event) => {
                 const value = event.target.value
@@ -485,7 +486,9 @@ function Toolbar({
               }}
               value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
             >
-              <option value="original-all">{t('All original currencies')}</option>
+              <option value="original-all">
+                {t('All original currencies')}
+              </option>
               {chartCurrencies.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -498,21 +501,21 @@ function Toolbar({
           </FormField>
           {preset === 'custom' ? (
             <div>
-            <FormField label={t('From')}>
-              <input
-                onChange={(event) => onFrom(event.target.value)}
-                type="date"
-                value={from}
-              />
-            </FormField>
-            <FormField label={t('To')}>
-              <input
-                onChange={(event) => onTo(event.target.value)}
-                type="date"
-                value={to}
-              />
-            </FormField>
-          </div>
+              <FormField label={t('From')}>
+                <input
+                  onChange={(event) => onFrom(event.target.value)}
+                  type="date"
+                  value={from}
+                />
+              </FormField>
+              <FormField label={t('To')}>
+                <input
+                  onChange={(event) => onTo(event.target.value)}
+                  type="date"
+                  value={to}
+                />
+              </FormField>
+            </div>
           ) : (
             <p className="dashboard-filter-hint">
               {t('Choose Custom range to set exact dates.')}

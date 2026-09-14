@@ -76,7 +76,10 @@ export function AppShell() {
           <ul className="primary-navigation">
             {navigationItems.map((item) => (
               <li key={item.to}>
-                <Link aria-current={item.active ? 'page' : undefined} to={item.to}>
+                <Link
+                  aria-current={item.active ? 'page' : undefined}
+                  to={item.to}
+                >
                   {item.label}
                 </Link>
               </li>
