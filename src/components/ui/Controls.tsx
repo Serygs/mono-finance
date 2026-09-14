@@ -91,7 +91,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             type="button"
           >
-            {option.label}
+            <span className="ui-segmented-control__label">{option.label}</span>
           </button>
         ))}
       </div>

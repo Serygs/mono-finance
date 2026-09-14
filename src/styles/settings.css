@@ -212,7 +212,8 @@
 }
 
 .settings-row--theme .settings-row__trailing {
-  width: min(100%, 16rem);
+  width: min(100%, 18rem);
+  overflow: visible;
   white-space: normal;
 }
 

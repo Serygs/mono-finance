@@ -172,7 +172,7 @@
   background: color-mix(
     in srgb,
     var(--negative-soft),
-    var(--surface-primary) 38%
+    var(--surface-primary) 24%
   );
 }
 
@@ -180,7 +180,7 @@
   background: color-mix(
     in srgb,
     var(--positive-soft),
-    var(--surface-primary) 38%
+    var(--surface-primary) 24%
   );
 }
 
@@ -188,7 +188,7 @@
   background: color-mix(
     in srgb,
     var(--accent-soft),
-    var(--surface-primary) 38%
+    var(--surface-primary) 24%
   );
 }
 
@@ -196,7 +196,7 @@
   background: color-mix(
     in srgb,
     var(--chart-violet),
-    var(--surface-primary) 91%
+    var(--surface-primary) 82%
   );
 }
 .dashboard-kpis .ui-kpi::before {
@@ -570,9 +570,41 @@
 
 .dashboard-widget-card .ui-card__body {
   display: flex;
+  height: auto;
   min-height: 0;
   flex-direction: column;
+  flex: 1 1 auto;
   justify-content: flex-start;
+}
+
+.dashboard-widget-card {
+  overflow: visible;
+}
+
+.dashboard-grid .dashboard-widget-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.dashboard-grid .dashboard-widget-card--list .ui-card__body {
+  overflow: hidden;
+}
+
+.dashboard-grid
+  .dashboard-widget-card--list
+  :is(.bar-chart, .dashboard-evidence-list) {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.1rem 0.35rem 0.7rem 0;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.dashboard-widget-card--list .dashboard-evidence-list li:last-child {
+  padding-bottom: 0.7rem;
 }
 
 .dashboard-widget__handle {
@@ -683,7 +715,7 @@
 }
 
 .line-chart-grid line {
-  stroke: var(--border-subtle);
+  stroke: var(--border-strong);
   stroke-width: 1;
 }
 
@@ -1034,6 +1066,7 @@
 }
 
 @media (max-width: 47.99rem) {
+  .dashboard-mobile-widgets .dashboard-widget-card--list,
   .dashboard-widget-card--top-merchants,
   .dashboard-widget-card--recurring-expenses,
   .dashboard-widget-card--largest-transactions,
@@ -1042,6 +1075,7 @@
     min-height: 0 !important;
   }
 
+  .dashboard-mobile-widgets .dashboard-widget-card--list .ui-card__body,
   .dashboard-widget-card--top-merchants .ui-card__body,
   .dashboard-widget-card--recurring-expenses .ui-card__body,
   .dashboard-widget-card--largest-transactions .ui-card__body,

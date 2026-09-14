@@ -63,6 +63,7 @@ describe('design system', () => {
     expect(markup).toContain('aria-busy="true"')
     expect(markup).toContain('aria-label="Close"')
     expect(markup).toContain('aria-pressed="true"')
+    expect(markup).toContain('ui-segmented-control__label')
     expect(markup).toContain('<label')
     expect(markup).toContain('Optional')
     expect(markup).toContain('ui-multi-select')

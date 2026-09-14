@@ -128,6 +128,65 @@ test('language and category type mapping remain accessible', async ({
   await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
 })
 
+test('theme segments remain centered and untruncated across responsive widths', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('link', { name: 'More' }).first().click()
+  await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
+
+  for (const width of [1440, 1152, 390]) {
+    await page.setViewportSize({ width, height: 932 })
+    const layout = await page.evaluate(() => {
+      const track = document.querySelector('.ui-segmented-control__track')!
+      const trackRect = track.getBoundingClientRect()
+      const segments = Array.from(
+        track.querySelectorAll('button'),
+        (button) => {
+          const label = button.querySelector('.ui-segmented-control__label')!
+          return {
+            height: button.getBoundingClientRect().height,
+            labelScrollWidth: label.scrollWidth,
+            labelWidth: label.clientWidth,
+            left: button.getBoundingClientRect().left,
+            right: button.getBoundingClientRect().right,
+          }
+        },
+      )
+      return {
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        segments,
+        trackLeft: trackRect.left,
+        trackRight: trackRect.right,
+      }
+    })
+
+    expect(layout.scrollWidth).toBe(layout.clientWidth)
+    expect(layout.segments).toHaveLength(3)
+    expect(
+      layout.segments.every(
+        (segment) => Math.abs(segment.height - layout.segments[0].height) < 0.1,
+      ),
+    ).toBe(true)
+    expect(
+      layout.segments.every(
+        (segment) =>
+          segment.labelScrollWidth <= segment.labelWidth &&
+          segment.left >= layout.trackLeft &&
+          segment.right <= layout.trackRight,
+      ),
+    ).toBe(true)
+  }
+
+  await page.getByRole('button', { name: 'Dark', exact: true }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+})
+
 test('overview switches to a single-column mobile composition without viewport overflow', async ({
   page,
 }) => {

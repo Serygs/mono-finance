@@ -112,6 +112,16 @@ const DEFAULT_WIDGET_ORDER = [
     (id) => !DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds.includes(id),
   ),
 ]
+const LIST_WIDGET_IDS = new Set<DashboardWidgetId>([
+  'expense-distribution',
+  'fixed-variable-expenses',
+  'largest-transactions',
+  'recent-compensations',
+  'recent-corrections',
+  'recurring-expenses',
+  'spending-by-category',
+  'top-merchants',
+])
 type DashboardAnalytics = Awaited<ReturnType<typeof getDashboardAnalytics>>
 
 export function DashboardPage() {
@@ -865,7 +875,7 @@ function buildWidgets(
         }))}
       />,
       6,
-      6,
+      7,
     ),
     box(
       t,
@@ -876,7 +886,7 @@ function buildWidgets(
         values={chart.breakdowns.recurringExpenses}
       />,
       6,
-      5,
+      7,
     ),
     box(
       t,
@@ -902,35 +912,35 @@ function buildWidgets(
         }))}
       />,
       6,
-      6,
+      7,
     ),
     box(
       t,
       'recent-corrections',
       'Recent corrections',
       <TransactionEvidence
-        empty={t('No corrected transactions in this period.')}
+        empty="No corrected transactions in this period."
         loading={loading}
         transactions={corrections}
         units={units}
         locale={locale}
       />,
       6,
-      6,
+      7,
     ),
     box(
       t,
       'recent-compensations',
       'Recent compensations',
       <TransactionEvidence
-        empty={t('No compensation links in this period.')}
+        empty="No compensation links in this period."
         loading={loading}
         transactions={compensations}
         units={units}
         locale={locale}
       />,
       6,
-      6,
+      7,
     ),
   ]
 }
@@ -963,7 +973,7 @@ function box(
   return {
     content: (
       <Card
-        className={`dashboard-widget-card dashboard-widget-card--${id}`}
+        className={`dashboard-widget-card dashboard-widget-card--${id}${LIST_WIDGET_IDS.has(id) ? ' dashboard-widget-card--list' : ''}`}
         actions={
           <span
             aria-label={t('Drag widget')}
@@ -1081,6 +1091,7 @@ function Recent({
                   item.effectiveAmountMinor,
                   item.currencyCode,
                   units.get(item.currencyCode) ?? item.currencyMinorUnit,
+                  locale,
                 )}
               </b>
             </li>
@@ -1479,7 +1490,7 @@ function TransactionEvidence({
   transactions,
   units,
 }: {
-  empty: string
+  empty: TranslationKey
   loading: boolean
   transactions: TransactionListItem[]
   units: Map<string, number>
@@ -1489,7 +1500,7 @@ function TransactionEvidence({
   return loading ? (
     <Skeleton label={t('Loading…')} lines={3} />
   ) : transactions.length === 0 ? (
-    <p>{empty}</p>
+    <Empty message={empty} />
   ) : (
     <Evidence
       units={units}
