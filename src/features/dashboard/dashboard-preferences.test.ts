@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  DASHBOARD_WIDGET_IDS,
   DEFAULT_DASHBOARD_PREFERENCES,
   loadDashboardPreferences,
   resetDashboardLayout,
@@ -11,6 +12,7 @@ import {
 
 describe('dashboard preferences', () => {
   it('uses the focused dashboard widgets and recent transaction limit by default', () => {
+    expect(DASHBOARD_WIDGET_IDS).not.toContain('expense-distribution')
     expect(DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds).toEqual([
       'recent-transactions',
       'income-expenses',

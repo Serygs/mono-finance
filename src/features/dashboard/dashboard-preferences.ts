@@ -6,7 +6,6 @@ export const DASHBOARD_WIDGET_IDS = [
   'spending-by-category',
   'spending-trend',
   'monthly-trend',
-  'expense-distribution',
   'spending-by-weekday',
   'top-merchants',
   'recurring-expenses',

@@ -3,7 +3,6 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Average',
   'Average spend / day help',
   'Categories could not be merged.',
-  'Expense distribution help',
   'Fixed vs variable expenses',
   'Fixed vs variable expenses help',
   'Income vs expenses',
@@ -144,8 +143,6 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Excluded from normal analytics.',
   'Exclude from analytics',
   'Excluding…',
-  'Expense distribution',
-  'Expense distribution by category',
   'Expense timeline',
   'Daily expenses',
   'Expenses',
@@ -393,8 +390,6 @@ export const UKRAINIAN_MESSAGES = {
   'Average spend / day help':
     'Загальні витрати, поділені на кількість днів у вибраному періоді.',
   'Categories could not be merged.': 'Не вдалося об’єднати категорії.',
-  'Expense distribution help':
-    'Розподіл витрат за категоріями у вибраній валюті.',
   'Fixed vs variable expenses': 'Постійні та змінні витрати',
   'Fixed vs variable expenses help':
     'Порівняння регулярних і змінних витрат у вибраному періоді.',
@@ -566,8 +561,6 @@ export const UKRAINIAN_MESSAGES = {
   'Excluded from normal analytics.': 'Виключено зі звичайної аналітики.',
   'Exclude from analytics': 'Виключити з аналітики',
   'Excluding…': 'Виключення…',
-  'Expense distribution': 'Розподіл витрат',
-  'Expense distribution by category': 'Розподіл витрат за категоріями',
   'Expense timeline': 'Динаміка витрат',
   'Daily expenses': 'Щоденні витрати',
   Expenses: 'Витрати',
