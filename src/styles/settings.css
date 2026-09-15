@@ -126,9 +126,7 @@
   background: var(--color-surface-soft);
 }
 
-.settings-row-popover .ui-popover__content {
-  right: 0;
-  left: auto;
+.ui-popover__content.settings-row-popover {
   width: min(22rem, calc(100vw - 2rem));
   min-width: min(18rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
@@ -360,14 +358,9 @@
     min-width: 6.5rem;
   }
 
-  .settings-row-popover .ui-popover__content {
-    position: fixed;
-    top: auto;
-    right: 1rem;
-    bottom: calc(5.75rem + env(safe-area-inset-bottom));
-    left: 1rem;
-    width: auto;
-    max-height: min(23rem, calc(100dvh - 8rem));
+  .ui-popover__content.settings-row-popover {
+    width: calc(100vw - 2rem);
+    max-height: min(23rem, calc(100dvh - 2rem));
   }
 
   .settings-row--theme {

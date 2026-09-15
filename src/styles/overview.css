@@ -412,12 +412,13 @@
   display: grid;
   min-height: 0;
   grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: stretch;
   gap: 0.45rem;
 }
 .income-expense-plot > div {
   display: grid;
   min-width: 0;
-  grid-template-rows: minmax(7.5rem, 1fr) auto;
+  grid-template-rows: minmax(7.5rem, 1fr) 2.6em;
   gap: 0.35rem;
   text-align: center;
 }
@@ -440,11 +441,11 @@
   border-radius: 0.25rem 0.25rem 0 0;
 }
 .income-expense-plot small {
-  overflow: hidden;
+  display: block;
+  min-width: 0;
   color: var(--color-text-tertiary);
   font-size: 0.66rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-wrap: balance;
 }
 .weekday-vertical-chart {
   display: grid;
@@ -927,6 +928,17 @@
   .dashboard-toolbar-actions .ui-button,
   .dashboard-toolbar-actions .dashboard-sync-popover {
     display: none;
+  }
+  .dashboard-toolbar-actions .dashboard-customize-action {
+    display: inline-flex;
+    width: 2.75rem;
+    min-height: 2.75rem;
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+  .dashboard-toolbar-actions .dashboard-customize-action span {
+    font-size: 1.1rem;
   }
   .dashboard-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));

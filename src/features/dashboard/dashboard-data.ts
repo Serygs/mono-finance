@@ -31,6 +31,11 @@ export interface DashboardAnalytics {
 export type ExpenseCategory = AnalyticsBreakdowns['expensesByCategory'][number]
 export type TimeSeriesBucket = TimeSeriesPoint & { periodEnd: number }
 
+export interface GroupedIncomeExpenseValue {
+  expenseMagnitude: number
+  incomeMagnitude: number
+}
+
 export function displayExpenseCategories(
   values: readonly ExpenseCategory[],
   otherCategoryName: string,
@@ -234,6 +239,33 @@ export function groupTimeSeriesIntoBuckets(
       buckets[buckets.length - 1]!.periodEnd = last.periodStart
   }
   return buckets
+}
+
+/**
+ * Converts signed financial aggregates to visual magnitudes without changing
+ * the source values used by calculations and tooltips. One maximum is shared
+ * by the entire chart so every bucket has the same baseline and scale.
+ */
+export function groupedIncomeExpenseValues(
+  buckets: readonly Pick<
+    TimeSeriesBucket,
+    'expenseAmountMinor' | 'incomeAmountMinor'
+  >[],
+): { maximum: number; values: GroupedIncomeExpenseValue[] } {
+  const values = buckets.map((bucket) => ({
+    expenseMagnitude: Math.abs(bucket.expenseAmountMinor),
+    incomeMagnitude: Math.max(0, bucket.incomeAmountMinor),
+  }))
+  return {
+    maximum: Math.max(
+      0,
+      ...values.flatMap((value) => [
+        value.expenseMagnitude,
+        value.incomeMagnitude,
+      ]),
+    ),
+    values,
+  }
 }
 
 export function formatPeriodRange(

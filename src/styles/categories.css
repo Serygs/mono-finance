@@ -216,9 +216,7 @@
   display: inline-flex;
 }
 
-.category-list-actions--overflow .ui-popover__content {
-  right: 0;
-  left: auto;
+.ui-popover__content.category-list-actions--overflow {
   width: max-content;
   min-width: 7.5rem;
 }

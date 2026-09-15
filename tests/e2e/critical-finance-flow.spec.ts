@@ -363,7 +363,134 @@ test('custom category form stays compact until the owner opens it', async ({
   )
 })
 
-async function installFinanceApiMock(page: Page): Promise<void> {
+test('category delete menu escapes clipped surfaces on desktop and mobile', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('link', { name: 'Categories' }).first().click()
+
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.getByRole('button', { name: 'Category actions' }).click()
+    const bounds = await page
+      .getByRole('button', { name: 'Delete' })
+      .evaluate((button) => {
+        const rect = button.getBoundingClientRect()
+        return {
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          viewportHeight: window.innerHeight,
+          viewportWidth: window.innerWidth,
+        }
+      })
+
+    expect(bounds.left).toBeGreaterThanOrEqual(8)
+    expect(bounds.right).toBeLessThanOrEqual(bounds.viewportWidth - 8)
+    expect(bounds.top).toBeGreaterThanOrEqual(8)
+    expect(bounds.bottom).toBeLessThanOrEqual(bounds.viewportHeight - 8)
+    await page.getByRole('button', { name: 'Delete' }).click()
+    await expect(
+      page.getByRole('heading', { name: 'Delete category?' }),
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await page.keyboard.press('Escape')
+  }
+})
+
+test('mobile dashboard customization persists visible widgets without grid editing', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  await page.getByRole('button', { name: 'Customize dashboard' }).click()
+  const topMerchants = page
+    .getByRole('dialog', { name: 'Customize dashboard' })
+    .getByRole('checkbox', { name: 'Top merchants' })
+  await topMerchants.check()
+  await page.getByRole('button', { name: 'Close' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Top merchants' }),
+  ).toBeVisible()
+  await expect(page.locator('.dashboard-grid')).toHaveCount(0)
+
+  await page.reload()
+  await page.getByRole('button', { name: 'Customize dashboard' }).click()
+  await expect(topMerchants).toBeChecked()
+  await page.getByRole('button', { name: 'Restore default widgets' }).click()
+  await expect(topMerchants).not.toBeChecked()
+})
+
+test('income and expense bars retain one baseline across responsive widths', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page, { trendsOverride: highVarianceTrends })
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 932 })
+    await expect(page.locator('.income-expense-plot > div')).toHaveCount(7)
+    const layout = await page.evaluate(() => {
+      const plot = document.querySelector('.income-expense-plot')!
+      const plotRect = plot.getBoundingClientRect()
+      const groups = Array.from(plot.children, (group) => {
+        const bars = group.querySelector('.income-expense-bars')!
+        const label = group.querySelector('small')!
+        return {
+          barBottom: bars.getBoundingClientRect().bottom,
+          labelLeft: label.getBoundingClientRect().left,
+          labelRight: label.getBoundingClientRect().right,
+          values: Array.from(
+            bars.querySelectorAll('span'),
+            (bar) => bar.getBoundingClientRect().height,
+          ),
+        }
+      })
+      return {
+        clientWidth: document.documentElement.clientWidth,
+        groups,
+        plotLeft: plotRect.left,
+        plotRight: plotRect.right,
+        scrollWidth: document.documentElement.scrollWidth,
+      }
+    })
+
+    expect(layout.scrollWidth).toBe(layout.clientWidth)
+    expect(
+      layout.groups.every(
+        (group) => Math.abs(group.barBottom - layout.groups[0].barBottom) < 0.1,
+      ),
+    ).toBe(true)
+    expect(
+      layout.groups.every(
+        (group) =>
+          group.labelLeft >= layout.plotLeft &&
+          group.labelRight <= layout.plotRight,
+      ),
+    ).toBe(true)
+    expect(layout.groups[3].values[1]).toBeGreaterThan(
+      layout.groups[0].values[1],
+    )
+  }
+})
+
+async function installFinanceApiMock(
+  page: Page,
+  { trendsOverride }: { trendsOverride?: typeof trends } = {},
+): Promise<void> {
   const state = {
     adjusted: false,
     category: 'Food',
@@ -431,7 +558,7 @@ async function installFinanceApiMock(page: Page): Promise<void> {
     if (path === '/api/analytics/breakdowns')
       return void route.fulfill(json({ data: breakdowns }))
     if (path === '/api/analytics/trends')
-      return void route.fulfill(json({ data: trends }))
+      return void route.fulfill(json({ data: trendsOverride ?? trends }))
     if (path === '/api/categories' && method === 'GET')
       return void route.fulfill(json({ data: { categories } }))
     if (path === '/api/category-sources' && method === 'GET')
@@ -659,6 +786,17 @@ const trends = {
     expenseAmountMinor: 1_500 + (index % 3) * 900 + index * 200,
     incomeAmountMinor: 0,
     netAmountMinor: -(1_500 + (index % 3) * 900 + index * 200),
+    periodStart: 1_735_689_600 + index * 86_400,
+  })),
+}
+const highVarianceTrends = {
+  ...trends,
+  daily: Array.from({ length: 7 }, (_, index) => ({
+    currencyCode: 'UAH',
+    expenseAmountMinor: index === 3 ? -200_000 : index === 1 ? -700 : 0,
+    incomeAmountMinor: index === 0 ? 500 : index === 3 ? 100_000 : 0,
+    netAmountMinor:
+      index === 3 ? -100_000 : index === 1 ? -700 : index === 0 ? 500 : 0,
     periodStart: 1_735_689_600 + index * 86_400,
   })),
 }

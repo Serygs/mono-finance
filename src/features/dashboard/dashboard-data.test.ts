@@ -6,6 +6,7 @@ import {
   chartAccentIndex,
   displayExpenseCategories,
   filterDashboardAnalytics,
+  groupedIncomeExpenseValues,
   groupTimeSeriesIntoBuckets,
   resolveDashboardRange,
   type DashboardAnalytics,
@@ -125,6 +126,50 @@ describe('dashboard data', () => {
       incomeAmountMinor: 15,
       periodEnd: 4,
       periodStart: 0,
+    })
+  })
+
+  it('uses one visual scale for grouped income and signed expense buckets', () => {
+    const { maximum, values } = groupedIncomeExpenseValues([
+      { expenseAmountMinor: -400, incomeAmountMinor: 1_000 },
+      { expenseAmountMinor: -20_000, incomeAmountMinor: 0 },
+      { expenseAmountMinor: 0, incomeAmountMinor: 250 },
+      { expenseAmountMinor: 0, incomeAmountMinor: 0 },
+    ])
+
+    expect(maximum).toBe(20_000)
+    expect(values).toEqual([
+      { expenseMagnitude: 400, incomeMagnitude: 1_000 },
+      { expenseMagnitude: 20_000, incomeMagnitude: 0 },
+      { expenseMagnitude: 0, incomeMagnitude: 250 },
+      { expenseMagnitude: 0, incomeMagnitude: 0 },
+    ])
+  })
+
+  it('keeps only-income, only-expense, and all-zero charts explicit', () => {
+    expect(
+      groupedIncomeExpenseValues([
+        { expenseAmountMinor: 0, incomeAmountMinor: 800 },
+      ]),
+    ).toEqual({
+      maximum: 800,
+      values: [{ expenseMagnitude: 0, incomeMagnitude: 800 }],
+    })
+    expect(
+      groupedIncomeExpenseValues([
+        { expenseAmountMinor: -650, incomeAmountMinor: 0 },
+      ]),
+    ).toEqual({
+      maximum: 650,
+      values: [{ expenseMagnitude: 650, incomeMagnitude: 0 }],
+    })
+    expect(
+      groupedIncomeExpenseValues([
+        { expenseAmountMinor: 0, incomeAmountMinor: 0 },
+      ]),
+    ).toEqual({
+      maximum: 0,
+      values: [{ expenseMagnitude: 0, incomeMagnitude: 0 }],
     })
   })
 })

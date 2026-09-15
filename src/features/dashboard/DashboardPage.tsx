@@ -49,6 +49,7 @@ import {
   formatPeriod,
   formatPeriodRange,
   groupTimeSeriesIntoBuckets,
+  groupedIncomeExpenseValues,
   resolveDashboardRange,
   DEFAULT_DASHBOARD_DATE_PRESET,
   type DashboardDatePreset,
@@ -59,6 +60,7 @@ import {
   loadDashboardPreferences,
   resetDashboardLayout,
   resetDashboardWidgetSizes,
+  restoreDefaultDashboardWidgets,
   saveDashboardPreferences,
   type DashboardPreferences,
   type DashboardWidgetId,
@@ -312,6 +314,7 @@ function DashboardPageContent() {
             ) : null}
           </div>
           <Button
+            className="dashboard-customize-action"
             onClick={() => setCustomizing(true)}
             size="small"
             type="button"
@@ -1113,13 +1116,8 @@ function GroupedBars({
   const { locale, t } = useLocalization()
   if (currency === null || points.length === 0) return <Empty />
   const buckets = groupTimeSeriesIntoBuckets(points)
-  const max = Math.max(
-    ...buckets.flatMap((item) => [
-      item.incomeAmountMinor,
-      Math.abs(item.expenseAmountMinor),
-    ]),
-    1,
-  )
+  const { maximum, values } = groupedIncomeExpenseValues(buckets)
+  if (maximum === 0) return <Empty />
   return (
     <div className="income-expense-vertical">
       <div
@@ -1136,7 +1134,9 @@ function GroupedBars({
         </span>
       </div>
       <div className="income-expense-plot">
-        {buckets.map((item) => {
+        {buckets.map((item, index) => {
+          const visualValue = values[index]
+          if (visualValue === undefined) return null
           const period = formatPeriodRange(
             item.periodStart,
             item.periodEnd,
@@ -1149,7 +1149,7 @@ function GroupedBars({
             locale,
           )
           const expense = formatCurrencyAmount(
-            Math.abs(item.expenseAmountMinor),
+            item.expenseAmountMinor,
             currency,
             units.get(currency) ?? 2,
             locale,
@@ -1166,12 +1166,14 @@ function GroupedBars({
               <div className="income-expense-bars" title={summary}>
                 <span
                   className="income-bar"
-                  style={{ height: `${(item.incomeAmountMinor / max) * 100}%` }}
+                  style={{
+                    height: `${(visualValue.incomeMagnitude / maximum) * 100}%`,
+                  }}
                 />
                 <span
                   className="expense-bar"
                   style={{
-                    height: `${(Math.abs(item.expenseAmountMinor) / max) * 100}%`,
+                    height: `${(visualValue.expenseMagnitude / maximum) * 100}%`,
                   }}
                 />
               </div>
@@ -1604,6 +1606,16 @@ function Customize({
           ))}
         </div>
         <div className="dashboard-dialog-actions">
+          <Button
+            onClick={() =>
+              onChange(restoreDefaultDashboardWidgets(preferences))
+            }
+            size="small"
+            type="button"
+            variant="secondary"
+          >
+            {t('Restore default widgets')}
+          </Button>
           <Button
             onClick={() => onChange(resetDashboardLayout(preferences))}
             size="small"

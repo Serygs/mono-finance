@@ -95,7 +95,7 @@
   padding: 0;
 }
 
-.profile-menu .ui-popover__content {
+.ui-popover__content.profile-menu {
   right: 0;
   left: auto;
   min-width: 9rem;
@@ -519,6 +519,12 @@
   overscroll-behavior: contain;
   padding: var(--space-1);
   animation: ui-popover-enter var(--motion-standard) both;
+}
+
+.ui-popover__content--portal {
+  position: fixed;
+  z-index: 100;
+  margin: 0;
 }
 
 .ui-search-field {

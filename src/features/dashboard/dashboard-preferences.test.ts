@@ -4,6 +4,7 @@ import {
   DEFAULT_DASHBOARD_PREFERENCES,
   loadDashboardPreferences,
   resetDashboardLayout,
+  restoreDefaultDashboardWidgets,
   saveDashboardPreferences,
   type DashboardPreferences,
 } from './dashboard-preferences'
@@ -46,6 +47,19 @@ describe('dashboard preferences', () => {
       preferences.enabledWidgetIds,
     )
     expect(resetDashboardLayout(preferences).layout).toEqual([])
+  })
+
+  it('restores default widget visibility while preserving the saved layout', () => {
+    const preferences: DashboardPreferences = {
+      ...DEFAULT_DASHBOARD_PREFERENCES,
+      enabledWidgetIds: ['top-merchants'],
+      layout: [{ h: 7, i: 'top-merchants', w: 6, x: 0, y: 0 }],
+    }
+
+    expect(restoreDefaultDashboardWidgets(preferences)).toEqual({
+      ...preferences,
+      enabledWidgetIds: DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds,
+    })
   })
 })
 

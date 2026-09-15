@@ -88,3 +88,12 @@ export function resetDashboardWidgetSizes(
     layout: preferences.layout.map(({ h, i, x, y }) => ({ h, i, w: 6, x, y })),
   }
 }
+
+export function restoreDefaultDashboardWidgets(
+  preferences: DashboardPreferences,
+): DashboardPreferences {
+  return {
+    ...preferences,
+    enabledWidgetIds: [...DEFAULT_DASHBOARD_PREFERENCES.enabledWidgetIds],
+  }
+}

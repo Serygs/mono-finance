@@ -506,9 +506,7 @@
     display: none;
   }
 
-  .transactions-toolbar__more-filters .ui-popover__content {
-    right: 0;
-    left: auto;
+  .ui-popover__content.transactions-toolbar__more-filters {
     width: min(20rem, calc(100vw - 2rem));
     max-height: min(22rem, 54dvh);
     padding: 0.75rem;
