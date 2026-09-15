@@ -35,6 +35,8 @@ import type {
   TransactionListFilters,
   TransactionListItem,
 } from '../transactions/transaction-types'
+import { getVisualMappings, type VisualMappings } from '../visuals/visuals-api'
+import { TransactionVisual } from '../visuals/visual-resolver'
 import {
   getDashboardAnalytics,
   type CurrencyAmount,
@@ -204,6 +206,10 @@ function DashboardPageContent() {
     queryFn: () => getTransactions(transactionFilters, undefined, 100),
     queryKey: ['dashboard-recent', transactionFilters],
   })
+  const visuals = useQuery({
+    queryFn: getVisualMappings,
+    queryKey: ['visuals'],
+  })
   useEffect(() => {
     void getAccounts()
       .then(setAccounts)
@@ -354,6 +360,7 @@ function DashboardPageContent() {
           onPreferences={setPreferences}
           preferences={preferences}
           recentLoading={recent.isPending}
+          visualMappings={visuals.data}
           transactions={recent.data?.transactions ?? []}
         />
       )}
@@ -555,6 +562,7 @@ function Dashboard({
   preferences,
   recentLoading,
   transactions,
+  visualMappings,
 }: {
   accounts: AccountSummary[]
   analytics: DashboardAnalytics
@@ -563,6 +571,7 @@ function Dashboard({
   preferences: DashboardPreferences
   recentLoading: boolean
   transactions: TransactionListItem[]
+  visualMappings: VisualMappings | undefined
 }) {
   const { locale, t } = useLocalization()
   const { containerRef, mounted, width } = useContainerWidth()
@@ -690,6 +699,7 @@ function Dashboard({
           <Recent
             limit={preferences.recentTransactionsLimit}
             loading={recentLoading}
+            mappings={visualMappings}
             transactions={transactions}
             units={units}
           />
@@ -1029,11 +1039,13 @@ function Metric({
 function Recent({
   limit,
   loading,
+  mappings,
   transactions,
   units,
 }: {
   limit: 5 | 10 | 20
   loading: boolean
+  mappings: VisualMappings | undefined
   transactions: TransactionListItem[]
   units: Map<string, number>
 }) {
@@ -1056,7 +1068,7 @@ function Recent({
                     : 'recent-transaction-icon'
                 }
               >
-                {item.originalDescription.slice(0, 1)}
+                <TransactionVisual mappings={mappings} transaction={item} />
               </span>
               <span className="recent-transaction-merchant">
                 <strong>{item.originalDescription}</strong>
