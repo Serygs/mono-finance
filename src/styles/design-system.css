@@ -214,6 +214,7 @@
 .page-content {
   width: min(calc(100% - 3rem), 75rem);
   max-width: 100%;
+  min-width: 0;
   margin-inline: auto;
   padding-block: clamp(1.5rem, 3vw, 2.5rem);
 }
