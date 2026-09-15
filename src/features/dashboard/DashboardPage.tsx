@@ -79,7 +79,6 @@ const DATE_PRESETS: Array<{
   { label: 'Custom range', value: 'custom' },
 ]
 const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
-  'expense-distribution': 'Expense distribution help',
   'fixed-variable-expenses': 'Fixed vs variable expenses help',
   'income-expenses': 'Income vs expenses help',
   'largest-transactions': 'Largest transactions help',
@@ -94,7 +93,6 @@ const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
   'top-merchants': 'Top merchants help',
 }
 const WIDGET_TITLES: Record<DashboardWidgetId, TranslationKey> = {
-  'expense-distribution': 'Expense distribution',
   'fixed-variable-expenses': 'Fixed vs variable expenses',
   'income-expenses': 'Income vs expenses',
   'largest-transactions': 'Largest transactions',
@@ -115,7 +113,6 @@ const DEFAULT_WIDGET_ORDER = [
   ),
 ]
 const LIST_WIDGET_IDS = new Set<DashboardWidgetId>([
-  'expense-distribution',
   'fixed-variable-expenses',
   'largest-transactions',
   'recent-compensations',
@@ -848,20 +845,6 @@ function buildWidgets(
       'monthly-trend',
       'Monthly trend',
       <Trend currency={currency} points={chart.trends.monthly} units={units} />,
-      6,
-      7,
-    ),
-    box(
-      t,
-      'expense-distribution',
-      'Expense distribution',
-      <Bars
-        units={units}
-        values={categories.initial.map((item) => ({
-          ...item,
-          label: item.categoryName,
-        }))}
-      />,
       6,
       7,
     ),
