@@ -10,6 +10,7 @@ interface __BaseEnv_Env {
 	MONOBANK_TOKEN: string;
 	SESSION_TOKEN_PEPPER: string;
 	SETUP_TOKEN: string;
+	ASSETS: R2Bucket;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {

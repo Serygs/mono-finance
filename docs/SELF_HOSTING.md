@@ -40,6 +40,21 @@ remote database, set `CLOUDFLARE_D1_DATABASE_ID` in your process or GitHub
 environment and let `npm run prepare:production` generate the ignored
 production Wrangler config before running `npm run db:migrate:production`.
 
+## 3.1 Create the visual-assets R2 bucket
+
+Custom merchant and category icons require an R2 bucket. Create it once in the
+same Cloudflare account as the Worker:
+
+```powershell
+npx wrangler r2 bucket create mono-finance-assets
+```
+
+`wrangler.jsonc` binds this bucket as `ASSETS`; it is not a secret. Uploaded
+assets remain private behind authenticated same-origin Worker URLs, are never
+committed to Git, and each fork owns its own objects and mappings. SVG uploads
+are capped at 64 KB and sanitized to a static vector subset. Visual priority is
+merchant custom > category custom > built-in category > merchant monogram.
+
 ## 4. Configure secrets
 
 For local development, copy the safe example and edit only the ignored file:

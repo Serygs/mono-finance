@@ -1192,3 +1192,46 @@ button.ui-chip {
     transform: translateX(2rem) scale(0.985);
   }
 }
+/* Compact visual picker: upload is primary, bundled choices remain secondary. */
+.icon-picker {
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(28rem, calc(100vw - 3rem));
+}
+
+.icon-picker > p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+.icon-picker__builtins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  gap: 0.45rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.icon-picker__builtins button {
+  display: grid;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.icon-picker__builtins button:hover,
+.icon-picker__builtins button:focus-visible {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.icon-picker__builtins svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}

@@ -346,6 +346,13 @@ configuration from another instance.
 
 ## Privacy
 
+### Custom merchant and category icons
+
+Owner-uploaded SVG icons live only in the deployment's R2 bucket; D1 stores
+metadata and merchant/category mappings, never raw SVG blobs in transactions.
+They are private, sanitized, capped at 64 KB, and are not source-controlled.
+See [self-hosting](docs/SELF_HOSTING.md) for R2 provisioning and priority.
+
 Financial data remains in the operator's D1 database and Cloudflare account.
 The repository contains no production transactions or credentials. Operators
 must protect their owner password, secrets, logs, backups, custom domain, and
