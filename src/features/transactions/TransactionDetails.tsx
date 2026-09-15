@@ -329,7 +329,7 @@ function TransactionDetailsContent({
       <IconPickerDialog
         assetType="merchant-icon"
         onClose={() => setIconPickerOpen(false)}
-        onSelect={(assetId) => merchantVisualMutation.mutate(assetId)}
+        onSelect={(assetId) => merchantVisualMutation.mutateAsync(assetId)}
         open={iconPickerOpen}
       />
       <section
