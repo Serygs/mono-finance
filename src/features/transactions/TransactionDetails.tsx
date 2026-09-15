@@ -29,6 +29,12 @@ import type {
   TransactionListItem,
 } from './transaction-types'
 import { useLocalization } from '../localization/localization'
+import { IconPickerDialog } from '../visuals/IconPickerDialog'
+import { merchantKey } from '../visuals/visual-resolver'
+import {
+  removeMerchantVisual,
+  saveMerchantVisual,
+} from '../visuals/visuals-api'
 
 interface TransactionDetailsProps {
   onTransactionUpdated(
@@ -97,6 +103,7 @@ function TransactionDetailsContent({
   })
   const [compensationTransactionId, setCompensationTransactionId] = useState('')
   const [compensationAmount, setCompensationAmount] = useState('')
+  const [iconPickerOpen, setIconPickerOpen] = useState(false)
 
   const refreshTransactions = () =>
     void queryClient.invalidateQueries({ queryKey: ['transactions'] })
@@ -187,6 +194,20 @@ function TransactionDetailsContent({
         queryKey: ['compensations', transaction.id],
       }),
   })
+  const merchantVisualMutation = useMutation({
+    mutationFn: (assetId: string | null) =>
+      assetId === null
+        ? removeMerchantVisual(merchantKey(transaction.originalDescription))
+        : saveMerchantVisual(
+            merchantKey(transaction.originalDescription),
+            transaction.originalDescription,
+            assetId,
+          ),
+    onSuccess: () => {
+      setIconPickerOpen(false)
+      void queryClient.invalidateQueries({ queryKey: ['visuals'] })
+    },
+  })
 
   const isSaving =
     adjustmentMutation.isPending ||
@@ -274,6 +295,43 @@ function TransactionDetailsContent({
           </dd>
         </div>
       </dl>
+      <section
+        className="transaction-correction-form"
+        aria-labelledby="merchant-appearance-title"
+      >
+        <div>
+          <h3 id="merchant-appearance-title">{t('Merchant appearance')}</h3>
+          <p>
+            {t(
+              'This icon will be used for all transactions from this merchant.',
+            )}
+          </p>
+        </div>
+        <div className="transaction-correction-actions">
+          <Button
+            onClick={() => setIconPickerOpen(true)}
+            size="small"
+            type="button"
+          >
+            {t('Change icon')}
+          </Button>
+          <Button
+            disabled={merchantVisualMutation.isPending}
+            onClick={() => merchantVisualMutation.mutate(null)}
+            size="small"
+            type="button"
+            variant="secondary"
+          >
+            {t('Remove custom icon')}
+          </Button>
+        </div>
+      </section>
+      <IconPickerDialog
+        assetType="merchant-icon"
+        onClose={() => setIconPickerOpen(false)}
+        onSelect={(assetId) => merchantVisualMutation.mutate(assetId)}
+        open={iconPickerOpen}
+      />
       <section
         className="transaction-correction-form"
         aria-labelledby="category-title"

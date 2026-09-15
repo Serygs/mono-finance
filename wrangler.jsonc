@@ -24,6 +24,7 @@
   "secrets": {
     "required": ["MONOBANK_TOKEN", "SESSION_TOKEN_PEPPER", "SETUP_TOKEN"],
   },
+  "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "mono-finance-assets" }],
   "env": {
     "development": {
       "version_metadata": { "binding": "WORKER_VERSION" },
@@ -54,6 +55,9 @@
       // D1 bindings are non-inheritable. The deployment workflow replaces this
       // empty list in the production build artifact with a real, protected ID.
       "d1_databases": [],
+      "r2_buckets": [
+        { "binding": "ASSETS", "bucket_name": "mono-finance-assets" },
+      ],
       "analytics_engine_datasets": [
         { "binding": "OBSERVABILITY", "dataset": "mono-finance-observability" },
       ],

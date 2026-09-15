@@ -28,6 +28,8 @@ import {
   formatTransactionAmount,
   groupTransactionsByDate,
 } from './transaction-formatting'
+import { getVisualMappings } from '../visuals/visuals-api'
+import { TransactionVisual } from '../visuals/visual-resolver'
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { getTransactions } from './transactions-api'
 import type {
@@ -113,6 +115,10 @@ export function TransactionsPage() {
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => getTransactions(filters, pageParam),
     queryKey: ['transactions', filters] as const,
+  })
+  const visualsQuery = useQuery({
+    queryFn: getVisualMappings,
+    queryKey: ['visuals'],
   })
   const transactions =
     transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
@@ -280,11 +286,11 @@ export function TransactionsPage() {
                       onClick={() => setSelectedTransaction(transaction)}
                       type="button"
                     >
-                      <span
-                        aria-hidden="true"
-                        className={`transaction-avatar transaction-avatar--${categoryVisual(transaction.category.name).tone}`}
-                      >
-                        <TransactionCategoryVisual transaction={transaction} />
+                      <span aria-hidden="true" className="transaction-avatar">
+                        <TransactionVisual
+                          mappings={visualsQuery.data}
+                          transaction={transaction}
+                        />
                       </span>
                       <span className="transactions-ledger-row__transaction">
                         <strong>{transaction.originalDescription}</strong>
@@ -403,7 +409,7 @@ function TransactionIndicators({
   )
 }
 
-function TransactionCategoryVisual({
+export function TransactionCategoryVisual({
   transaction,
 }: {
   transaction: TransactionListItem
