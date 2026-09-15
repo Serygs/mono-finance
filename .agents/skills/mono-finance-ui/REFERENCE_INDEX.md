@@ -1,39 +1,14 @@
 # Mono Finance UI reference index
 
-These images are the canonical visual references for the five main Mono Finance navigation screens.
-
-## Overview / Огляд
-
-- Desktop: `references/desktop/overview.jpg`
-- Mobile: `references/mobile/overview.jpg`
-
-## Transactions / Транзакції
-
-- Desktop: `references/desktop/transactions.jpg`
-- Mobile: `references/mobile/transactions.jpg`
-
-## Categories / Категорії
-
-- Desktop: `references/desktop/categories.jpg`
-- Mobile: `references/mobile/categories.jpg`
-
-## Accounts / Рахунки
-
-The canonical filename for the Accounts screen is `accounts.jpg`.
-
-- Desktop: `references/desktop/accounts.jpg`
-- Mobile: `references/mobile/accounts.jpg`
-
-## More / Ще
-
-- Desktop: `references/desktop/settings.jpg`
-- Mobile: `references/mobile/settings.jpg`
+The binary visual references were removed before public release because their
+data provenance could not be independently verified. Use the application and
+shared design-system guidance as the source of truth; never add screenshots
+containing real financial data.
 
 ## Usage
 
-Before implementing or redesigning a page, open only its exact desktop/mobile reference pair.
-
-Treat these references as a visual contract, not loose inspiration.
+Review the existing components and design-system rules before implementing a
+page. Treat those rules as the visual contract, not loose inspiration.
 
 Match as closely as practical:
 - composition;
@@ -49,8 +24,5 @@ Match as closely as practical:
 - borders and shadows;
 - mobile interaction patterns.
 
-Preserve real Mono Finance behavior and data.
-
-Generated balances, labels, text mistakes, or unsupported functionality visible in the reference images must not be copied as product truth.
-
-The legacy UI is not a visual source of truth.
+Preserve real Mono Finance behavior and data. Never fabricate balances,
+transactions, labels, or unsupported functionality as product truth.

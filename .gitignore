@@ -32,4 +32,19 @@ dist-ssr
 !.dev.vars.example
 .env*
 !.env.example
+
+# Local databases, dumps, exports, backups, and private financial data
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
+*.sqlite-wal
+*.sqlite-shm
+*.dump
+*.sql.gz
+*.bak
+*.backup
+exports/
+backups/
+private-exports/
 /prompts.md

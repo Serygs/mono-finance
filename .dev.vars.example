@@ -1,5 +1,8 @@
-# Copy to .dev.vars and replace every value with the corresponding real secret.
+# Copy to .dev.vars and replace every value with your own secret.
 # This file is intentionally safe to commit; .dev.vars is ignored.
-MONOBANK_TOKEN=replace-with-your-personal-monobank-api-token
+# Server secret: your personal Monobank Personal API token.
+MONOBANK_TOKEN=your-monobank-token
+# Server secret: independently generated high-entropy session-token pepper.
 SESSION_TOKEN_PEPPER=replace-with-a-long-random-secret
+# Server secret: separate temporary bootstrap token; rotate after setup.
 SETUP_TOKEN=replace-with-a-separate-long-random-setup-secret

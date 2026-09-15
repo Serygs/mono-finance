@@ -1,6 +1,25 @@
 # Mono Finance
 
-Mono Finance is a private, single-user personal-finance application that imports Monobank accounts and transactions into Cloudflare D1. It provides authenticated transaction browsing, corrections, exclusions, custom categories, compensation links, multi-currency analytics, dashboard visualizations, and encrypted offline read access.
+A self-hosted, single-user personal-finance dashboard for Monobank built with
+React, TypeScript, Cloudflare Workers, and D1.
+
+Each operator deploys an independent instance connected to their own Monobank
+account. This repository does **not** include the author's Monobank access,
+Cloudflare resources, production D1 data, owner account, or production
+configuration. It is not a hosted multi-tenant financial service: there is no
+public registration and each deployment creates exactly one owner through the
+setup endpoint.
+
+## Screenshots / Features
+
+The checked-in design references are intended to use synthetic data only; do
+not add real data to screenshots or fixtures. The application
+provides password-protected owner access, Monobank account and transaction
+sync, immutable source records with separate corrections and exclusions,
+custom categories, compensation links, multi-currency analytics, responsive
+dark-mode UI, and an installable PWA.
+
+See the [self-hosting guide](docs/SELF_HOSTING.md) to run your own instance.
 
 ## Architecture
 
@@ -55,11 +74,11 @@ The browser never receives D1 bindings, password or session hashes, provider pay
 - English and Ukrainian UI, responsive desktop/mobile layouts, dark mode, and accessible chart interactions.
 - Installable PWA with safe-area support for iPhone, Android, Windows, and macOS.
 
-## Prerequisites
+## Self-hosting
 
 - Node.js 24
 - npm
-- A Monobank Personal API token
+- Your own Monobank Personal API token
 - A Cloudflare account and authenticated Wrangler session for production deployment
 - Playwright Chromium for browser tests
 
@@ -98,7 +117,7 @@ npm run dev
 
 The application is available at `http://localhost:5173`. Local D1 state is stored in `.wrangler/state`; use the provided migration commands so Wrangler and Vite access the same database.
 
-### Create the owner
+## First owner setup
 
 Owner creation is a one-time controlled operation. Replace the placeholder token, email, and password:
 
@@ -111,7 +130,7 @@ curl.exe --request POST "http://localhost:5173/api/auth/setup" `
 
 The endpoint returns `409` after an owner already exists. Rotate or remove the production setup token after successful owner creation.
 
-## Authentication and security
+## Security model
 
 - Passwords use PBKDF2-HMAC-SHA-256 with a random 16-byte salt, 100,000 iterations, and a 32-byte derived key. Use a long, unique password because the Cloudflare runtime limit is below the current OWASP recommendation.
 - Session cookies contain a random 256-bit opaque token. D1 stores only its HMAC-SHA-256 hash using `SESSION_TOKEN_PEPPER`.
@@ -286,6 +305,11 @@ Tests use synthetic financial fixtures and no real secrets. Repository tests cur
 5. Configure `MONOBANK_TOKEN`, `SESSION_TOKEN_PEPPER`, and `SETUP_TOKEN` directly as encrypted secrets on the production Worker. Do not store these application secrets in GitHub or committed configuration.
 6. Protect `main` with pull-request reviews and required `Quality gates` checks.
 
+Production deployment reads only the `production` environment secrets and
+variables configured in the fork that runs it. Pull-request jobs are
+secret-free and cannot invoke deployment. See [SELF_HOSTING.md](docs/SELF_HOSTING.md)
+for a complete setup from a fresh fork.
+
 Production D1 configuration is generated into the ignored `dist/mono_finance/wrangler.production.json`; `wrangler.jsonc` intentionally contains no production database UUID.
 
 For a trusted workstation release, set `CLOUDFLARE_D1_DATABASE_ID` and `PRODUCTION_HEALTH_URL` only in the current process, then run:
@@ -304,6 +328,32 @@ The GitHub workflow is the preferred release path. After deployment, verify the 
 ### Rollback
 
 Roll back Worker code from Cloudflare Workers deployments and rerun the health check. Code rollback does not revert D1 migrations, secrets, or Monobank effects. Fix schema problems with a new forward migration; never modify or manually reverse an applied production migration.
+
+## Required secrets
+
+Server-only secrets are configured outside tracked source. `MONOBANK_TOKEN` is
+the deployer's own Personal API token; `SESSION_TOKEN_PEPPER` is an independent
+high-entropy session secret; and `SETUP_TOKEN` is a temporary bootstrap secret.
+Normal configuration such as the D1 database ID and health URL is supplied as
+fork-owned deployment variables. Never prefix server secrets with `VITE_`.
+
+## Forking and customization
+
+Forks are independent deployments. Create a new D1 database, configure your
+own Cloudflare account and Worker secrets, run migrations, and create your one
+owner through `/api/auth/setup`. Do not copy production rows, IDs, tokens, or
+configuration from another instance.
+
+## Privacy
+
+Financial data remains in the operator's D1 database and Cloudflare account.
+The repository contains no production transactions or credentials. Operators
+must protect their owner password, secrets, logs, backups, custom domain, and
+any exports they create.
+
+## License
+
+Mono Finance is available under the [MIT License](LICENSE).
 
 ## Observability and recovery
 
