@@ -56,7 +56,9 @@ export async function getVisualAssetHandler(context: VisualContext) {
     )
     if (asset.content === null)
       return context.json(failure('not_found', 'Asset not found.'), 404)
-    return new Response(asset.content, {
+    // D1 returns BLOBs as ArrayBuffer. Wrap it explicitly so the Worker sends
+    // the original bytes rather than relying on a runtime-specific BodyInit cast.
+    return new Response(new Uint8Array(asset.content), {
       headers: {
         'Content-Type': asset.mimeType,
         'Cache-Control': 'private, max-age=31536000, immutable',
