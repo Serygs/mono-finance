@@ -1,6 +1,6 @@
 export const SVG_MIME_TYPE = 'image/svg+xml'
 export const MAX_SVG_SIZE_BYTES = 64 * 1024
-export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+export const MAX_IMAGE_SIZE_BYTES = 1_900_000
 export const SUPPORTED_IMAGE_TYPES = [
   'image/svg+xml',
   'image/png',
