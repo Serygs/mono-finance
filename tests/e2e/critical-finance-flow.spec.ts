@@ -443,6 +443,15 @@ test('income and expense bars retain one baseline across responsive widths', asy
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 932 })
     await expect(page.locator('.income-expense-plot > div')).toHaveCount(7)
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            document.documentElement.scrollWidth ===
+            document.documentElement.clientWidth,
+        ),
+      )
+      .toBe(true)
     const layout = await page.evaluate(() => {
       const plot = document.querySelector('.income-expense-plot')!
       const plotRect = plot.getBoundingClientRect()
