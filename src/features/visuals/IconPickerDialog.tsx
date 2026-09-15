@@ -31,9 +31,9 @@ export function IconPickerDialog({
         'image/webp',
         'image/gif',
       ].includes(file.type) ||
-      file.size > 2 * 1024 * 1024
+      file.size > 1_900_000
     ) {
-      setError(t('SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.'))
+      setError(t('SVG, PNG, JPEG, WebP or GIF; maximum 1.9 MB.'))
       return
     }
     setPending(true)
@@ -49,7 +49,7 @@ export function IconPickerDialog({
   return (
     <Dialog onClose={onClose} open={open} title={t('Change icon')}>
       <div className="icon-picker">
-        <p>{t('SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.')}</p>
+        <p>{t('SVG, PNG, JPEG, WebP or GIF; maximum 1.9 MB.')}</p>
         <input
           accept="image/svg+xml,image/png,image/jpeg,image/webp,image/gif,.svg,.png,.jpg,.jpeg,.webp,.gif"
           hidden

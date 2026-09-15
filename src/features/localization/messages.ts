@@ -375,6 +375,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Upload SVG',
   'Uploading…',
   'SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.',
+  'SVG, PNG, JPEG, WebP or GIF; maximum 1.9 MB.',
   'The image could not be accepted.',
   'Upload image',
   'Built-in icons',
@@ -407,6 +408,8 @@ export const UKRAINIAN_MESSAGES = {
   'Uploading…': 'Завантаження…',
   'SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.':
     'SVG, PNG, JPEG, WebP або GIF; до 2 МБ.',
+  'SVG, PNG, JPEG, WebP or GIF; maximum 1.9 MB.':
+    'SVG, PNG, JPEG, WebP або GIF; до 1,9 МБ.',
   'The image could not be accepted.': 'Не вдалося прийняти зображення.',
   'Upload image': 'Завантажити зображення',
   'Built-in icons': 'Вбудовані іконки',

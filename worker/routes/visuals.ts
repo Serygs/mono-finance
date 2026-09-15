@@ -10,7 +10,7 @@ type VisualContext = Context<{
 }>
 const keyPattern = /^[a-z0-9][a-z0-9:_-]{0,191}$/
 export function visualService(context: VisualContext) {
-  return new VisualService(context.env.DB, context.env.ASSETS)
+  return new VisualService(context.env.DB)
 }
 export async function listVisualsHandler(context: VisualContext) {
   return noStore(
@@ -54,10 +54,9 @@ export async function getVisualAssetHandler(context: VisualContext) {
       context.get('authenticatedUser').id,
       assetId,
     )
-    const object = await context.env.ASSETS.get(asset.objectKey)
-    if (object === null)
+    if (asset.content === null)
       return context.json(failure('not_found', 'Asset not found.'), 404)
-    return new Response(object.body, {
+    return new Response(asset.content, {
       headers: {
         'Content-Type': asset.mimeType,
         'Cache-Control': 'private, max-age=31536000, immutable',

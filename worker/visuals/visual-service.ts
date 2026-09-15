@@ -1,6 +1,7 @@
 import {
   sanitizeSvg,
   SvgValidationError,
+  MAX_IMAGE_SIZE_BYTES,
   validateRasterImage,
 } from './svg-sanitizer'
 
@@ -9,6 +10,7 @@ export interface VisualMapping {
   assetId: string
 }
 export interface VisualAsset {
+  content: ArrayBuffer | null
   id: string
   objectKey: string
   mimeType: string
@@ -25,10 +27,8 @@ export class VisualError extends Error {
 
 export class VisualService {
   private readonly database: D1Database
-  private readonly assets: R2Bucket
-  constructor(database: D1Database, assets: R2Bucket) {
+  constructor(database: D1Database) {
     this.database = database
-    this.assets = assets
   }
   async list(userId: string) {
     const [merchants, categories] = await Promise.all([
@@ -55,7 +55,7 @@ export class VisualService {
     assetType: 'merchant-icon' | 'category-icon',
     file: File,
   ) {
-    if (file.size > 2 * 1024 * 1024) throw new VisualError('invalid_image')
+    if (file.size > MAX_IMAGE_SIZE_BYTES) throw new VisualError('invalid_image')
     const content =
       file.type === 'image/svg+xml'
         ? sanitizeSvg(await file.text(), file.type)
@@ -65,47 +65,22 @@ export class VisualService {
         ? 'image/svg+xml'
         : validateRasterImage(content as Uint8Array, file.type)
     const id = crypto.randomUUID()
-    const extension =
-      mimeType === 'image/svg+xml'
-        ? 'svg'
-        : mimeType === 'image/jpeg'
-          ? 'jpg'
-          : mimeType.slice(6)
-    const objectKey = `${assetType === 'merchant-icon' ? 'merchant-icons' : 'category-icons'}/${id}.${extension}`
-    await this.assets.put(objectKey, content, {
-      httpMetadata: {
-        contentType: mimeType,
-        cacheControl: 'public, max-age=31536000, immutable',
-      },
-    })
-    try {
-      await this.database
-        .prepare(
-          'INSERT INTO visual_assets (id, user_id, object_key, asset_type, mime_type, size_bytes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())',
-        )
-        .bind(
-          id,
-          userId,
-          objectKey,
-          assetType,
-          mimeType,
-          content instanceof Uint8Array
-            ? content.byteLength
-            : new TextEncoder().encode(content).byteLength,
-        )
-        .run()
-    } catch (error) {
-      await this.assets.delete(objectKey)
-      throw error
-    }
+    const objectKey = `d1://visual-assets/${id}`
+    const bytes =
+      content instanceof Uint8Array
+        ? content
+        : new TextEncoder().encode(content)
+    await this.database
+      .prepare(
+        'INSERT INTO visual_assets (id, user_id, object_key, asset_type, mime_type, size_bytes, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), unixepoch())',
+      )
+      .bind(id, userId, objectKey, assetType, mimeType, bytes.byteLength, bytes)
+      .run()
     return {
       id,
       objectKey,
       mimeType,
-      sizeBytes:
-        content instanceof Uint8Array
-          ? content.byteLength
-          : new TextEncoder().encode(content).byteLength,
+      sizeBytes: bytes.byteLength,
       assetType,
     }
   }
@@ -176,7 +151,7 @@ export class VisualService {
   async getAsset(userId: string, id: string) {
     const asset = await this.database
       .prepare(
-        'SELECT id, object_key AS objectKey, mime_type AS mimeType, size_bytes AS sizeBytes, asset_type AS assetType FROM visual_assets WHERE id = ? AND user_id = ?',
+        'SELECT id, object_key AS objectKey, mime_type AS mimeType, size_bytes AS sizeBytes, content, asset_type AS assetType FROM visual_assets WHERE id = ? AND user_id = ?',
       )
       .bind(id, userId)
       .first<VisualAsset>()
@@ -186,12 +161,11 @@ export class VisualService {
   private async cleanupUnreferenced(userId: string) {
     const stale = await this.database
       .prepare(
-        'SELECT id, object_key AS objectKey FROM visual_assets WHERE user_id = ? AND NOT EXISTS (SELECT 1 FROM merchant_visuals WHERE icon_asset_id = visual_assets.id) AND NOT EXISTS (SELECT 1 FROM category_visuals WHERE icon_asset_id = visual_assets.id)',
+        'SELECT id FROM visual_assets WHERE user_id = ? AND NOT EXISTS (SELECT 1 FROM merchant_visuals WHERE icon_asset_id = visual_assets.id) AND NOT EXISTS (SELECT 1 FROM category_visuals WHERE icon_asset_id = visual_assets.id)',
       )
       .bind(userId)
-      .all<{ id: string; objectKey: string }>()
+      .all<{ id: string }>()
     for (const asset of stale.results) {
-      await this.assets.delete(asset.objectKey)
       await this.database
         .prepare('DELETE FROM visual_assets WHERE id = ?')
         .bind(asset.id)
