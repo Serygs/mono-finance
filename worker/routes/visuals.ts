@@ -8,7 +8,20 @@ type VisualContext = Context<{
   Bindings: VisualEnvironment
   Variables: { authenticatedUser: AuthenticatedUser }
 }>
-const keyPattern = /^[a-z0-9][a-z0-9:_-]{0,191}$/
+// Merchant/category keys are normalized by the client and may legitimately use
+// Ukrainian or other Unicode letters; keep separators constrained.
+const keyPattern = /^[\p{L}\p{N}][\p{L}\p{N}:_-]{0,191}$/u
+export function isVisualKey(value: string): boolean {
+  return keyPattern.test(value)
+}
+function routeKey(value: string | undefined): string {
+  const raw = value ?? ''
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return ''
+  }
+}
 export function visualService(context: VisualContext) {
   return new VisualService(context.env.DB)
 }
@@ -80,8 +93,8 @@ export async function setMerchantVisualHandler(context: VisualContext) {
   return mapping(context, 'merchant')
 }
 export async function deleteMerchantVisualHandler(context: VisualContext) {
-  const key = context.req.param('merchantKey') ?? ''
-  if (!keyPattern.test(key)) return invalid(context)
+  const key = routeKey(context.req.param('merchantKey'))
+  if (!isVisualKey(key)) return invalid(context)
   await visualService(context).setMerchant(
     context.get('authenticatedUser').id,
     key,
@@ -94,8 +107,8 @@ export async function setCategoryVisualHandler(context: VisualContext) {
   return mapping(context, 'category')
 }
 export async function deleteCategoryVisualHandler(context: VisualContext) {
-  const key = context.req.param('categoryKey') ?? ''
-  if (!keyPattern.test(key)) return invalid(context)
+  const key = routeKey(context.req.param('categoryKey'))
+  if (!isVisualKey(key)) return invalid(context)
   await visualService(context).setCategory(
     context.get('authenticatedUser').id,
     key,
@@ -105,9 +118,9 @@ export async function deleteCategoryVisualHandler(context: VisualContext) {
 }
 async function mapping(context: VisualContext, type: 'merchant' | 'category') {
   try {
-    const key =
-      context.req.param(type === 'merchant' ? 'merchantKey' : 'categoryKey') ??
-      ''
+    const key = routeKey(
+      context.req.param(type === 'merchant' ? 'merchantKey' : 'categoryKey'),
+    )
     const body = await context.req.json<{
       assetId?: unknown
       displayName?: unknown
@@ -115,7 +128,7 @@ async function mapping(context: VisualContext, type: 'merchant' | 'category') {
     const displayName = body.displayName
     const assetId = body.assetId
     if (
-      !keyPattern.test(key) ||
+      !isVisualKey(key) ||
       typeof assetId !== 'string' ||
       assetId.length > 64 ||
       (type === 'merchant' &&
