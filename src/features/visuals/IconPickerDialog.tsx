@@ -14,7 +14,7 @@ export function IconPickerDialog({
 }: {
   assetType: 'merchant-icon' | 'category-icon'
   onClose(): void
-  onSelect(assetId: string): void
+  onSelect(assetId: string): Promise<unknown>
   open: boolean
 }) {
   const { t } = useLocalization()
@@ -23,6 +23,7 @@ export function IconPickerDialog({
   const [pending, setPending] = useState(false)
   async function selectFile(file: File | undefined) {
     if (!file) return
+    const normalizedFile = normalizeFileType(file)
     if (
       ![
         'image/svg+xml',
@@ -30,8 +31,8 @@ export function IconPickerDialog({
         'image/jpeg',
         'image/webp',
         'image/gif',
-      ].includes(file.type) ||
-      file.size > 1_900_000
+      ].includes(normalizedFile.type) ||
+      normalizedFile.size > 1_900_000
     ) {
       setError(t('SVG, PNG, JPEG, WebP or GIF; maximum 1.9 MB.'))
       return
@@ -39,7 +40,8 @@ export function IconPickerDialog({
     setPending(true)
     setError(null)
     try {
-      onSelect((await uploadVisual(assetType, file)).id)
+      const asset = await uploadVisual(assetType, normalizedFile)
+      await onSelect(asset.id)
     } catch {
       setError(t('The image could not be accepted.'))
     } finally {
@@ -80,4 +82,22 @@ export function IconPickerDialog({
       </div>
     </Dialog>
   )
+}
+
+function normalizeFileType(file: File): File {
+  if (file.type) return file
+  const extension = file.name.split('.').at(-1)?.toLowerCase()
+  const mimeType =
+    extension === 'svg'
+      ? 'image/svg+xml'
+      : extension === 'png'
+        ? 'image/png'
+        : extension === 'jpg' || extension === 'jpeg'
+          ? 'image/jpeg'
+          : extension === 'webp'
+            ? 'image/webp'
+            : extension === 'gif'
+              ? 'image/gif'
+              : ''
+  return mimeType ? new File([file], file.name, { type: mimeType }) : file
 }
