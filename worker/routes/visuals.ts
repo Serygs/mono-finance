@@ -8,7 +8,12 @@ type VisualContext = Context<{
   Bindings: VisualEnvironment
   Variables: { authenticatedUser: AuthenticatedUser }
 }>
-const keyPattern = /^[a-z0-9][a-z0-9:_-]{0,191}$/
+// Merchant/category keys are normalized by the client and may legitimately use
+// Ukrainian or other Unicode letters; keep separators constrained.
+const keyPattern = /^[\p{L}\p{N}][\p{L}\p{N}:_-]{0,191}$/u
+export function isVisualKey(value: string): boolean {
+  return keyPattern.test(value)
+}
 export function visualService(context: VisualContext) {
   return new VisualService(context.env.DB)
 }
@@ -81,7 +86,7 @@ export async function setMerchantVisualHandler(context: VisualContext) {
 }
 export async function deleteMerchantVisualHandler(context: VisualContext) {
   const key = context.req.param('merchantKey') ?? ''
-  if (!keyPattern.test(key)) return invalid(context)
+  if (!isVisualKey(key)) return invalid(context)
   await visualService(context).setMerchant(
     context.get('authenticatedUser').id,
     key,
@@ -95,7 +100,7 @@ export async function setCategoryVisualHandler(context: VisualContext) {
 }
 export async function deleteCategoryVisualHandler(context: VisualContext) {
   const key = context.req.param('categoryKey') ?? ''
-  if (!keyPattern.test(key)) return invalid(context)
+  if (!isVisualKey(key)) return invalid(context)
   await visualService(context).setCategory(
     context.get('authenticatedUser').id,
     key,
@@ -115,7 +120,7 @@ async function mapping(context: VisualContext, type: 'merchant' | 'category') {
     const displayName = body.displayName
     const assetId = body.assetId
     if (
-      !keyPattern.test(key) ||
+      !isVisualKey(key) ||
       typeof assetId !== 'string' ||
       assetId.length > 64 ||
       (type === 'merchant' &&
