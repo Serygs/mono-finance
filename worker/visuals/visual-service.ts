@@ -1,7 +1,7 @@
 import {
-  MAX_SVG_SIZE_BYTES,
   sanitizeSvg,
   SvgValidationError,
+  validateRasterImage,
 } from './svg-sanitizer'
 
 export interface VisualMapping {
@@ -55,13 +55,26 @@ export class VisualService {
     assetType: 'merchant-icon' | 'category-icon',
     file: File,
   ) {
-    if (file.size > MAX_SVG_SIZE_BYTES) throw new VisualError('invalid_svg')
-    const svg = sanitizeSvg(await file.text(), file.type)
+    if (file.size > 2 * 1024 * 1024) throw new VisualError('invalid_image')
+    const content =
+      file.type === 'image/svg+xml'
+        ? sanitizeSvg(await file.text(), file.type)
+        : new Uint8Array(await file.arrayBuffer())
+    const mimeType =
+      file.type === 'image/svg+xml'
+        ? 'image/svg+xml'
+        : validateRasterImage(content as Uint8Array, file.type)
     const id = crypto.randomUUID()
-    const objectKey = `${assetType === 'merchant-icon' ? 'merchant-icons' : 'category-icons'}/${id}.svg`
-    await this.assets.put(objectKey, svg, {
+    const extension =
+      mimeType === 'image/svg+xml'
+        ? 'svg'
+        : mimeType === 'image/jpeg'
+          ? 'jpg'
+          : mimeType.slice(6)
+    const objectKey = `${assetType === 'merchant-icon' ? 'merchant-icons' : 'category-icons'}/${id}.${extension}`
+    await this.assets.put(objectKey, content, {
       httpMetadata: {
-        contentType: 'image/svg+xml',
+        contentType: mimeType,
         cacheControl: 'public, max-age=31536000, immutable',
       },
     })
@@ -75,8 +88,10 @@ export class VisualService {
           userId,
           objectKey,
           assetType,
-          'image/svg+xml',
-          new TextEncoder().encode(svg).byteLength,
+          mimeType,
+          content instanceof Uint8Array
+            ? content.byteLength
+            : new TextEncoder().encode(content).byteLength,
         )
         .run()
     } catch (error) {
@@ -86,8 +101,11 @@ export class VisualService {
     return {
       id,
       objectKey,
-      mimeType: 'image/svg+xml',
-      sizeBytes: new TextEncoder().encode(svg).byteLength,
+      mimeType,
+      sizeBytes:
+        content instanceof Uint8Array
+          ? content.byteLength
+          : new TextEncoder().encode(content).byteLength,
       assetType,
     }
   }

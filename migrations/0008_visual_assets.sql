@@ -4,8 +4,8 @@ CREATE TABLE visual_assets (
   user_id TEXT NOT NULL,
   object_key TEXT NOT NULL UNIQUE,
   asset_type TEXT NOT NULL CHECK (asset_type IN ('merchant-icon', 'category-icon')),
-  mime_type TEXT NOT NULL CHECK (mime_type = 'image/svg+xml'),
-  size_bytes INTEGER NOT NULL CHECK (size_bytes BETWEEN 1 AND 65536),
+  mime_type TEXT NOT NULL CHECK (mime_type IN ('image/svg+xml', 'image/png', 'image/jpeg', 'image/webp', 'image/gif')),
+  size_bytes INTEGER NOT NULL CHECK (size_bytes BETWEEN 1 AND 2097152),
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT

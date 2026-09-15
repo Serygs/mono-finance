@@ -1,5 +1,14 @@
 export const SVG_MIME_TYPE = 'image/svg+xml'
 export const MAX_SVG_SIZE_BYTES = 64 * 1024
+export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/svg+xml',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+] as const
+export type SupportedImageType = (typeof SUPPORTED_IMAGE_TYPES)[number]
 
 export class SvgValidationError extends Error {}
 
@@ -71,4 +80,39 @@ export function sanitizeSvg(input: string, mimeType: string): string {
   if (!/^\s*<svg\b/i.test(sanitized) || !/<\/svg>\s*$/i.test(sanitized))
     throw new SvgValidationError('Malformed SVG.')
   return sanitized
+}
+
+export function validateRasterImage(
+  bytes: Uint8Array,
+  mimeType: string,
+): SupportedImageType {
+  const type = mimeType.toLowerCase().split(';')[0]?.trim()
+  if (
+    type !== 'image/png' &&
+    type !== 'image/jpeg' &&
+    type !== 'image/webp' &&
+    type !== 'image/gif'
+  )
+    throw new SvgValidationError('Unsupported image format.')
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_IMAGE_SIZE_BYTES)
+    throw new SvgValidationError('Image must be no larger than 2 MB.')
+  const valid =
+    (type === 'image/png' &&
+      startsWith(bytes, [137, 80, 78, 71, 13, 10, 26, 10])) ||
+    (type === 'image/jpeg' && startsWith(bytes, [255, 216, 255])) ||
+    (type === 'image/gif' &&
+      (startsWith(bytes, [71, 73, 70, 56, 55, 97]) ||
+        startsWith(bytes, [71, 73, 70, 56, 57, 97]))) ||
+    (type === 'image/webp' &&
+      startsWith(bytes, [82, 73, 70, 70]) &&
+      bytes[8] === 87 &&
+      bytes[9] === 69 &&
+      bytes[10] === 66 &&
+      bytes[11] === 80)
+  if (!valid)
+    throw new SvgValidationError('Image content does not match its type.')
+  return type
+}
+function startsWith(bytes: Uint8Array, signature: number[]) {
+  return signature.every((value, index) => bytes[index] === value)
 }

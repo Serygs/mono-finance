@@ -23,8 +23,17 @@ export function IconPickerDialog({
   const [pending, setPending] = useState(false)
   async function selectFile(file: File | undefined) {
     if (!file) return
-    if (file.type !== 'image/svg+xml' || file.size > 64 * 1024) {
-      setError(t('SVG only, maximum 64 KB.'))
+    if (
+      ![
+        'image/svg+xml',
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'image/gif',
+      ].includes(file.type) ||
+      file.size > 2 * 1024 * 1024
+    ) {
+      setError(t('SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.'))
       return
     }
     setPending(true)
@@ -32,7 +41,7 @@ export function IconPickerDialog({
     try {
       onSelect((await uploadVisual(assetType, file)).id)
     } catch {
-      setError(t('The SVG could not be accepted.'))
+      setError(t('The image could not be accepted.'))
     } finally {
       setPending(false)
     }
@@ -40,9 +49,9 @@ export function IconPickerDialog({
   return (
     <Dialog onClose={onClose} open={open} title={t('Change icon')}>
       <div className="icon-picker">
-        <p>{t('SVG only, maximum 64 KB.')}</p>
+        <p>{t('SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.')}</p>
         <input
-          accept="image/svg+xml,.svg"
+          accept="image/svg+xml,image/png,image/jpeg,image/webp,image/gif,.svg,.png,.jpg,.jpeg,.webp,.gif"
           hidden
           onChange={(event) => void selectFile(event.target.files?.[0])}
           ref={input}
@@ -53,10 +62,10 @@ export function IconPickerDialog({
           onClick={() => input.current?.click()}
           type="button"
         >
-          {t(pending ? 'Uploading…' : 'Upload SVG')}
+          {t(pending ? 'Uploading…' : 'Upload image')}
         </Button>
         {error ? <p role="alert">{error}</p> : null}
-        <div className="icon-picker__builtins">
+        <div aria-label={t('Built-in icons')} className="icon-picker__builtins">
           {CATEGORY_ICONS.map((icon) => (
             <button
               aria-label={icon.label}

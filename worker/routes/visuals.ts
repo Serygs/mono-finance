@@ -59,12 +59,16 @@ export async function getVisualAssetHandler(context: VisualContext) {
       return context.json(failure('not_found', 'Asset not found.'), 404)
     return new Response(object.body, {
       headers: {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': asset.mimeType,
         'Cache-Control': 'private, max-age=31536000, immutable',
         'Content-Disposition': 'inline',
         'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy':
-          "default-src 'none'; style-src 'none'; sandbox",
+        ...(asset.mimeType === 'image/svg+xml'
+          ? {
+              'Content-Security-Policy':
+                "default-src 'none'; style-src 'none'; sandbox",
+            }
+          : {}),
       },
     })
   } catch (error) {
@@ -146,7 +150,7 @@ function visualFailure(context: VisualContext, error: unknown) {
   if (error instanceof VisualError || error instanceof Error)
     return noStore(
       context.json(
-        failure('validation_error', 'The SVG could not be accepted.'),
+        failure('validation_error', 'The image could not be accepted.'),
         400,
       ),
     )

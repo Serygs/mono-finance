@@ -374,6 +374,10 @@ export const ENGLISH_MESSAGE_KEYS = [
   'The SVG could not be accepted.',
   'Upload SVG',
   'Uploading…',
+  'SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.',
+  'The image could not be accepted.',
+  'Upload image',
+  'Built-in icons',
   'Theme',
   'Ukrainian',
   'Your private personal finance workspace.',
@@ -401,6 +405,11 @@ export const UKRAINIAN_MESSAGES = {
   'The SVG could not be accepted.': 'Не вдалося прийняти SVG.',
   'Upload SVG': 'Завантажити SVG',
   'Uploading…': 'Завантаження…',
+  'SVG, PNG, JPEG, WebP or GIF; maximum 2 MB.':
+    'SVG, PNG, JPEG, WebP або GIF; до 2 МБ.',
+  'The image could not be accepted.': 'Не вдалося прийняти зображення.',
+  'Upload image': 'Завантажити зображення',
+  'Built-in icons': 'Вбудовані іконки',
   'About every {days} days · {count} payments':
     'Приблизно кожні {days} днів · {count} платежів',
   Average: 'Середнє',

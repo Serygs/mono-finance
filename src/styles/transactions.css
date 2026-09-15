@@ -224,6 +224,13 @@
   height: 1.12rem;
 }
 
+.transaction-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+}
+
 .transaction-avatar--groceries {
   --transaction-icon-color: var(--chart-mint);
   --transaction-icon-background: color-mix(
