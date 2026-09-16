@@ -8,37 +8,44 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   /* Semantic layers are the only colour contract consumed by product CSS. */
-  --app-bg: #e8eff9;
-  --surface-primary: #fbfcff;
-  --surface-secondary: #f1f5fb;
-  --surface-tertiary: #dfe9f7;
-  --surface-hover: #dce8f8;
-  --border-subtle: rgb(51 75 110 / 16%);
-  --border-strong: rgb(51 75 110 / 30%);
-  --text-primary: #172033;
-  --text-secondary: #536079;
-  --text-tertiary: #77839a;
-  --accent: #1f6fe5;
-  --accent-soft: #d8e9ff;
-  --positive: #087d4b;
-  --positive-soft: #d8f3e5;
-  --negative: #c4435a;
-  --negative-soft: #fde1e8;
-  --warning: #8b6513;
-  --warning-soft: #fff4d8;
-  --info: #1f6fe5;
-  --info-soft: #d8e9ff;
-  --chart-income: #139769;
-  --chart-expense: #2588e6;
-  --chart-violet: #7151cc;
-  --chart-mint: #19a882;
-  --chart-cyan: #168fba;
-  --chart-purple: #8b56cc;
-  --chart-coral: #db695b;
+  --app-bg: #f7f8fd;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f4f6fb;
+  --surface-tertiary: #e9efff;
+  --surface-hover: #eef3ff;
+  --border-subtle: rgb(61 76 117 / 12%);
+  --border-strong: rgb(61 76 117 / 20%);
+  --text-primary: #12172a;
+  --text-secondary: #687086;
+  --text-tertiary: #959db0;
+  --accent: #2864f0;
+  --accent-soft: #e3edff;
+  --positive: #18ae75;
+  --positive-soft: #e0f8ed;
+  --negative: #f0446b;
+  --negative-soft: #ffebf0;
+  --warning: #ef9a23;
+  --warning-soft: #fff2dc;
+  --info: var(--accent);
+  --info-soft: var(--accent-soft);
+  --on-action: #fff;
+  --chart-income: #28bd84;
+  --chart-expense: #3184ef;
+  --chart-violet: #8b63f6;
+  --chart-mint: #3bcf9b;
+  --chart-cyan: #39bfe5;
+  --chart-purple: #a77af7;
+  --chart-coral: #f77696;
+  --chart-orange: #fb9b42;
+  --chart-red: #f15368;
+  --chart-slate: #aab4c7;
+  --canvas-glow-primary: #eaf1ff;
+  --canvas-glow-secondary: #eef9ff;
   --color-canvas: var(--app-bg);
   --color-surface: var(--surface-primary);
   --color-surface-raised: var(--surface-primary);
   --color-surface-soft: var(--surface-secondary);
+  --color-surface-sunken: var(--surface-tertiary);
   --color-glass: color-mix(in srgb, var(--surface-primary), transparent 8%);
   --color-text: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -46,7 +53,7 @@
   --color-border: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-action: var(--accent);
-  --color-action-hover: #155cbf;
+  --color-action-hover: #0e56be;
   --color-action-soft: var(--accent-soft);
   --color-income: var(--positive);
   --color-expense: var(--negative);
@@ -79,43 +86,52 @@
   --control-height-touch: 2.75rem;
   --motion-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --motion-standard: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --shadow-card: 0 0.3rem 1rem rgb(48 72 109 / 5%);
-  --shadow-overlay: 0 1rem 3rem rgb(29 43 68 / 20%);
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 70%);
+  --shadow-card:
+    0 0.65rem 1.8rem rgb(24 29 45 / 8%), 0 0.12rem 0.3rem rgb(24 29 45 / 4%);
+  --shadow-overlay: 0 1rem 3rem rgb(24 29 45 / 22%);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 66%);
 }
 
 :root[data-theme='dark'] {
-  --app-bg: #101722;
-  --surface-primary: #1b2636;
-  --surface-secondary: #253249;
-  --surface-tertiary: #31415a;
-  --surface-hover: #3a4d69;
-  --border-subtle: rgb(225 235 255 / 15%);
-  --border-strong: rgb(225 235 255 / 29%);
-  --text-primary: #f3f7ff;
-  --text-secondary: #bec9da;
-  --text-tertiary: #96a5ba;
-  --accent: #69a5ff;
-  --accent-soft: #1d4278;
-  --positive: #51d493;
-  --positive-soft: #164b3c;
-  --negative: #f09bac;
-  --negative-soft: #552b3a;
-  --warning: #e4c574;
-  --warning-soft: #4c3d1d;
-  --info: #69a5ff;
-  --info-soft: #1d4278;
-  --chart-income: #4dd191;
-  --chart-expense: #62a8ff;
-  --chart-violet: #ad8bf2;
-  --chart-mint: #50c8a3;
-  --chart-cyan: #55c3e4;
-  --chart-purple: #c18ced;
-  --chart-coral: #ed9583;
-  --color-action-hover: #9bc3ff;
+  color-scheme: dark;
+  --app-bg: #151515;
+  --surface-primary: #202020;
+  --surface-secondary: #292929;
+  --surface-tertiary: #323232;
+  --surface-hover: #383838;
+  --border-subtle: rgb(255 255 255 / 12%);
+  --border-strong: rgb(255 255 255 / 20%);
+  --text-primary: #f4f2ef;
+  --text-secondary: #c6c3bf;
+  --text-tertiary: #96938f;
+  --accent: #4c8dff;
+  --accent-soft: #19345d;
+  --positive: #35d391;
+  --positive-soft: #173b2d;
+  --negative: #ff6687;
+  --negative-soft: #48212d;
+  --warning: #ffb648;
+  --warning-soft: #4c3618;
+  --info: var(--accent);
+  --info-soft: var(--accent-soft);
+  --on-action: #fff;
+  --chart-income: #42d89d;
+  --chart-expense: #589aff;
+  --chart-violet: #ad8cff;
+  --chart-mint: #48d6a3;
+  --chart-cyan: #3ed7f7;
+  --chart-purple: #c694ff;
+  --chart-coral: #ff7eaa;
+  --chart-orange: #ffad53;
+  --chart-red: #ff6374;
+  --chart-slate: #aaa8a5;
+  --canvas-glow-primary: rgb(255 255 255 / 3%);
+  --canvas-glow-secondary: rgb(255 255 255 / 1.8%);
+  --color-action-hover: #78aaff;
   --color-glass: color-mix(in srgb, var(--surface-primary), transparent 8%);
-  --shadow-card: 0 0.45rem 1.25rem rgb(0 0 0 / 16%);
-  --shadow-overlay: 0 1rem 3rem rgb(0 0 0 / 42%);
+  --shadow-card:
+    0 0.45rem 1.4rem rgb(0 0 0 / 26%), 0 0.08rem 0.2rem rgb(0 0 0 / 18%);
+  --shadow-overlay: 0 1rem 3rem rgb(0 0 0 / 52%);
 }
 
 * {
@@ -127,7 +143,48 @@ html,
   width: 100%;
   min-width: 0;
   min-height: 100%;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
+    var(--color-canvas);
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
+    var(--color-canvas);
+}
+
+:root[data-theme='dark'] #root {
+  background:
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
+    var(--color-canvas);
 }
 
 html {
@@ -139,7 +196,18 @@ body {
   min-width: 0;
   min-height: 100dvh;
   margin: 0;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
+    var(--color-canvas);
   color: var(--color-text);
   -webkit-tap-highlight-color: color-mix(
     in srgb,

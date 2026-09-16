@@ -1002,7 +1002,7 @@
 }
 
 .category-color-option--orange {
-  --category-color: #e58a12;
+  --category-color: var(--chart-orange);
 }
 
 .category-color-option--pink {
@@ -1010,7 +1010,7 @@
 }
 
 .category-color-option--red {
-  --category-color: #e45858;
+  --category-color: var(--chart-red);
 }
 
 .category-color-option--purple {
@@ -1018,7 +1018,7 @@
 }
 
 .category-color-option--slate {
-  --category-color: #778391;
+  --category-color: var(--chart-slate);
 }
 
 .category-list li {
