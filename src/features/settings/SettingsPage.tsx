@@ -1,4 +1,5 @@
 import { CategoryManagement } from '../categories/CategoryManagement'
+import { CategoryAnalytics } from '../categories/CategoryAnalytics'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { CurrencyPreferences } from './CurrencyPreferences'
 import { SettingsSyncStatus } from './SettingsSyncStatus'
@@ -35,6 +36,7 @@ export function SettingsPage() {
           id="categories-title"
           title={t('Categories')}
         />
+        <CategoryAnalytics />
         <CategoryManagement />
       </PageSurface>
     )
