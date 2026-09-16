@@ -118,88 +118,14 @@
   height: 2.25rem;
   flex: 0 0 2.25rem;
   border-radius: 50%;
-  background: var(--category-icon-background, var(--color-surface-soft));
-  color: var(--category-icon-color, var(--color-text-secondary));
+  background: var(--entity-visual-background);
+  color: var(--entity-visual-color);
   place-items: center;
 }
 
 .category-list-row__icon svg {
   width: 1.15rem;
   height: 1.15rem;
-}
-
-.category-list-row__icon--mint,
-.category-list-row__icon--green {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--accent-green),
-    transparent 84%
-  );
-  --category-icon-color: var(--accent-green);
-}
-
-.category-list-row__icon--blue {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--accent-blue),
-    transparent 84%
-  );
-  --category-icon-color: var(--accent-blue);
-}
-
-.category-list-row__icon--cyan {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--accent-cyan),
-    transparent 84%
-  );
-  --category-icon-color: var(--accent-cyan);
-}
-
-.category-list-row__icon--orange {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--chart-orange),
-    transparent 84%
-  );
-  --category-icon-color: var(--chart-orange);
-}
-
-.category-list-row__icon--pink {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--accent-pink),
-    transparent 84%
-  );
-  --category-icon-color: var(--accent-pink);
-}
-
-.category-list-row__icon--purple,
-.category-list-row__icon--violet {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--accent-violet),
-    transparent 84%
-  );
-  --category-icon-color: var(--accent-violet);
-}
-
-.category-list-row__icon--red {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--chart-red),
-    transparent 84%
-  );
-  --category-icon-color: var(--chart-red);
-}
-
-.category-list-row__icon--slate {
-  --category-icon-background: color-mix(
-    in srgb,
-    var(--chart-slate),
-    transparent 84%
-  );
-  --category-icon-color: var(--chart-slate);
 }
 
 .category-list-row__name {

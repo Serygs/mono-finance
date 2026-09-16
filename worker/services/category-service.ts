@@ -278,7 +278,9 @@ export class CategoryService {
 
 export interface EffectiveCategoryResult {
   category: {
+    colorToken: string | null
     id: string | null
+    icon: string | null
     name: string | null
     source: 'custom' | 'mapped' | 'original' | null
   }
@@ -298,13 +300,25 @@ export function resolveEffectiveCategory(
     ? {
         category:
           originalCategory.name === null
-            ? { ...originalCategory, source: null }
-            : { ...originalCategory, source: 'original' },
+            ? {
+                ...originalCategory,
+                colorToken: null,
+                icon: null,
+                source: null,
+              }
+            : {
+                ...originalCategory,
+                colorToken: null,
+                icon: null,
+                source: 'original',
+              },
         originalCategory,
       }
     : {
         category: {
+          colorToken: effectiveCategory.colorToken,
           id: effectiveCategory.id,
+          icon: effectiveCategory.icon,
           name: effectiveCategory.name,
           source: transaction.overrideCategory === null ? 'mapped' : 'custom',
         },

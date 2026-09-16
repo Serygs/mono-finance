@@ -30,7 +30,6 @@ import {
 } from './transaction-formatting'
 import { getVisualMappings } from '../visuals/visuals-api'
 import { TransactionVisual } from '../visuals/visual-resolver'
-import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { getTransactions } from './transactions-api'
 import type {
   TransactionListFilters,
@@ -286,12 +285,11 @@ export function TransactionsPage() {
                       onClick={() => setSelectedTransaction(transaction)}
                       type="button"
                     >
-                      <span aria-hidden="true" className="transaction-avatar">
-                        <TransactionVisual
-                          mappings={visualsQuery.data}
-                          transaction={transaction}
-                        />
-                      </span>
+                      <TransactionVisual
+                        className="transaction-avatar"
+                        mappings={visualsQuery.data}
+                        transaction={transaction}
+                      />
                       <span className="transactions-ledger-row__transaction">
                         <strong>{transaction.originalDescription}</strong>
                         <TransactionIndicators transaction={transaction} />
@@ -405,48 +403,6 @@ function TransactionIndicators({
       ))}
     </span>
   )
-}
-
-export function TransactionCategoryVisual({
-  transaction,
-}: {
-  transaction: TransactionListItem
-}) {
-  const visual = categoryVisual(transaction.category.name)
-  return visual.icon === null ? (
-    <span>{transaction.originalDescription.slice(0, 1)}</span>
-  ) : (
-    <CategoryIcon token={visual.icon} />
-  )
-}
-
-function categoryVisual(category: string | null): {
-  icon: Parameters<typeof CategoryIcon>[0]['token']
-  tone: string
-} {
-  const normalized = category?.toLocaleLowerCase() ?? ''
-  if (/grocer|продукт/.test(normalized)) {
-    return { icon: 'groceries', tone: 'groceries' }
-  }
-  if (/fuel|gas|transport|палив|транспорт/.test(normalized)) {
-    return { icon: 'transport', tone: 'transport' }
-  }
-  if (/housing|home|rent|житл|дім/.test(normalized)) {
-    return { icon: 'home', tone: 'housing' }
-  }
-  if (/restaurant|dining|cafe|food|ресторан|кафе/.test(normalized)) {
-    return { icon: 'dining', tone: 'dining' }
-  }
-  if (/subscription|entertainment|підпис|розваг/.test(normalized)) {
-    return { icon: 'entertainment', tone: 'subscriptions' }
-  }
-  if (/health|medical|здоров/.test(normalized)) {
-    return { icon: 'health', tone: 'health' }
-  }
-  if (/transfer|income|переказ|дохід/.test(normalized)) {
-    return { icon: 'wallet', tone: 'transfer' }
-  }
-  return { icon: null, tone: 'neutral' }
 }
 
 function AccountMultiSelector({

@@ -12,8 +12,12 @@ interface TransactionRow {
   category_id: string | null
   category_name: string | null
   custom_category_id: string | null
+  custom_category_color_token: string | null
+  custom_category_icon: string | null
   custom_category_name: string | null
   mapped_category_id: string | null
+  mapped_category_color_token: string | null
+  mapped_category_icon: string | null
   mapped_category_name: string | null
   effective_amount_minor: number
   has_adjustment: number
@@ -118,8 +122,12 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
            accounts.type AS account_type,
            account_cards.masked_pan AS card_masked_pan,
            categories.id AS custom_category_id,
+           categories.icon AS custom_category_icon,
+           categories.color_token AS custom_category_color_token,
            categories.name AS custom_category_name,
            mapped_categories.id AS mapped_category_id,
+           mapped_categories.icon AS mapped_category_icon,
+           mapped_categories.color_token AS mapped_category_color_token,
            mapped_categories.name AS mapped_category_name
          FROM transactions
          INNER JOIN accounts ON accounts.id = transactions.account_id
@@ -167,20 +175,32 @@ function mapTransactionRow(row: TransactionRow): TransactionListItem {
     },
     category: hasCustomCategory
       ? {
+          colorToken: row.custom_category_color_token,
           id: row.custom_category_id,
+          icon: row.custom_category_icon,
           name: row.custom_category_name,
           source: 'custom',
         }
       : hasMappedCategory
         ? {
+            colorToken: row.mapped_category_color_token,
             id: row.mapped_category_id,
+            icon: row.mapped_category_icon,
             name: row.mapped_category_name,
             source: 'mapped',
           }
         : row.category_name === null
-          ? { id: null, name: null, source: null }
+          ? {
+              colorToken: null,
+              icon: null,
+              id: null,
+              name: null,
+              source: null,
+            }
           : {
+              colorToken: null,
               id: row.category_id,
+              icon: null,
               name: row.category_name,
               source: 'original',
             },

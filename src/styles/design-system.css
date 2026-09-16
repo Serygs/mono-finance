@@ -710,6 +710,58 @@
     box-shadow var(--motion-standard);
 }
 
+.ui-entity-visual {
+  --entity-visual-color: var(--chart-slate);
+  --entity-visual-background: color-mix(
+    in srgb,
+    var(--entity-visual-color),
+    transparent 82%
+  );
+  background: var(--entity-visual-background);
+  color: var(--entity-visual-color);
+}
+
+.ui-entity-visual--blue {
+  --entity-visual-color: var(--accent-blue);
+}
+
+.ui-entity-visual--cyan {
+  --entity-visual-color: var(--accent-cyan);
+}
+
+.ui-entity-visual--mint,
+.ui-entity-visual--green {
+  --entity-visual-color: var(--accent-green);
+}
+
+.ui-entity-visual--orange {
+  --entity-visual-color: var(--chart-orange);
+}
+
+.ui-entity-visual--pink {
+  --entity-visual-color: var(--accent-pink);
+}
+
+.ui-entity-visual--purple,
+.ui-entity-visual--violet {
+  --entity-visual-color: var(--accent-violet);
+}
+
+.ui-entity-visual--red {
+  --entity-visual-color: var(--chart-red);
+}
+
+.ui-entity-visual--slate {
+  --entity-visual-color: var(--chart-slate);
+}
+
+.ui-entity-visual img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+}
+
 .ui-status-badge {
   display: inline-flex;
   min-height: 1.5rem;

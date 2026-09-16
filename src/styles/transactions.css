@@ -212,8 +212,8 @@
   height: 2.15rem;
   grid-column: 1;
   border-radius: 50%;
-  color: var(--transaction-icon-color, var(--color-text-secondary));
-  background: var(--transaction-icon-background, var(--surface-secondary));
+  color: var(--entity-visual-color);
+  background: var(--entity-visual-background);
   font-size: 0.82rem;
   font-weight: 700;
   place-items: center;
@@ -222,60 +222,6 @@
 .transaction-avatar svg {
   width: 1.12rem;
   height: 1.12rem;
-}
-
-.transaction-avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: contain;
-}
-
-.transaction-avatar--groceries {
-  --transaction-icon-color: var(--chart-mint);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-mint),
-    transparent 84%
-  );
-}
-
-.transaction-avatar--transport {
-  --transaction-icon-color: var(--chart-cyan);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-cyan),
-    transparent 84%
-  );
-}
-
-.transaction-avatar--housing,
-.transaction-avatar--subscriptions {
-  --transaction-icon-color: var(--chart-violet);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-violet),
-    transparent 84%
-  );
-}
-
-.transaction-avatar--dining {
-  --transaction-icon-color: var(--chart-coral);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-coral),
-    transparent 84%
-  );
-}
-
-.transaction-avatar--health {
-  --transaction-icon-color: var(--negative);
-  --transaction-icon-background: var(--negative-soft);
-}
-
-.transaction-avatar--transfer {
-  --transaction-icon-color: var(--positive);
-  --transaction-icon-background: var(--positive-soft);
 }
 
 .transactions-ledger-row__transaction {

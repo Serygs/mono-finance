@@ -18,14 +18,18 @@ describe('category appearance fields', () => {
       'wallet',
       'groceries',
       'dining',
+      'fuel',
       'home',
       'transport',
       'health',
       'shopping',
       'entertainment',
+      'subscriptions',
       'travel',
       'education',
       'bills',
+      'transfer',
+      'utilities',
       'savings',
     ])
     expect(CATEGORY_COLORS.map(({ token }) => token)).toEqual([
