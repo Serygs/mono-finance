@@ -15,6 +15,8 @@ describe('effective category repository projections', () => {
         category_name: 'MCC 5411',
         currency_minor_unit: 2,
         custom_category_id: null,
+        custom_category_color_token: null,
+        custom_category_icon: null,
         custom_category_name: null,
         effective_amount_minor: -1_000,
         exclusion_reason: null,
@@ -23,6 +25,8 @@ describe('effective category repository projections', () => {
         id: 'transaction-1',
         is_excluded: 0,
         mapped_category_id: 'groceries',
+        mapped_category_color_token: 'mint',
+        mapped_category_icon: 'groceries',
         mapped_category_name: 'Groceries',
         original_amount_minor: -1_000,
         original_currency_code: 'UAH',
@@ -47,7 +51,13 @@ describe('effective category repository projections', () => {
     })
 
     expect(result.transactions[0]).toMatchObject({
-      category: { id: 'groceries', name: 'Groceries', source: 'mapped' },
+      category: {
+        colorToken: 'mint',
+        icon: 'groceries',
+        id: 'groceries',
+        name: 'Groceries',
+        source: 'mapped',
+      },
       originalCategory: { id: '5411', name: 'MCC 5411' },
     })
     expect(database.sql).toContain('category_source_mappings')

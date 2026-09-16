@@ -1,7 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { CompactList } from '../../components/ui/Collections'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -13,6 +12,8 @@ import {
 import { Dialog } from '../../components/ui/Overlay'
 import { OverflowMenu } from '../../components/ui/Popover'
 import { useLocalization } from '../localization/localization'
+import { getVisualMappings } from '../visuals/visuals-api'
+import { CategoryVisual } from '../visuals/visual-resolver'
 import {
   createCategory,
   deleteCategory,
@@ -32,6 +33,10 @@ export function CategoryManagement() {
   const categories = useQuery({
     queryFn: getCategories,
     queryKey: ['categories'],
+  })
+  const visuals = useQuery({
+    queryFn: getVisualMappings,
+    queryKey: ['visuals'],
   })
   const [editing, setEditing] = useState<{
     id: string
@@ -209,12 +214,11 @@ export function CategoryManagement() {
               {visibleCategories.map((category) => (
                 <li key={category.id}>
                   <div className="category-list-row__identity">
-                    <span
-                      aria-hidden="true"
-                      className={`category-list-row__icon category-list-row__icon--${category.colorToken ?? 'slate'}`}
-                    >
-                      <CategoryIcon token={category.icon} />
-                    </span>
+                    <CategoryVisual
+                      category={category}
+                      className="category-list-row__icon"
+                      mappings={visuals.data}
+                    />
                     <span className="category-list-row__name">
                       {category.name}
                     </span>

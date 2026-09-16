@@ -18,7 +18,9 @@ export interface TransactionListItem {
     type: string
   }
   category: {
+    colorToken: string | null
     id: string | null
+    icon: string | null
     name: string | null
     source: 'custom' | 'mapped' | 'original' | null
   }

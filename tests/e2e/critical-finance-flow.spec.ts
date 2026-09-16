@@ -190,6 +190,46 @@ test('theme segments remain centered and untruncated across responsive widths', 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
+test('account marks retain their account surface and fit responsive layouts', async ({
+  page,
+}) => {
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  for (const theme of ['Light', 'Dark']) {
+    await page.getByRole('link', { name: 'More' }).first().click()
+    await page.getByRole('button', { name: theme, exact: true }).click()
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-theme',
+      theme.toLowerCase(),
+    )
+    await page.getByRole('link', { name: 'Accounts' }).first().click()
+
+    for (const width of [1440, 1200, 390]) {
+      await page.setViewportSize({ width, height: 932 })
+      const layout = await page.evaluate(() => {
+        const icons = Array.from(
+          document.querySelectorAll('.account-row__icon'),
+        )
+        return {
+          iconOverflow: icons.some(
+            (icon) => icon.scrollWidth > icon.clientWidth,
+          ),
+          marks: icons.map((icon) => icon.textContent?.trim()),
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        }
+      })
+
+      expect(layout.marks).toEqual(['mono'])
+      expect(layout.iconOverflow).toBe(false)
+      expect(layout.scrollWidth).toBe(layout.clientWidth)
+    }
+  }
+})
+
 test('overview switches to a single-column mobile composition without viewport overflow', async ({
   page,
 }) => {

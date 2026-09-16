@@ -1060,16 +1060,11 @@ function Recent({
         <ol className="recent-transactions-list">
           {transactions.slice(0, limit).map((item) => (
             <li key={item.id}>
-              <span
-                aria-hidden="true"
-                className={
-                  item.effectiveAmountMinor >= 0
-                    ? 'recent-transaction-icon is-income'
-                    : 'recent-transaction-icon'
-                }
-              >
-                <TransactionVisual mappings={mappings} transaction={item} />
-              </span>
+              <TransactionVisual
+                className="recent-transaction-icon"
+                mappings={mappings}
+                transaction={item}
+              />
               <span className="recent-transaction-merchant">
                 <strong>{item.originalDescription}</strong>
                 <small>

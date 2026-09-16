@@ -1,12 +1,16 @@
 import type { SVGProps } from 'react'
 
-const ICON_PATHS: Readonly<Record<string, readonly string[]>> = {
+const ICON_PATHS = {
   bills: ['M6 2h12v20l-3-2-3 2-3-2-3 2V2Z', 'M9 7h6M9 11h6M9 15h4'],
   dining: ['M7 3v7M4 3v4a3 3 0 0 0 6 0V3M7 10v11', 'M16 3v18M16 3c3 2 4 6 0 9'],
   education: ['m3 10 9-5 9 5-9 5-9-5Z', 'M7 12v5c3 2 7 2 10 0v-5M21 10v6'],
   entertainment: [
     'M7 8h10a5 5 0 0 1 4.5 7.2l-1.2 2.4a2.5 2.5 0 0 1-4.2.4L14 16h-4l-2.1 2a2.5 2.5 0 0 1-4.2-.4l-1.2-2.4A5 5 0 0 1 7 8Z',
     'M7 12v4M5 14h4M16 13h.01M19 15h.01',
+  ],
+  fuel: [
+    'M5 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h15',
+    'M8 7h5v4H8V7ZM16 8h2l2 2v7a2 2 0 0 1-4 0M18 8V5l2 2',
   ],
   groceries: ['M3 4h2l2 11h10l3-8H6', 'M9 20h.01M17 20h.01'],
   health: [
@@ -19,24 +23,35 @@ const ICON_PATHS: Readonly<Record<string, readonly string[]>> = {
     'M16 8h.01M4 10H2V7',
   ],
   shopping: ['M6 8h12l-1 13H7L6 8Z', 'M9 10V6a3 3 0 0 1 6 0v4'],
+  subscriptions: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z', 'm10 8 6 4-6 4V8Z'],
   transport: [
     'M5 17h14M6 17l1-8h10l1 8',
     'M8 13h.01M16 13h.01M8 20h.01M16 20h.01',
   ],
   travel: ['M4 19h16M6 19l2-13h8l2 13', 'M9 6V4h6v2M8 11h8'],
+  transfer: ['M4 8h13M14 5l3 3-3 3', 'M20 16H7M10 13l-3 3 3 3'],
+  utilities: ['M13 2 5 14h6l-1 6 9-14h-6V2Z'],
   wallet: [
     'M3 6h16a2 2 0 0 1 2 2v11H5a2 2 0 0 1-2-2V6Z',
     'M3 8V5a2 2 0 0 1 2-2h12M16 12h5v4h-5a2 2 0 0 1 0-4Z',
   ],
-}
+} as const
+
+export type CategoryIconToken = keyof typeof ICON_PATHS
 
 interface CategoryIconProps extends SVGProps<SVGSVGElement> {
   token: string | null
 }
 
+function isCategoryIconToken(
+  token: string | null | undefined,
+): token is CategoryIconToken {
+  return token !== null && token !== undefined && token in ICON_PATHS
+}
+
 export function CategoryIcon({ token, ...props }: CategoryIconProps) {
-  const paths = token === null ? undefined : ICON_PATHS[token]
-  if (paths === undefined) return null
+  if (!isCategoryIconToken(token)) return null
+  const paths = ICON_PATHS[token]
 
   return (
     <svg

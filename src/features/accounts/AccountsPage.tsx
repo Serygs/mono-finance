@@ -170,7 +170,7 @@ function AccountRow({ account }: { account: AccountSummary }) {
   return (
     <li className="account-row">
       <span aria-hidden="true" className="account-row__icon">
-        {account.type.slice(0, 1).toUpperCase()}
+        mono
       </span>
       <div className="account-row__identity">
         <strong>{displayAccountType(account.type)}</strong>
