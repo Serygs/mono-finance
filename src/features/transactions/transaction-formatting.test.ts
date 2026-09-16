@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatMoneyAmount,
   formatTransactionDateGroup,
   groupTransactionsByDate,
   parseAmountInputToMinor,
@@ -13,6 +14,12 @@ describe('parseAmountInputToMinor', () => {
 
   it('rejects an amount with more fractional digits than the currency supports', () => {
     expect(parseAmountInputToMinor('-10.123', 2)).toBeNull()
+  })
+})
+
+describe('formatMoneyAmount', () => {
+  it('can include the sign for an incoming transaction amount', () => {
+    expect(formatMoneyAmount(50_000, 'UAH', 2, 'uk', true)).toContain('+')
   })
 })
 

@@ -57,6 +57,9 @@ test('an owner can complete the critical private-finance workflow', async ({
     page.getByRole('button', { name: /Restaurant/ }).getByText('Dining'),
   ).toBeVisible()
 
+  await expect(page.getByLabel('Suggested incoming transaction')).toContainText(
+    '+',
+  )
   await page
     .getByLabel('Suggested incoming transaction')
     .selectOption('income-1')
@@ -839,6 +842,7 @@ function compensationDetails(state: { compensated: boolean }) {
         availableAmountMinor: 1_000,
         confidenceScore: 95,
         description: 'Ivan reimbursement',
+        originalAmountMinor: 1_000,
         originalTimestamp: 1_735_690_000,
         transactionId: 'income-1',
       },
