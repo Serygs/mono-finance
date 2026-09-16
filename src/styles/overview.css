@@ -167,27 +167,13 @@
   box-shadow: 0 0.45rem 1.3rem
     color-mix(in srgb, var(--metric-color), transparent 91%);
   padding: 1rem;
-}
-
-.dashboard-kpis .ui-kpi--cyan {
-  background: linear-gradient(135deg, #fff9fa, var(--negative-soft));
-}
-
-.dashboard-kpis .ui-kpi--blue {
-  background: linear-gradient(135deg, #fbfffd, var(--positive-soft));
-}
-
-.dashboard-kpis .ui-kpi--green {
-  background: linear-gradient(135deg, #fbfdff, var(--accent-soft));
-}
-
-.dashboard-kpis .ui-kpi--pink {
   background: linear-gradient(
     135deg,
-    #fffbff,
-    color-mix(in srgb, var(--chart-violet), white 88%)
+    color-mix(in srgb, var(--metric-color), var(--surface-primary) 86%),
+    color-mix(in srgb, var(--metric-soft), var(--surface-primary) 38%)
   );
 }
+
 .dashboard-kpis .ui-kpi::before {
   display: none;
 }

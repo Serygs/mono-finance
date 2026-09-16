@@ -39,10 +39,13 @@
   --chart-orange: #fb9b42;
   --chart-red: #f15368;
   --chart-slate: #aab4c7;
+  --canvas-glow-primary: #eaf1ff;
+  --canvas-glow-secondary: #eef9ff;
   --color-canvas: var(--app-bg);
   --color-surface: var(--surface-primary);
   --color-surface-raised: var(--surface-primary);
   --color-surface-soft: var(--surface-secondary);
+  --color-surface-sunken: var(--surface-tertiary);
   --color-glass: color-mix(in srgb, var(--surface-primary), transparent 8%);
   --color-text: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -84,47 +87,51 @@
   --motion-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --motion-standard: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --shadow-card:
-    0 0.65rem 1.8rem rgb(47 65 105 / 8%), 0 0.12rem 0.3rem rgb(47 65 105 / 4%);
-  --shadow-overlay: 0 1rem 3rem rgb(22 45 84 / 22%);
+    0 0.65rem 1.8rem rgb(24 29 45 / 8%), 0 0.12rem 0.3rem rgb(24 29 45 / 4%);
+  --shadow-overlay: 0 1rem 3rem rgb(24 29 45 / 22%);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 66%);
 }
 
 :root[data-theme='dark'] {
-  --app-bg: #111421;
-  --surface-primary: #1b2030;
-  --surface-secondary: #242a3b;
-  --surface-tertiary: #2c3550;
-  --surface-hover: #303b56;
-  --border-subtle: rgb(218 232 255 / 15%);
-  --border-strong: rgb(218 232 255 / 28%);
-  --text-primary: #f5f8ff;
-  --text-secondary: #c4d0e2;
-  --text-tertiary: #98a9c2;
-  --accent: #6597ff;
-  --accent-soft: #263d71;
-  --positive: #3bce91;
-  --positive-soft: #123f35;
-  --negative: #ff8da5;
-  --negative-soft: #56283a;
-  --warning: #f0bd56;
-  --warning-soft: #4e3b18;
+  color-scheme: dark;
+  --app-bg: #151515;
+  --surface-primary: #202020;
+  --surface-secondary: #292929;
+  --surface-tertiary: #323232;
+  --surface-hover: #383838;
+  --border-subtle: rgb(255 255 255 / 12%);
+  --border-strong: rgb(255 255 255 / 20%);
+  --text-primary: #f4f2ef;
+  --text-secondary: #c6c3bf;
+  --text-tertiary: #96938f;
+  --accent: #4c8dff;
+  --accent-soft: #19345d;
+  --positive: #35d391;
+  --positive-soft: #173b2d;
+  --negative: #ff6687;
+  --negative-soft: #48212d;
+  --warning: #ffb648;
+  --warning-soft: #4c3618;
   --info: var(--accent);
   --info-soft: var(--accent-soft);
   --on-action: #fff;
-  --chart-income: #36cb8c;
-  --chart-expense: #5b9eff;
-  --chart-violet: #ad8bff;
-  --chart-mint: #38cba4;
-  --chart-cyan: #41c8ed;
-  --chart-purple: #d088fa;
-  --chart-coral: #ff8ba4;
-  --chart-orange: #ffba45;
-  --chart-red: #ff7b89;
-  --chart-slate: #9aacc6;
-  --color-action-hover: #82b3ff;
+  --chart-income: #42d89d;
+  --chart-expense: #589aff;
+  --chart-violet: #ad8cff;
+  --chart-mint: #48d6a3;
+  --chart-cyan: #3ed7f7;
+  --chart-purple: #c694ff;
+  --chart-coral: #ff7eaa;
+  --chart-orange: #ffad53;
+  --chart-red: #ff6374;
+  --chart-slate: #aaa8a5;
+  --canvas-glow-primary: rgb(255 255 255 / 3%);
+  --canvas-glow-secondary: rgb(255 255 255 / 1.8%);
+  --color-action-hover: #78aaff;
   --color-glass: color-mix(in srgb, var(--surface-primary), transparent 8%);
-  --shadow-card: 0 0.45rem 1.4rem rgb(0 0 0 / 22%);
-  --shadow-overlay: 0 1rem 3rem rgb(0 0 0 / 46%);
+  --shadow-card:
+    0 0.45rem 1.4rem rgb(0 0 0 / 26%), 0 0.08rem 0.2rem rgb(0 0 0 / 18%);
+  --shadow-overlay: 0 1rem 3rem rgb(0 0 0 / 52%);
 }
 
 * {
@@ -137,22 +144,46 @@ html,
   min-width: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at 18% -12%, #eaf1ff 0, transparent 28rem),
-    radial-gradient(circle at 94% 35%, #eef9ff 0, transparent 26rem),
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
     var(--color-canvas);
 }
 
 :root[data-theme='dark'] body {
   background:
-    radial-gradient(circle at 18% -12%, #202e57 0, transparent 28rem),
-    radial-gradient(circle at 94% 35%, #172d3e 0, transparent 26rem),
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
     var(--color-canvas);
 }
 
 :root[data-theme='dark'] #root {
   background:
-    radial-gradient(circle at 18% -12%, #202e57 0, transparent 28rem),
-    radial-gradient(circle at 94% 35%, #172d3e 0, transparent 26rem),
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
     var(--color-canvas);
 }
 
@@ -166,8 +197,16 @@ body {
   min-height: 100dvh;
   margin: 0;
   background:
-    radial-gradient(circle at 18% -12%, #eaf1ff 0, transparent 28rem),
-    radial-gradient(circle at 94% 35%, #eef9ff 0, transparent 26rem),
+    radial-gradient(
+      circle at 18% -12%,
+      var(--canvas-glow-primary) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 94% 35%,
+      var(--canvas-glow-secondary) 0,
+      transparent 26rem
+    ),
     var(--color-canvas);
   color: var(--color-text);
   -webkit-tap-highlight-color: color-mix(
