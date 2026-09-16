@@ -24,10 +24,10 @@
   min-width: 0;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-card);
   background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--accent), transparent 91%);
   padding: 0.6rem;
 }
 .dashboard-toolbar {
@@ -58,8 +58,8 @@
 .dashboard-toolbar-menu__trigger,
 .dashboard-toolbar-actions .ui-button {
   min-height: 2.5rem;
-  border-color: var(--color-border);
-  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  background: var(--surface-primary);
   box-shadow: none;
   font-size: 0.82rem;
   font-weight: 600;
@@ -162,9 +162,10 @@
 }
 .dashboard-kpis .ui-kpi {
   min-height: 7.1rem;
-  border-color: color-mix(in srgb, var(--color-border), transparent 8%);
+  border-color: color-mix(in srgb, var(--metric-color), transparent 78%);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 0.45rem 1.3rem
+    color-mix(in srgb, var(--metric-color), transparent 91%);
   padding: 1rem;
 }
 
@@ -172,7 +173,7 @@
   background: color-mix(
     in srgb,
     var(--negative-soft),
-    var(--surface-primary) 24%
+    var(--surface-primary) 44%
   );
 }
 
@@ -180,7 +181,7 @@
   background: color-mix(
     in srgb,
     var(--positive-soft),
-    var(--surface-primary) 24%
+    var(--surface-primary) 44%
   );
 }
 
@@ -188,7 +189,7 @@
   background: color-mix(
     in srgb,
     var(--accent-soft),
-    var(--surface-primary) 24%
+    var(--surface-primary) 44%
   );
 }
 
@@ -196,7 +197,7 @@
   background: color-mix(
     in srgb,
     var(--chart-violet),
-    var(--surface-primary) 82%
+    var(--surface-primary) 90%
   );
 }
 .dashboard-kpis .ui-kpi::before {
@@ -214,7 +215,7 @@
 }
 .dashboard-kpis .ui-kpi__value {
   margin-top: 0.5rem;
-  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
   font-weight: 700;
   letter-spacing: -0.04em;
 }
@@ -227,8 +228,8 @@
 }
 .dashboard-kpis .ui-kpi__icon {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 2.15rem;
+  height: 2.15rem;
   flex: 0 0 auto;
   border-radius: 0.7rem;
   background: var(--metric-soft);
@@ -258,6 +259,7 @@
 .dashboard-grid .ui-card,
 .dashboard-mobile-widgets .ui-card {
   border-radius: var(--radius-card);
+  border-color: var(--color-border);
   box-shadow: var(--shadow-card);
 }
 .dashboard-recent-card .ui-card__header,
@@ -638,8 +640,8 @@
   grid-area: icon;
   align-self: center;
   border-radius: 0.7rem;
-  background: var(--surface-tertiary);
-  color: var(--text-secondary);
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: 0.78rem;
   font-weight: 750;
   place-items: center;
@@ -680,7 +682,7 @@
 }
 
 .weekday-vertical-chart > div > span:first-child {
-  background: linear-gradient(180deg, var(--chart-expense), var(--chart-cyan));
+  background: var(--chart-violet);
 }
 
 .bar-chart {
@@ -723,7 +725,7 @@
 }
 
 .line-chart-grid line {
-  stroke: var(--border-strong);
+  stroke: var(--border-subtle);
   stroke-width: 1;
 }
 

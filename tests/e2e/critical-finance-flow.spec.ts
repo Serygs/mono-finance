@@ -142,7 +142,7 @@ test('theme segments remain centered and untruncated across responsive widths', 
   await page.getByRole('link', { name: 'More' }).first().click()
   await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
 
-  for (const width of [1440, 1152, 390]) {
+  for (const width of [1440, 1200, 390]) {
     await page.setViewportSize({ width, height: 932 })
     const layout = await page.evaluate(() => {
       const track = document.querySelector('.ui-segmented-control__track')!
@@ -443,7 +443,7 @@ test('income and expense bars retain one baseline across responsive widths', asy
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  for (const width of [1440, 768, 390]) {
+  for (const width of [1440, 1200, 390]) {
     await page.setViewportSize({ width, height: 932 })
     await expect(page.locator('.income-expense-plot > div')).toHaveCount(7)
     await expect

@@ -283,7 +283,7 @@
   }
 
   .accounts-page--summary .ui-page-header__actions .ui-button::before {
-    color: #fff;
+    color: var(--on-action);
     content: '↻';
     font-size: 1.35rem;
     font-weight: 400;

@@ -157,8 +157,12 @@
 }
 
 .category-list-row__icon--orange {
-  --category-icon-background: rgb(217 119 6 / 12%);
-  --category-icon-color: #d97706;
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--chart-orange),
+    transparent 84%
+  );
+  --category-icon-color: var(--chart-orange);
 }
 
 .category-list-row__icon--pink {
@@ -181,13 +185,21 @@
 }
 
 .category-list-row__icon--red {
-  --category-icon-background: rgb(228 88 88 / 12%);
-  --category-icon-color: #e45858;
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--chart-red),
+    transparent 84%
+  );
+  --category-icon-color: var(--chart-red);
 }
 
 .category-list-row__icon--slate {
-  --category-icon-background: rgb(119 131 145 / 14%);
-  --category-icon-color: #778391;
+  --category-icon-background: color-mix(
+    in srgb,
+    var(--chart-slate),
+    transparent 84%
+  );
+  --category-icon-color: var(--chart-slate);
 }
 
 .category-list-row__name {
