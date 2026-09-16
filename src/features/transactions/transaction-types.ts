@@ -74,6 +74,7 @@ export interface CompensationSuggestion {
   availableAmountMinor: number
   confidenceScore: number
   description: string
+  originalAmountMinor: number
   originalTimestamp: number
   transactionId: string
 }

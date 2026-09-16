@@ -2,27 +2,48 @@ import type { TransactionListItem } from './transaction-types'
 
 export function formatTransactionAmount(
   transaction: TransactionListItem,
+  locale?: string,
 ): string {
-  return new Intl.NumberFormat(undefined, {
-    currency: transaction.currencyCode,
-    currencyDisplay: 'code',
-    minimumFractionDigits: transaction.currencyMinorUnit,
-    maximumFractionDigits: transaction.currencyMinorUnit,
-    style: 'currency',
-  }).format(
-    transaction.effectiveAmountMinor / 10 ** transaction.currencyMinorUnit,
+  return formatMoneyAmount(
+    transaction.effectiveAmountMinor,
+    transaction.currencyCode,
+    transaction.currencyMinorUnit,
+    locale,
   )
 }
 
-export function formatTransactionTime(epochSeconds: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+export function formatMoneyAmount(
+  amountMinor: number,
+  currencyCode: string,
+  currencyMinorUnit: number,
+  locale?: string,
+  includePositiveSign = false,
+): string {
+  return new Intl.NumberFormat(locale, {
+    currency: currencyCode,
+    currencyDisplay: 'code',
+    maximumFractionDigits: currencyMinorUnit,
+    minimumFractionDigits: currencyMinorUnit,
+    signDisplay: includePositiveSign ? 'always' : 'auto',
+    style: 'currency',
+  }).format(amountMinor / 10 ** currencyMinorUnit)
+}
+
+export function formatTransactionTime(
+  epochSeconds: number,
+  locale?: string,
+): string {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(epochSeconds * 1_000)
 }
 
-export function formatTransactionDate(epochSeconds: number): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(
+export function formatTransactionDate(
+  epochSeconds: number,
+  locale?: string,
+): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
     epochSeconds * 1_000,
   )
 }

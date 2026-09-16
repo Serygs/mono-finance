@@ -11,7 +11,9 @@ import {
 
 import {
   accountLabel,
+  formatMoneyAmount,
   formatTransactionAmount,
+  formatTransactionDate,
   formatTransactionTime,
   parseAmountInputToMinor,
 } from './transaction-formatting'
@@ -25,6 +27,7 @@ import {
   unlinkCompensation,
 } from './transactions-api'
 import type {
+  CompensationSuggestion,
   TransactionCorrection,
   TransactionListItem,
 } from './transaction-types'
@@ -70,7 +73,7 @@ function TransactionDetailsContent({
 }: Omit<TransactionDetailsProps, 'transaction'> & {
   transaction: TransactionListItem
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   const queryClient = useQueryClient()
   const [adjustmentAmount, setAdjustmentAmount] = useState(() =>
     toEditableAmount(
@@ -256,50 +259,52 @@ function TransactionDetailsContent({
 
   return (
     <div className="transaction-details">
-      <div className="transaction-details-heading">
-        <div>
-          <p className="eyebrow">{t('Transaction details')}</p>
-          <h2>{transaction.originalDescription}</h2>
+      <section className="transaction-details-summary">
+        <div className="transaction-details-summary__primary">
+          <h2 title={transaction.originalDescription}>
+            {transaction.originalDescription}
+          </h2>
+          <p>{formatTransactionTime(transaction.originalTimestamp, locale)}</p>
+          <strong className="transaction-details-amount">
+            {formatTransactionAmount(transaction, locale)}
+          </strong>
         </div>
-      </div>
-      <div>
-        <strong className="transaction-details-amount">
-          {formatTransactionAmount(transaction)}
-        </strong>
         {transaction.hasAdjustment ? (
           <span className="transaction-original-amount">
-            {t('Original')}: {formatOriginalAmount(transaction)}
+            {t('Original')}:{' '}
+            {formatMoneyAmount(
+              transaction.originalAmountMinor,
+              transaction.currencyCode,
+              transaction.currencyMinorUnit,
+              locale,
+            )}
           </span>
         ) : null}
-      </div>
-      <dl className="transaction-details-list">
-        <div>
-          <dt>{t('Date and time')}</dt>
-          <dd>{formatTransactionTime(transaction.originalTimestamp)}</dd>
-        </div>
-        <div>
-          <dt>{t('Account')}</dt>
-          <dd>{accountLabel(transaction)}</dd>
-        </div>
-        <div>
-          <dt>{t('Category')}</dt>
-          <dd>
-            {transaction.category.name ?? t('Uncategorized')}
-            {(transaction.category.source === 'custom' ||
-              transaction.category.source === 'mapped') &&
-            transaction.originalCategory.name !== null ? (
-              <span className="transaction-original-amount">
-                {t('Original')}: {transaction.originalCategory.name}
-              </span>
-            ) : null}
-          </dd>
-        </div>
-      </dl>
+        <dl className="transaction-details-list">
+          <div>
+            <dt>{t('Account')}</dt>
+            <dd>{accountLabel(transaction)}</dd>
+          </div>
+          <div>
+            <dt>{t('Category')}</dt>
+            <dd>
+              {transaction.category.name ?? t('Uncategorized')}
+              {(transaction.category.source === 'custom' ||
+                transaction.category.source === 'mapped') &&
+              transaction.originalCategory.name !== null ? (
+                <span className="transaction-original-amount">
+                  {t('Original')}: {transaction.originalCategory.name}
+                </span>
+              ) : null}
+            </dd>
+          </div>
+        </dl>
+      </section>
       <section
-        className="transaction-correction-form"
+        className="transaction-details-section transaction-correction-form"
         aria-labelledby="merchant-appearance-title"
       >
-        <div>
+        <div className="transaction-details-section__header">
           <h3 id="merchant-appearance-title">{t('Merchant appearance')}</h3>
           <p>
             {t(
@@ -333,10 +338,10 @@ function TransactionDetailsContent({
         open={iconPickerOpen}
       />
       <section
-        className="transaction-correction-form"
+        className="transaction-details-section transaction-correction-form"
         aria-labelledby="category-title"
       >
-        <div>
+        <div className="transaction-details-section__header">
           <h3 id="category-title">{t('Analytics category')}</h3>
           <p>
             {t(
@@ -383,10 +388,10 @@ function TransactionDetailsContent({
       </section>
       {transaction.originalAmountMinor < 0 ? (
         <section
-          className="transaction-correction-form"
+          className="transaction-details-section transaction-correction-form"
           aria-labelledby="compensation-title"
         >
-          <div>
+          <div className="transaction-details-section__header">
             <h3 id="compensation-title">{t('Compensations')}</h3>
             <p>
               {t(
@@ -403,6 +408,7 @@ function TransactionDetailsContent({
                     {formatMinor(
                       compensationQuery.data.summary.originalExpenseAmountMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -412,6 +418,7 @@ function TransactionDetailsContent({
                     {formatMinor(
                       compensationQuery.data.summary.compensatedAmountMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -422,6 +429,7 @@ function TransactionDetailsContent({
                       compensationQuery.data.summary
                         .remainingPersonalExpenseMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -430,7 +438,12 @@ function TransactionDetailsContent({
                 <div className="compensation-link" key={link.id}>
                   <span>
                     {link.description} ·{' '}
-                    {formatMinor(link.compensatedAmountMinor, transaction)}
+                    {formatMinor(
+                      link.compensatedAmountMinor,
+                      transaction,
+                      locale,
+                      true,
+                    )}
                   </span>
                   <Button
                     disabled={unlinkCompensationMutation.isPending}
@@ -443,81 +456,90 @@ function TransactionDetailsContent({
                   </Button>
                 </div>
               ))}
-              <FormField label={t('Suggested incoming transaction')}>
-                <Select
-                  value={compensationTransactionId}
-                  onChange={(event) => {
-                    const candidate = compensationQuery.data?.suggestions.find(
-                      (item) => item.transactionId === event.target.value,
-                    )
-                    setCompensationTransactionId(event.target.value)
-                    setCompensationAmount(
-                      candidate
-                        ? toEditableAmount(
-                            Math.min(
-                              candidate.availableAmountMinor,
-                              -compensationQuery.data.summary
-                                .remainingPersonalExpenseMinor,
-                            ),
-                            transaction.currencyMinorUnit,
-                          )
-                        : '',
-                    )
-                  }}
-                >
-                  <option value="">{t('Choose a suggestion')}</option>
-                  {compensationQuery.data.suggestions.map((candidate) => (
-                    <option
-                      key={candidate.transactionId}
-                      value={candidate.transactionId}
-                    >
-                      {candidate.description} · {candidate.confidenceScore}%
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-              <FormField
-                label={`${t('Compensated amount')} (${transaction.currencyCode})`}
-              >
-                <input
-                  autoComplete="off"
-                  inputMode="decimal"
-                  name="compensated-amount"
-                  value={compensationAmount}
-                  onChange={(event) =>
-                    setCompensationAmount(event.target.value)
-                  }
-                />
-              </FormField>
-              <Button
-                disabled={
-                  compensationTransactionId === '' ||
-                  compensationMutation.isPending
-                }
-                onClick={() => {
-                  const amount = parseAmountInputToMinor(
-                    compensationAmount,
-                    transaction.currencyMinorUnit,
-                  )
-                  if (amount === null || amount <= 0) {
-                    setValidationMessage(
-                      t('Enter a valid positive compensation amount.'),
-                    )
-                    return
-                  }
-                  setValidationMessage(null)
-                  compensationMutation.mutate({
-                    compensationTransactionId,
-                    compensatedAmountMinor: amount,
-                  })
-                }}
-                loading={compensationMutation.isPending}
-                type="button"
-              >
-                {compensationMutation.isPending
-                  ? t('Linking…')
-                  : t('Link compensation')}
-              </Button>
+              <div className="transaction-compensation-controls">
+                <FormField label={t('Suggested incoming transaction')}>
+                  <Select
+                    value={compensationTransactionId}
+                    onChange={(event) => {
+                      const candidate =
+                        compensationQuery.data?.suggestions.find(
+                          (item) => item.transactionId === event.target.value,
+                        )
+                      setCompensationTransactionId(event.target.value)
+                      setCompensationAmount(
+                        candidate
+                          ? toEditableAmount(
+                              Math.min(
+                                candidate.availableAmountMinor,
+                                -compensationQuery.data.summary
+                                  .remainingPersonalExpenseMinor,
+                              ),
+                              transaction.currencyMinorUnit,
+                            )
+                          : '',
+                      )
+                    }}
+                  >
+                    <option value="">{t('Choose a suggestion')}</option>
+                    {compensationQuery.data.suggestions.map((candidate) => (
+                      <option
+                        key={candidate.transactionId}
+                        value={candidate.transactionId}
+                      >
+                        {formatCompensationSuggestion(
+                          candidate,
+                          transaction,
+                          locale,
+                        )}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+                <div className="transaction-compensation-controls__action">
+                  <FormField
+                    label={`${t('Compensated amount')} (${transaction.currencyCode})`}
+                  >
+                    <input
+                      autoComplete="off"
+                      inputMode="decimal"
+                      name="compensated-amount"
+                      value={compensationAmount}
+                      onChange={(event) =>
+                        setCompensationAmount(event.target.value)
+                      }
+                    />
+                  </FormField>
+                  <Button
+                    disabled={
+                      compensationTransactionId === '' ||
+                      compensationMutation.isPending
+                    }
+                    onClick={() => {
+                      const amount = parseAmountInputToMinor(
+                        compensationAmount,
+                        transaction.currencyMinorUnit,
+                      )
+                      if (amount === null || amount <= 0) {
+                        setValidationMessage(
+                          t('Enter a valid positive compensation amount.'),
+                        )
+                        return
+                      }
+                      setValidationMessage(null)
+                      compensationMutation.mutate({
+                        compensationTransactionId,
+                        compensatedAmountMinor: amount,
+                      })
+                    }}
+                    loading={compensationMutation.isPending}
+                    type="button"
+                  >
+                    {compensationMutation.isPending
+                      ? t('Linking…')
+                      : t('Link compensation')}
+                  </Button>
+                </div>
+              </div>
             </>
           ) : null}
           {compensationQuery.isPending ? (
@@ -532,8 +554,11 @@ function TransactionDetailsContent({
           ) : null}
         </section>
       ) : null}
-      <form className="transaction-correction-form" onSubmit={submitAdjustment}>
-        <div>
+      <form
+        className="transaction-details-section transaction-correction-form"
+        onSubmit={submitAdjustment}
+      >
+        <div className="transaction-details-section__header">
           <h3>{t('Analytics adjustment')}</h3>
           <p>
             {t(
@@ -580,10 +605,10 @@ function TransactionDetailsContent({
         </div>
       </form>
       <section
-        className="transaction-exclusion"
+        className="transaction-details-section transaction-exclusion"
         aria-labelledby="exclusion-title"
       >
-        <div>
+        <div className="transaction-details-section__header">
           <h3 id="exclusion-title">{t('Analytics exclusion')}</h3>
           <p>
             {t(
@@ -657,28 +682,31 @@ function TransactionDetailsContent({
   )
 }
 
-function formatOriginalAmount(transaction: TransactionListItem): string {
-  return new Intl.NumberFormat(undefined, {
-    currency: transaction.currencyCode,
-    currencyDisplay: 'code',
-    minimumFractionDigits: transaction.currencyMinorUnit,
-    maximumFractionDigits: transaction.currencyMinorUnit,
-    style: 'currency',
-  }).format(
-    transaction.originalAmountMinor / 10 ** transaction.currencyMinorUnit,
-  )
-}
 function formatMinor(
   amountMinor: number,
   transaction: TransactionListItem,
+  locale?: string,
+  includePositiveSign = false,
 ): string {
-  return new Intl.NumberFormat(undefined, {
-    currency: transaction.currencyCode,
-    currencyDisplay: 'code',
-    minimumFractionDigits: transaction.currencyMinorUnit,
-    maximumFractionDigits: transaction.currencyMinorUnit,
-    style: 'currency',
-  }).format(amountMinor / 10 ** transaction.currencyMinorUnit)
+  return formatMoneyAmount(
+    amountMinor,
+    transaction.currencyCode,
+    transaction.currencyMinorUnit,
+    locale,
+    includePositiveSign,
+  )
+}
+
+function formatCompensationSuggestion(
+  candidate: CompensationSuggestion,
+  transaction: TransactionListItem,
+  locale: string,
+): string {
+  return [
+    candidate.description,
+    formatMinor(candidate.originalAmountMinor, transaction, locale, true),
+    formatTransactionDate(candidate.originalTimestamp, locale),
+  ].join(' \u00b7 ')
 }
 
 function toEditableAmount(amountMinor: number, minorUnit: number): string {

@@ -361,6 +361,199 @@
   margin-top: 0.25rem;
 }
 
+.transaction-details {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.transaction-details-summary {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-secondary);
+  padding: 1rem;
+}
+
+.transaction-details-summary__primary {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.transaction-details-summary h2,
+.transaction-details-section h3 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-details-summary h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.transaction-details-summary__primary > p,
+.transaction-details-section__header > p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.transaction-details-amount {
+  margin-top: 0.15rem;
+  color: var(--color-text);
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.transaction-original-amount {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+}
+
+.transaction-details-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.75rem;
+  margin: 0;
+}
+
+.transaction-details-list dt {
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.transaction-details-list dd {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0.12rem 0 0;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-details-list .transaction-original-amount {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transaction-details-section {
+  display: grid;
+  min-width: 0;
+  gap: 0.75rem;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 0 0;
+}
+
+.transaction-details-section__header {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.transaction-details-section h3 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.transaction-correction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.compensation-summary {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  padding: 0.7rem 0.75rem;
+}
+
+.compensation-summary > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.compensation-summary dt {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compensation-summary dd {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.compensation-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.65rem;
+}
+
+.compensation-link > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compensation-link .ui-button {
+  flex: 0 0 auto;
+}
+
+.transaction-compensation-controls {
+  display: grid;
+  min-width: 0;
+  gap: 0.65rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.transaction-compensation-controls__action {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.transaction-details .ui-field textarea {
+  min-height: 4.5rem;
+}
+
 @media (max-width: 74.99rem) and (min-width: 48rem) {
   .transactions-toolbar {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -670,6 +863,42 @@
   .transactions-pagination {
     margin-top: 0.1rem;
     padding-bottom: 0.5rem;
+  }
+
+  .transaction-details {
+    gap: 0.85rem;
+  }
+
+  .transaction-details-summary {
+    padding: 0.9rem;
+  }
+
+  .transaction-details-summary h2 {
+    font-size: 1.08rem;
+  }
+
+  .transaction-details-section {
+    gap: 0.7rem;
+    padding-top: 0.85rem;
+  }
+
+  .transaction-compensation-controls__action {
+    grid-template-columns: 1fr;
+  }
+
+  .transaction-correction-actions {
+    flex-direction: column;
+  }
+
+  .transaction-correction-actions .ui-button,
+  .transaction-compensation-controls__action .ui-button,
+  .transaction-exclusion > .ui-button {
+    width: 100%;
+    min-height: var(--control-height-touch);
+  }
+
+  .compensation-link {
+    align-items: flex-start;
   }
 }
 
