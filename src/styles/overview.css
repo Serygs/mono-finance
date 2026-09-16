@@ -170,34 +170,22 @@
 }
 
 .dashboard-kpis .ui-kpi--cyan {
-  background: color-mix(
-    in srgb,
-    var(--negative-soft),
-    var(--surface-primary) 44%
-  );
+  background: linear-gradient(135deg, #fff9fa, var(--negative-soft));
 }
 
 .dashboard-kpis .ui-kpi--blue {
-  background: color-mix(
-    in srgb,
-    var(--positive-soft),
-    var(--surface-primary) 44%
-  );
+  background: linear-gradient(135deg, #fbfffd, var(--positive-soft));
 }
 
 .dashboard-kpis .ui-kpi--green {
-  background: color-mix(
-    in srgb,
-    var(--accent-soft),
-    var(--surface-primary) 44%
-  );
+  background: linear-gradient(135deg, #fbfdff, var(--accent-soft));
 }
 
 .dashboard-kpis .ui-kpi--pink {
-  background: color-mix(
-    in srgb,
-    var(--chart-violet),
-    var(--surface-primary) 90%
+  background: linear-gradient(
+    135deg,
+    #fffbff,
+    color-mix(in srgb, var(--chart-violet), white 88%)
   );
 }
 .dashboard-kpis .ui-kpi::before {
@@ -231,7 +219,7 @@
   width: 2.15rem;
   height: 2.15rem;
   flex: 0 0 auto;
-  border-radius: 0.7rem;
+  border-radius: 50%;
   background: var(--metric-soft);
   color: var(--metric-color);
   font-size: 1.15rem;
@@ -639,7 +627,7 @@
   height: 2.1rem;
   grid-area: icon;
   align-self: center;
-  border-radius: 0.7rem;
+  border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 0.78rem;

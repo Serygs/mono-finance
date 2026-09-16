@@ -211,7 +211,7 @@
   width: 2.15rem;
   height: 2.15rem;
   grid-column: 1;
-  border-radius: 0.72rem;
+  border-radius: 50%;
   color: var(--transaction-icon-color, var(--color-text-secondary));
   background: var(--transaction-icon-background, var(--surface-secondary));
   font-size: 0.82rem;
@@ -783,7 +783,7 @@
     height: 2.35rem;
     grid-column: 1;
     grid-row: 1 / span 2;
-    border-radius: 0.8rem;
+    border-radius: 50%;
     color: var(--color-text);
     font-size: 0.9rem;
     font-weight: 700;

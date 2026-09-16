@@ -117,7 +117,7 @@
   width: 2.25rem;
   height: 2.25rem;
   flex: 0 0 2.25rem;
-  border-radius: 0.75rem;
+  border-radius: 50%;
   background: var(--category-icon-background, var(--color-surface-soft));
   color: var(--category-icon-color, var(--color-text-secondary));
   place-items: center;

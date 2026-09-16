@@ -22,7 +22,11 @@
   gap: 0.85rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  background: var(--color-surface-raised);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface-raised),
+    var(--accent-soft)
+  );
   box-shadow: var(--shadow-card);
   padding: 1rem;
 }
@@ -83,7 +87,7 @@
   height: 2.35rem;
   grid-area: icon;
   align-self: center;
-  border-radius: 0.75rem;
+  border-radius: 50%;
   background: var(--color-action-soft);
   color: var(--color-action);
   font-size: 0.84rem;
@@ -187,6 +191,24 @@
   font-size: 0.86rem;
   font-weight: 750;
   place-items: center;
+}
+
+.account-row:nth-child(3n + 1) .account-row__icon {
+  border-color: transparent;
+  background: linear-gradient(135deg, #1f8cff, #1764d8);
+  color: white;
+  box-shadow: 0 0.4rem 0.9rem rgb(38 100 240 / 24%);
+}
+
+.account-row:nth-child(3n + 2) .account-row__icon {
+  border-color: transparent;
+  background: linear-gradient(135deg, #f8f9fc, #dfe4ed);
+}
+
+.account-row:nth-child(3n) .account-row__icon {
+  border-color: transparent;
+  background: linear-gradient(135deg, #273046, #111522);
+  color: white;
 }
 
 .account-row__identity,

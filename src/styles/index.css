@@ -8,37 +8,37 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   /* Semantic layers are the only colour contract consumed by product CSS. */
-  --app-bg: #f5f8fe;
+  --app-bg: #f7f8fd;
   --surface-primary: #ffffff;
-  --surface-secondary: #f6f8fc;
-  --surface-tertiary: #e8f0ff;
-  --surface-hover: #edf3ff;
-  --border-subtle: rgb(43 78 132 / 16%);
-  --border-strong: rgb(43 78 132 / 28%);
-  --text-primary: #14213d;
-  --text-secondary: #4e607d;
-  --text-tertiary: #74839c;
-  --accent: #1769e0;
-  --accent-soft: #dceaff;
-  --positive: #079566;
-  --positive-soft: #d7f6e8;
-  --negative: #dc3e5c;
-  --negative-soft: #ffe0e6;
-  --warning: #b96e00;
-  --warning-soft: #fff0cc;
+  --surface-secondary: #f4f6fb;
+  --surface-tertiary: #e9efff;
+  --surface-hover: #eef3ff;
+  --border-subtle: rgb(61 76 117 / 12%);
+  --border-strong: rgb(61 76 117 / 20%);
+  --text-primary: #12172a;
+  --text-secondary: #687086;
+  --text-tertiary: #959db0;
+  --accent: #2864f0;
+  --accent-soft: #e3edff;
+  --positive: #18ae75;
+  --positive-soft: #e0f8ed;
+  --negative: #f0446b;
+  --negative-soft: #ffebf0;
+  --warning: #ef9a23;
+  --warning-soft: #fff2dc;
   --info: var(--accent);
   --info-soft: var(--accent-soft);
   --on-action: #fff;
-  --chart-income: #0aa56f;
-  --chart-expense: #2a75ed;
-  --chart-violet: #7754df;
-  --chart-mint: #0fa982;
-  --chart-cyan: #0798c5;
-  --chart-purple: #9a57db;
-  --chart-coral: #eb5c78;
-  --chart-orange: #e58a00;
-  --chart-red: #e34b55;
-  --chart-slate: #6f809d;
+  --chart-income: #28bd84;
+  --chart-expense: #3184ef;
+  --chart-violet: #8b63f6;
+  --chart-mint: #3bcf9b;
+  --chart-cyan: #39bfe5;
+  --chart-purple: #a77af7;
+  --chart-coral: #f77696;
+  --chart-orange: #fb9b42;
+  --chart-red: #f15368;
+  --chart-slate: #aab4c7;
   --color-canvas: var(--app-bg);
   --color-surface: var(--surface-primary);
   --color-surface-raised: var(--surface-primary);
@@ -83,24 +83,25 @@
   --control-height-touch: 2.75rem;
   --motion-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --motion-standard: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --shadow-card: 0 0.35rem 1.25rem rgb(35 63 110 / 8%);
+  --shadow-card:
+    0 0.65rem 1.8rem rgb(47 65 105 / 8%), 0 0.12rem 0.3rem rgb(47 65 105 / 4%);
   --shadow-overlay: 0 1rem 3rem rgb(22 45 84 / 22%);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent), transparent 66%);
 }
 
 :root[data-theme='dark'] {
-  --app-bg: #0d1422;
-  --surface-primary: #152136;
-  --surface-secondary: #1b2a42;
-  --surface-tertiary: #223754;
-  --surface-hover: #283f60;
+  --app-bg: #111421;
+  --surface-primary: #1b2030;
+  --surface-secondary: #242a3b;
+  --surface-tertiary: #2c3550;
+  --surface-hover: #303b56;
   --border-subtle: rgb(218 232 255 / 15%);
   --border-strong: rgb(218 232 255 / 28%);
   --text-primary: #f5f8ff;
   --text-secondary: #c4d0e2;
   --text-tertiary: #98a9c2;
-  --accent: #4d93ff;
-  --accent-soft: #173f7a;
+  --accent: #6597ff;
+  --accent-soft: #263d71;
   --positive: #3bce91;
   --positive-soft: #123f35;
   --negative: #ff8da5;
@@ -135,7 +136,24 @@ html,
   width: 100%;
   min-width: 0;
   min-height: 100%;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(circle at 18% -12%, #eaf1ff 0, transparent 28rem),
+    radial-gradient(circle at 94% 35%, #eef9ff 0, transparent 26rem),
+    var(--color-canvas);
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at 18% -12%, #202e57 0, transparent 28rem),
+    radial-gradient(circle at 94% 35%, #172d3e 0, transparent 26rem),
+    var(--color-canvas);
+}
+
+:root[data-theme='dark'] #root {
+  background:
+    radial-gradient(circle at 18% -12%, #202e57 0, transparent 28rem),
+    radial-gradient(circle at 94% 35%, #172d3e 0, transparent 26rem),
+    var(--color-canvas);
 }
 
 html {
@@ -147,7 +165,10 @@ body {
   min-width: 0;
   min-height: 100dvh;
   margin: 0;
-  background: var(--color-canvas);
+  background:
+    radial-gradient(circle at 18% -12%, #eaf1ff 0, transparent 28rem),
+    radial-gradient(circle at 94% 35%, #eef9ff 0, transparent 26rem),
+    var(--color-canvas);
   color: var(--color-text);
   -webkit-tap-highlight-color: color-mix(
     in srgb,
