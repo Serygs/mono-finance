@@ -11,18 +11,18 @@ description: Canonical UI/UX contract for Mono Finance. Use for every frontend r
 
 Before changing a page, open `REFERENCE_INDEX.md` and inspect only the matching references.
 
-The bundled images are not loose inspiration. They are the primary visual target for composition, hierarchy, density, typography scale, card proportions, navigation, filters, list/table density, chart/widget proportions, icons, borders/shadows, and desktop/mobile interaction patterns.
+Project-provided canonical images, including private references available in the task context, are not loose inspiration. They are the primary visual target for composition, hierarchy, density, typography scale, card proportions, navigation, filters, list/table density, chart/widget proportions, icons, color, surfaces, borders/shadows, and desktop/mobile interaction patterns.
 
 Preserve real Mono Finance data, business rules, APIs, routing, and i18n, but do not preserve legacy presentation merely because it already works. If the existing UI conflicts with a canonical reference, replace the presentation. Page markup, page-level CSS, containers, cards, toolbars, tables, navigation composition, and responsive structure may be rewritten.
 
-Do not stop at an "Apple-like" approximation. Side-by-side, the resulting page should be recognizably the same design system and composition as the matching reference.
+Do not stop at an "Apple-like" approximation. Side-by-side, the resulting page should be recognizably the same design system, composition, and expressive visual direction as the matching reference.
 
 Generated reference text, fake values, and unsupported actions are illustrative only. Never fabricate product data or functionality.
 
 ## 2. Reference priority
 
 For a page redesign, use references in this order:
-1. page-specific canonical desktop/mobile reference when available;
+1. page-specific canonical desktop/mobile reference when available, including private project-provided references;
 2. canonical reference boards;
 3. older supplemental references;
 4. this written design contract.
@@ -58,22 +58,24 @@ Canonical mobile navigation contains:
 - Рахунки / Accounts;
 - Ще / More.
 
-Use the bundled mobile page references for the visual direction.
+Use the matching canonical mobile page references when they are available for the visual direction.
 
 ## 5. Visual language
 
 Mono Finance is a premium personal-finance product, not a generic admin dashboard.
 
 Target:
-- Apple-inspired, not a pixel copy of Apple;
-- calm, minimal, polished;
-- compact and information-dense;
-- soft surfaces;
-- restrained borders and shadows;
-- clear financial hierarchy;
-- coherent light/dark themes.
+- Apple-inspired, not a pixel copy of Apple and never a synonym for monochrome, desaturated, or visually sterile;
+- premium, vivid, expressive, polished, and visually memorable;
+- compact and information-dense, with a clear financial hierarchy;
+- strong semantic color, colorful icons, richer chart palettes, tinted surfaces, layered hierarchy, and clear visual differentiation;
+- saturated accents for categories, merchant visuals, charts, status indicators, active navigation, important actions, and financial semantics;
+- controlled large surfaces that let colorful elements retain contrast without globally desaturating the product;
+- coherent, accessible light/dark themes.
 
-Avoid generic admin-panel aesthetics, oversized cards with little content, heavy shadows, excessive gradients/glassmorphism, raw browser-looking controls, and duplicated page-specific styling for shared controls.
+Minimalism means removing unnecessary UI, not removing color or personality. Gradients, richer shadows, subtle glow, decorative backgrounds, and illustrations are allowed when intentional, readable, and supported by the supplied canonical reference. Avoid generic admin-panel aesthetics, oversized cards with little content, raw browser-looking controls, and duplicated page-specific styling for shared controls.
+
+Reference fidelity takes precedence over legacy presentation and conservative stylistic defaults. When a supplied canonical reference is materially more colorful or expressive than the current app, reproduce that visual direction rather than averaging it with the legacy UI.
 
 ## 6. Typography
 
@@ -114,13 +116,13 @@ Typical:
 - card padding: 16–24px;
 - compact row vertical padding: 12–16px.
 
-Main cards: roughly 16–20px radius. Nested controls: roughly 10–12px radius. Use subtle 1px borders and soft or no shadow. Prefer spacing/background/border before shadow to create hierarchy.
+Main cards: roughly 16–20px radius. Nested controls: roughly 10–12px radius. Choose borders, tinted surfaces, layered elevation, shadows, glow, and decorative treatment deliberately to match the canonical reference while preserving legibility and accessible contrast. Prefer shared tokens when the treatment recurs.
 
 ## 8. Shared primitives
 
 Search for existing shared primitives before creating page-specific ones. Prefer shared implementations for PageHeader, Surface/SectionCard, Button, Input, Select/Dropdown/MultiSelect, Popover/Dialog/Tooltip, InfoTooltip, StatusBadge, SegmentedControl, CompactTable, SearchField, EmptyState, Skeleton, and OverflowMenu.
 
-If a visual fix affects two or more pages, implement it in the shared layer.
+If a visual fix affects two or more pages, implement it in the shared layer. Page-specific art direction is allowed when it is needed for canonical-reference fidelity.
 
 ## 9. Controls
 

@@ -1,14 +1,35 @@
 # Mono Finance UI reference index
 
-The binary visual references were removed before public release because their
-data provenance could not be independently verified. Use the application and
-shared design-system guidance as the source of truth; never add screenshots
-containing real financial data.
+## Canonical private references
+
+Private or project-provided references may be canonical visual sources even
+when they are intentionally absent from the public repository. When one is
+available in the task or project context, it overrides legacy UI presentation
+and conservative stylistic defaults for its matching page.
+
+Canonical reference names:
+
+- `overview-desktop`
+- `overview-mobile`
+- `transactions-desktop`
+- `transactions-mobile`
+- `categories-desktop`
+- `categories-mobile`
+- `accounts-desktop`
+- `accounts-mobile`
+- `more-desktop`
+- `more-mobile`
+
+Do not restore financial screenshots from Git history or commit private
+reference assets unless their provenance is explicitly confirmed safe for
+public release.
 
 ## Usage
 
-Review the existing components and design-system rules before implementing a
-page. Treat those rules as the visual contract, not loose inspiration.
+Inspect only the desktop/mobile references that match the page being changed.
+Treat an available canonical reference as the visual contract, not loose
+inspiration. It may establish page-specific art direction in addition to the
+shared design system.
 
 Match as closely as practical:
 - composition;
@@ -21,6 +42,7 @@ Match as closely as practical:
 - toolbar/filter composition;
 - tables/lists;
 - chart/widget proportions;
+- color, iconography, tinted surfaces, backgrounds, and visual differentiation;
 - borders and shadows;
 - mobile interaction patterns.
 

@@ -39,13 +39,16 @@
 
 ## Design system
 
-- Visual direction: clean Apple-inspired personal-finance UI; minimal, compact, calm, and information-dense.
-- Reuse the existing theme tokens and shared components instead of adding page-specific styles.
+- Visual direction: premium, vivid, expressive, and visually memorable personal-finance UI; clean, compact, and information-dense without being visually sterile. Apple-inspired does not mean monochrome or desaturated.
+- Prefer strong semantic color, colorful icons, richer chart palettes, tinted surfaces, layered hierarchy, and clear differentiation for categories, merchants, statuses, active navigation, important actions, and financial meaning. Keep large surfaces controlled so these elements retain contrast; do not globally desaturate the product.
+- Reuse the existing theme tokens and shared components where appropriate, while allowing page-specific art direction when needed to reproduce a canonical reference.
 - Use the system font stack; do not bundle Apple fonts.
 - Form controls must inherit application typography; raw browser-looking selects are not acceptable.
 - Prefer compact list/table rows over large cards for small records.
 - Desktop actions such as Edit / Merge / Delete should be horizontal or moved into an overflow menu.
-- Avoid large empty cards, excessive gradients, strong shadows, and generic admin-dashboard styling.
+- Gradients, richer shadows, subtle glow, decorative background treatment, and illustrations are allowed when intentional and supported by a supplied canonical reference. Use them to strengthen hierarchy and visual identity without reducing readability, accessibility, or data clarity.
+- Minimalism means removing unnecessary UI, not removing color or personality. Avoid generic admin-dashboard styling and large empty cards with little useful content.
+- A supplied canonical reference takes precedence over legacy presentation and conservative stylistic defaults. When it is materially more colorful or expressive than the current app, reproduce that direction rather than averaging it with the legacy UI.
 - All redesigned UI must work in both light and dark themes.
 
 ## Responsive layout
