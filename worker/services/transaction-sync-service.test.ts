@@ -16,6 +16,7 @@ const account = (id: string): ClaimedTransactionSyncAccount => ({
   backfillStartAt: 1_000,
   currencyCode: 'UAH',
   lastSyncedTransactionAt: null,
+  lastSuccessfulSyncAt: null,
   monobankAccountId: `monobank-${id}`,
   userId: 'owner-1',
 })
@@ -116,17 +117,125 @@ describe('TransactionSyncService', () => {
       'account-2',
     ])
   })
+
+  it('imports the current window before resuming a partial historical backfill', async () => {
+    const partiallyBackfilled = {
+      ...account('account-1'),
+      backfillCursorAt: 1_500,
+      lastSyncedTransactionAt: 2_000,
+    }
+    const repository = new FakeRepository([partiallyBackfilled])
+    repository.importResult = { importedCount: 1, skippedDuplicateCount: 0 }
+    const service = serviceFor(repository, {
+      ...transaction,
+      occurredAtEpochSeconds: 3_000_000,
+    })
+
+    await expect(
+      service.synchronizeLatestForAll('owner-1'),
+    ).resolves.toMatchObject({
+      accountIds: ['account-1'],
+      importedCount: 1,
+    })
+    expect(repository.latestCompletions).toEqual([
+      expect.objectContaining({
+        accountId: 'account-1',
+        lastSyncedTransactionAt: 3_000_000,
+      }),
+    ])
+    expect(repository.completed).toEqual([])
+  })
+
+  it('imports current transactions for every active account sequentially', async () => {
+    const repository = new FakeRepository([
+      account('account-1'),
+      account('account-2'),
+    ])
+    repository.importResult = { importedCount: 1, skippedDuplicateCount: 0 }
+    const client = new FakeMonobankClient([transaction])
+    const service = new TransactionSyncService(repository, client, {
+      nowEpochSeconds: () => 3_000_000,
+    })
+
+    await expect(
+      service.synchronizeLatestForAll('owner-1'),
+    ).resolves.toMatchObject({
+      accountIds: ['account-1', 'account-2'],
+      importedCount: 2,
+    })
+    expect(client.requests.map((request) => request.accountId)).toEqual([
+      'monobank-account-1',
+      'monobank-account-2',
+    ])
+  })
+
+  it('does not request a statement when the current window has no new time to import', async () => {
+    const repository = new FakeRepository([
+      { ...account('account-1'), lastSyncedTransactionAt: 3_000_000 },
+    ])
+    const client = new FakeMonobankClient([])
+    const service = new TransactionSyncService(repository, client, {
+      nowEpochSeconds: () => 3_000_000,
+    })
+
+    await expect(
+      service.synchronizeLatestForAll('owner-1'),
+    ).resolves.toMatchObject({
+      accountIds: ['account-1'],
+      importedCount: 0,
+    })
+    expect(client.requests).toEqual([])
+  })
+
+  it('retains duplicate overlap protection during the latest pass', async () => {
+    const repository = new FakeRepository([account('account-1')])
+    repository.importResult = { importedCount: 0, skippedDuplicateCount: 1 }
+
+    await expect(
+      serviceFor(repository, transaction).synchronizeLatestForAll('owner-1'),
+    ).resolves.toMatchObject({
+      importedCount: 0,
+      skippedDuplicateCount: 1,
+    })
+  })
+
+  it('stops on a provider failure without changing resumable backfill state', async () => {
+    const partiallyBackfilled = {
+      ...account('account-1'),
+      backfillCursorAt: 1_500,
+    }
+    const repository = new FakeRepository([partiallyBackfilled])
+    const client = new FakeMonobankClient([])
+    client.error = new MonobankApiError('rate_limit', 'upstream details', {
+      retryable: true,
+    })
+    const service = new TransactionSyncService(repository, client, {
+      nowEpochSeconds: () => 3_000_000,
+    })
+
+    await expect(
+      service.synchronizeLatestForAll('owner-1'),
+    ).rejects.toMatchObject({
+      code: 'rate_limit',
+    })
+    expect(repository.failures).toEqual([
+      { accountId: 'account-1', errorCode: 'rate_limit' },
+    ])
+    expect(repository.completed).toEqual([])
+    expect(repository.latestCompletions).toEqual([])
+  })
 })
 
 function serviceFor(
   repository: FakeRepository,
-  transactions: TransactionSourceRecord[],
+  transactions: TransactionSourceRecord | TransactionSourceRecord[],
 ): TransactionSyncService {
-  return new TransactionSyncService(
-    repository,
-    new FakeMonobankClient(transactions),
-    { nowEpochSeconds: () => 3_000_000 },
+  const client = new FakeMonobankClient(
+    Array.isArray(transactions) ? transactions : [transactions],
   )
+  return new TransactionSyncService(repository, client, {
+    nowEpochSeconds: () => 3_000_000,
+  })
 }
 
 class FakeMonobankClient {
@@ -156,6 +265,7 @@ class FakeRepository implements TransactionSyncRepository {
   emptyCompletions: string[] = []
   failures: Array<{ accountId: string; errorCode: string }> = []
   imports: Array<{ accountId: string }> = []
+  latestCompletions: Array<Record<string, unknown>> = []
   importResult = { importedCount: 0, skippedDuplicateCount: 0 }
   private readonly accounts: ClaimedTransactionSyncAccount[]
 
@@ -167,12 +277,20 @@ class FakeRepository implements TransactionSyncRepository {
     return this.accounts.shift() ?? null
   }
 
+  async claimNextLatest() {
+    return this.accounts.shift() ?? null
+  }
+
   async completeEmptyWindow(accountId: string) {
     this.emptyCompletions.push(accountId)
   }
 
   async completeWindow(input: Record<string, unknown>) {
     this.completed.push(input)
+  }
+
+  async completeLatestWindow(input: Record<string, unknown>) {
+    this.latestCompletions.push(input)
   }
 
   async failWindow(accountId: string, errorCode: string) {

@@ -8,9 +8,8 @@ export interface TransactionSyncState {
 }
 
 export interface TransactionSyncResult {
-  accountId: string | null
+  accountIds: string[]
   importedCount: number
   skippedDuplicateCount: number
-  status: 'completed' | 'no_accounts' | 'synchronized'
-  window: { fromEpochSeconds: number; toEpochSeconds: number } | null
+  status: 'no_accounts' | 'synchronized'
 }

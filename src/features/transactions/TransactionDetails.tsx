@@ -185,17 +185,21 @@ function TransactionDetailsContent({
       compensationTransactionId: string
       compensatedAmountMinor: number
     }) => linkCompensation(transaction.id, input),
-    onSuccess: () =>
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ['compensations', transaction.id],
-      }),
+      })
+      refreshTransactions()
+    },
   })
   const unlinkCompensationMutation = useMutation({
     mutationFn: (linkId: string) => unlinkCompensation(transaction.id, linkId),
-    onSuccess: () =>
+    onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ['compensations', transaction.id],
-      }),
+      })
+      refreshTransactions()
+    },
   })
   const merchantVisualMutation = useMutation({
     mutationFn: (assetId: string | null) =>
@@ -704,7 +708,7 @@ function formatCompensationSuggestion(
 ): string {
   return [
     candidate.description,
-    formatMinor(candidate.originalAmountMinor, transaction, locale, true),
+    formatMinor(candidate.availableAmountMinor, transaction, locale, true),
     formatTransactionDate(candidate.originalTimestamp, locale),
   ].join(' \u00b7 ')
 }

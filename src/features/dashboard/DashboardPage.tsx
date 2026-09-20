@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { GridLayout, useContainerWidth } from 'react-grid-layout'
+import { GridLayout, useContainerWidth, type Layout } from 'react-grid-layout'
 import { Link, useLocation } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
@@ -228,7 +228,9 @@ function DashboardPageContent() {
     setSyncingAccounts(true)
     try {
       setAccounts(await synchronizeAccounts())
-      await client.invalidateQueries({ queryKey: ['dashboard-analytics'] })
+      await synchronizeTransactions()
+      setSyncStates(await getTransactionSyncStatus())
+      await refreshAfterTransactionSync()
     } catch {
       setError('Accounts could not be synchronized. Try again later.')
     } finally {
@@ -240,15 +242,21 @@ function DashboardPageContent() {
     try {
       await synchronizeTransactions()
       setSyncStates(await getTransactionSyncStatus())
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-        client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
-      ])
+      await refreshAfterTransactionSync()
     } catch {
       setError('Transaction sync is unavailable. Try again later.')
     } finally {
       setSyncingTransactions(false)
     }
+  }
+  function refreshAfterTransactionSync() {
+    return Promise.all([
+      client.invalidateQueries({ queryKey: ['accounts'] }),
+      client.invalidateQueries({ queryKey: ['transactions'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
+      client.invalidateQueries({ queryKey: ['transaction-sync-status'] }),
+    ])
   }
   return (
     <PageSurface className="dashboard-page">
@@ -293,7 +301,7 @@ function DashboardPageContent() {
               <div className="dashboard-popover" role="dialog">
                 <div className="dashboard-sync-actions">
                   <Button
-                    disabled={syncingAccounts}
+                    disabled={syncingAccounts || syncingTransactions}
                     loading={syncingAccounts}
                     onClick={() => void syncAccounts()}
                     size="small"
@@ -303,7 +311,7 @@ function DashboardPageContent() {
                     {t('Sync accounts')}
                   </Button>
                   <Button
-                    disabled={syncingTransactions}
+                    disabled={syncingAccounts || syncingTransactions}
                     loading={syncingTransactions}
                     onClick={() => void syncTransactions()}
                     size="small"
@@ -613,6 +621,11 @@ function Dashboard({
       preferences.layout.find((saved) => saved.i === item.id) ??
       defaultWidgetLayout(item, index),
   )
+  const persistStableLayout = useCallback(
+    (nextLayout: Layout) =>
+      onPreferences({ ...preferences, layout: nextLayout }),
+    [onPreferences, preferences],
+  )
   return (
     <>
       <section className="dashboard-kpis" aria-label={t('Period summary')}>
@@ -722,9 +735,8 @@ function Dashboard({
             dragConfig={{ enabled: true, handle: '.dashboard-widget__handle' }}
             gridConfig={{ cols: 12, margin: [16, 16], rowHeight: 30 }}
             layout={layout}
-            onLayoutChange={(next) =>
-              onPreferences({ ...preferences, layout: next })
-            }
+            onDragStop={persistStableLayout}
+            onResizeStop={persistStableLayout}
             resizeConfig={{ enabled: true }}
             width={width}
           >
