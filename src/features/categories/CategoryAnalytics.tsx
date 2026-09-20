@@ -25,6 +25,7 @@ import { getCategories, getCategorySources } from './categories-api'
 import {
   aggregateCategoryDistribution,
   categoryPercentage,
+  getActiveExpenseCategoryCount,
 } from './category-analytics-data'
 
 type Direction = 'expense' | 'income'
@@ -55,16 +56,6 @@ export function CategoryAnalytics() {
     queryFn: () =>
       getCategorySources({ mapping: 'all', page: 1, pageSize: 1, query: '' }),
     queryKey: ['category-sources', 'summary', 'all'],
-  })
-  const configuredSources = useQuery({
-    queryFn: () =>
-      getCategorySources({
-        mapping: 'mapped',
-        page: 1,
-        pageSize: 1,
-        query: '',
-      }),
-    queryKey: ['category-sources', 'summary', 'mapped'],
   })
   const filters = useMemo(
     () =>
@@ -126,10 +117,10 @@ export function CategoryAnalytics() {
       })),
     [t, values],
   )
-  const configuredCount = configuredSources.data?.totalItems ?? 0
   const sourceCount = sourceTotal.data?.totalItems ?? 0
-  const configuredPercent =
-    sourceCount === 0 ? 0 : Math.round((configuredCount / sourceCount) * 100)
+  const activeExpenseCategoryCount = getActiveExpenseCategoryCount(
+    analytics.data?.expensesByCategory ?? [],
+  )
   const largestExpense = [...(analytics.data?.expensesByCategory ?? [])].sort(
     (left, right) => right.amountMinor - left.amountMinor,
   )[0]
@@ -192,12 +183,8 @@ export function CategoryAnalytics() {
         />
         <SummaryCard
           icon="✓"
-          label={t('Configured source types')}
-          value={
-            configuredSources.isPending
-              ? '—'
-              : `${configuredCount} · ${configuredPercent}%`
-          }
+          label={t('Active categories')}
+          value={analytics.isPending ? '—' : String(activeExpenseCategoryCount)}
           tone="mint"
         />
         <SummaryCard
