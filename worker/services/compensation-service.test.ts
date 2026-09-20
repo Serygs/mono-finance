@@ -64,7 +64,7 @@ describe('CompensationService', () => {
     ).rejects.toMatchObject({ code: 'invalid_compensation' })
   })
 
-  it('suggests relevant, unallocated same-currency income deterministically', async () => {
+  it('suggests all same-currency incomes with remaining availability, ranked deterministically', async () => {
     const repository = new FakeCompensationRepository()
     repository.incomes.push(
       transaction(
@@ -90,7 +90,7 @@ describe('CompensationService', () => {
       ),
     )
     repository.links.push(
-      link('linked-1', 'expense-other', 'income-linked', 1_000),
+      link('linked-1', 'expense-other', 'income-linked', 500),
     )
     const service = new CompensationService(repository)
 
@@ -99,14 +99,74 @@ describe('CompensationService', () => {
     expect(detail.suggestions.map((item) => item.transactionId)).toContain(
       'income-related',
     )
-    expect(detail.suggestions.map((item) => item.transactionId)).not.toContain(
-      'income-linked',
+    expect(detail.suggestions).toContainEqual(
+      expect.objectContaining({
+        availableAmountMinor: 500,
+        transactionId: 'income-linked',
+      }),
     )
     expect(detail.suggestions[0]?.confidenceScore).toBeGreaterThan(
       detail.suggestions.find(
         (item) => item.transactionId === 'income-unrelated',
       )?.confidenceScore ?? 0,
     )
+  })
+
+  it('includes every smaller candidate, including candidates beyond the former twelve and hundred row cutoffs', async () => {
+    const repository = new FakeCompensationRepository()
+    repository.transactions.set(
+      'expense-149',
+      transaction('expense-149', 'expense', -149, 'Shared purchase', 1_700_000_000),
+    )
+    repository.incomes.push(
+      ...Array.from({ length: 101 }, (_, index) =>
+        transaction(
+          `income-${index + 1}`,
+          'income',
+          1,
+          `Refund ${index + 1}`,
+          1_700_001_000 + index,
+        ),
+      ),
+    )
+    const detail = await new CompensationService(repository).getDetails(
+      'owner-1',
+      'expense-149',
+    )
+
+    expect(detail.suggestions).toHaveLength(104)
+    expect(detail.suggestions.map((item) => item.transactionId)).toContain(
+      'income-101',
+    )
+  })
+
+  it('uses the unallocated portion of partially used income and excludes fully allocated income', async () => {
+    const repository = new FakeCompensationRepository()
+    repository.links.push(
+      link('partial', 'expense-other', 'income-1', 400),
+      link('full', 'expense-other', 'income-2', 2_000),
+    )
+    const detail = await new CompensationService(repository).getDetails(
+      'owner-1',
+      'expense-1',
+    )
+
+    expect(detail.suggestions).toContainEqual(
+      expect.objectContaining({
+        transactionId: 'income-1',
+        availableAmountMinor: 600,
+      }),
+    )
+    expect(detail.suggestions.map((item) => item.transactionId)).not.toContain(
+      'income-2',
+    )
+
+    await expect(
+      new CompensationService(repository).link('owner-1', 'expense-1', {
+        compensationTransactionId: 'income-1',
+        compensatedAmountMinor: 601,
+      }),
+    ).rejects.toMatchObject({ code: 'invalid_compensation' })
   })
 })
 
@@ -120,6 +180,7 @@ function transaction(
   currencyCode = 'UAH',
 ) {
   return {
+    allocatedAmountMinor: 0,
     id,
     direction,
     originalAmountMinor,
@@ -207,11 +268,14 @@ class FakeCompensationRepository implements CompensationRepository {
     )
   }
   async findIncomeCandidates() {
-    return [...this.transactions.values(), ...this.incomes].filter(
-      (item) =>
-        item.direction === 'income' &&
-        !this.links.some((link) => link.compensationTransactionId === item.id),
-    )
+    return [...this.transactions.values(), ...this.incomes]
+      .filter((item) => item.direction === 'income')
+      .map((item) => ({
+        ...item,
+        allocatedAmountMinor: this.links
+          .filter((link) => link.compensationTransactionId === item.id)
+          .reduce((total, link) => total + link.compensatedAmountMinor, 0),
+      }))
   }
   async createLink(input: {
     expenseTransactionId: string

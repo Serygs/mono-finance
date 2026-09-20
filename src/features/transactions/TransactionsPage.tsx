@@ -1,7 +1,15 @@
-import { useDeferredValue, useMemo, useState } from 'react'
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   useInfiniteQuery,
+  useMutation,
   useQuery,
+  useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query'
 
@@ -30,7 +38,11 @@ import {
 } from './transaction-formatting'
 import { getVisualMappings } from '../visuals/visuals-api'
 import { TransactionVisual } from '../visuals/visual-resolver'
-import { getTransactions } from './transactions-api'
+import {
+  getCompensationDetails,
+  getTransactions,
+  linkCompensation,
+} from './transactions-api'
 import type {
   TransactionListFilters,
   TransactionListItem,
@@ -49,6 +61,11 @@ type DatePreset =
   | 'previous-month'
   | 'current-year'
   | 'custom'
+
+type CompensationDropTarget = {
+  availableAmountMinor: number
+  remainingExpenseMinor: number
+}
 
 const DATE_PRESETS: { label: TranslationKey; value: DatePreset }[] = [
   { label: '7 days', value: '7d' },
@@ -77,6 +94,24 @@ export function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [selectedTransaction, setSelectedTransaction] =
     useState<TransactionListItem | null>(null)
+  const [draggedIncome, setDraggedIncome] =
+    useState<TransactionListItem | null>(null)
+  const [dropTargets, setDropTargets] = useState<
+    Record<string, CompensationDropTarget>
+  >({})
+  const [draggedOverId, setDraggedOverId] = useState<string | null>(null)
+  const [dragError, setDragError] = useState(false)
+  const suppressOpenRef = useRef(false)
+  const queryClient = useQueryClient()
+  const [isDesktop, setIsDesktop] = useState(() =>
+    window.matchMedia('(min-width: 768px)').matches,
+  )
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
   const deferredSearch = useDeferredValue(search.trim())
   const accountsQuery = useQuery({
     queryFn: getAccounts,
@@ -122,6 +157,26 @@ export function TransactionsPage() {
   const transactions =
     transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
   const transactionGroups = groupTransactionsByDate(transactions)
+  const compensationMutation = useMutation({
+    mutationFn: ({
+      expenseId,
+      incomeId,
+      amountMinor,
+    }: {
+      amountMinor: number
+      expenseId: string
+      incomeId: string
+    }) =>
+      linkCompensation(expenseId, {
+        compensatedAmountMinor: amountMinor,
+        compensationTransactionId: incomeId,
+      }),
+    onError: () => setDragError(true),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      void queryClient.invalidateQueries({ queryKey: ['compensations'] })
+    },
+  })
   const dateGroupNow = new Date()
   const categories = [
     ...(customCategoriesQuery.data ?? []).map((item) => item.name),
@@ -277,12 +332,80 @@ export function TransactionsPage() {
                     </span>
                     <span>{formatDateGroupAmount(group.transactions)}</span>
                   </h2>
-                  {group.transactions.map((transaction) => (
-                    <button
+                  {group.transactions.map((transaction) => {
+                    const dropTarget = dropTargets[transaction.id]
+                    const isDropTarget =
+                      draggedOverId === transaction.id && dropTarget !== undefined
+                    return (
+                      <button
                       aria-pressed={selectedTransaction?.id === transaction.id}
-                      className="transactions-ledger-row"
+                      aria-dropeffect={isDropTarget ? 'link' : undefined}
+                      className={`transactions-ledger-row${
+                        draggedIncome?.id === transaction.id
+                          ? ' is-compensation-drag-source'
+                          : ''
+                      }${isDropTarget ? ' is-compensation-drop-target' : ''}`}
+                      draggable={isDesktop && transaction.originalAmountMinor > 0}
                       key={transaction.id}
-                      onClick={() => setSelectedTransaction(transaction)}
+                      onClick={() => {
+                        if (suppressOpenRef.current) return
+                        setSelectedTransaction(transaction)
+                      }}
+                      onDragEnd={() => {
+                        setDraggedIncome(null)
+                        setDraggedOverId(null)
+                        setDropTargets({})
+                        suppressOpenRef.current = true
+                        window.setTimeout(() => {
+                          suppressOpenRef.current = false
+                        }, 0)
+                      }}
+                      onDragOver={(event) => {
+                        if (
+                          draggedIncome === null ||
+                          transaction.originalAmountMinor >= 0
+                        )
+                          return
+                        event.preventDefault()
+                        event.dataTransfer.dropEffect =
+                          dropTarget === undefined ? 'none' : 'link'
+                        setDraggedOverId(
+                          dropTarget === undefined ? null : transaction.id,
+                        )
+                      }}
+                      onDragLeave={() => {
+                        if (draggedOverId === transaction.id)
+                          setDraggedOverId(null)
+                      }}
+                      onDragStart={(event) => {
+                        if (transaction.originalAmountMinor <= 0) return
+                        setDragError(false)
+                        setDraggedIncome(transaction)
+                        event.dataTransfer.effectAllowed = 'link'
+                        event.dataTransfer.setData('text/plain', transaction.id)
+                        void loadDropTargets(
+                          transaction,
+                          transactions,
+                          queryClient,
+                          setDropTargets,
+                        )
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault()
+                        const source = draggedIncome
+                        if (source === null || dropTarget === undefined) {
+                          setDragError(true)
+                          return
+                        }
+                        compensationMutation.mutate({
+                          amountMinor: Math.min(
+                            dropTarget.availableAmountMinor,
+                            dropTarget.remainingExpenseMinor,
+                          ),
+                          expenseId: transaction.id,
+                          incomeId: source.id,
+                        })
+                      }}
                       type="button"
                     >
                       <TransactionVisual
@@ -330,13 +453,19 @@ export function TransactionsPage() {
                       >
                         •••
                       </span>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </section>
               )
             })}
           </div>
         </div>
+      ) : null}
+      {dragError ? (
+        <Alert tone="danger">
+          {t('Compensation could not be saved. Try again later.')}
+        </Alert>
       ) : null}
       <BottomSheet
         onClose={() => setSelectedTransaction(null)}
@@ -383,6 +512,46 @@ export function TransactionsPage() {
       ) : null}
     </PageSurface>
   )
+}
+
+async function loadDropTargets(
+  income: TransactionListItem,
+  transactions: TransactionListItem[],
+  queryClient: ReturnType<typeof useQueryClient>,
+  setDropTargets: (targets: Record<string, CompensationDropTarget>) => void,
+) {
+  const expenses = transactions.filter(
+    (transaction) =>
+      transaction.originalAmountMinor < 0 &&
+      transaction.currencyCode === income.currencyCode,
+  )
+  const results = await Promise.all(
+    expenses.map(async (expense) => {
+      try {
+        const details = await queryClient.fetchQuery({
+          queryFn: () => getCompensationDetails(expense.id),
+          queryKey: ['compensations', expense.id],
+        })
+        const candidate = details.suggestions.find(
+          (item) => item.transactionId === income.id,
+        )
+        const remainingExpenseMinor =
+          -details.summary.remainingPersonalExpenseMinor
+        return candidate === undefined || remainingExpenseMinor <= 0
+          ? null
+          : [
+              expense.id,
+              {
+                availableAmountMinor: candidate.availableAmountMinor,
+                remainingExpenseMinor,
+              },
+            ] as const
+      } catch {
+        return null
+      }
+    }),
+  )
+  setDropTargets(Object.fromEntries(results.filter((result) => result !== null)))
 }
 
 function TransactionIndicators({
