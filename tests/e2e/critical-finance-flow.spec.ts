@@ -206,6 +206,9 @@ test('account marks retain their account surface and fit responsive layouts', as
       theme.toLowerCase(),
     )
     await page.getByRole('link', { name: 'Accounts' }).first().click()
+    const accountMark = page.locator('.account-row__icon')
+    await expect(accountMark).toHaveCount(1)
+    await expect(accountMark).toHaveText('mono')
 
     for (const width of [1440, 1200, 390]) {
       await page.setViewportSize({ width, height: 932 })
