@@ -473,6 +473,90 @@ test('mobile dashboard customization persists visible widgets without grid editi
   await expect(topMerchants).not.toBeChecked()
 })
 
+test('dashboard widget drag stays aligned after scrolling and persists on release', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 700 })
+  await installFinanceApiMock(page)
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('owner@example.com')
+  await page.getByLabel('Password').fill('correct-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  const widget = page
+    .getByRole('heading', { name: 'Monthly trend' })
+    .locator('xpath=ancestor::div[contains(@class, "react-grid-item")][1]')
+  const handle = widget.locator('.dashboard-widget__handle')
+  await handle.scrollIntoViewIfNeeded()
+  await page.evaluate(() => window.scrollBy(0, -120))
+  await expect(handle).toBeVisible()
+  await page.waitForTimeout(250)
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+
+  const before = await widget.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return {
+      left: rect.left,
+      top: rect.top,
+      transform: element.style.transform,
+    }
+  })
+  const handleBox = await handle.boundingBox()
+  if (handleBox === null)
+    throw new Error('Dashboard drag handle is not visible.')
+
+  await page.mouse.move(
+    handleBox.x + handleBox.width / 2,
+    handleBox.y + handleBox.height / 2,
+  )
+  await page.mouse.down()
+  await page.waitForTimeout(100)
+
+  const afterPointerDown = await widget.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return {
+      left: rect.left,
+      scrollY: window.scrollY,
+      top: rect.top,
+      transform: element.style.transform,
+    }
+  })
+  expect(Math.abs(afterPointerDown.left - before.left)).toBeLessThan(2)
+  expect(Math.abs(afterPointerDown.top - before.top)).toBeLessThan(2)
+
+  await page.mouse.move(handleBox.x + 260, handleBox.y + handleBox.height / 2, {
+    steps: 8,
+  })
+  await page.mouse.up()
+  await expect
+    .poll(() => widget.evaluate((element) => element.style.transform))
+    .not.toBe(before.transform)
+
+  const finalTransform = await widget.evaluate(
+    (element) => element.style.transform,
+  )
+  const savedLayout = await page.evaluate(() => {
+    const saved = localStorage.getItem('mono-finance.dashboard-preferences.v1')
+    return saved === null
+      ? null
+      : (
+          JSON.parse(saved) as {
+            layout: Array<{ i: string; x: number; y: number }>
+          }
+        ).layout.find((item) => item.i === 'monthly-trend')
+  })
+  expect(savedLayout).not.toBeNull()
+
+  await page.reload()
+  const reloadedWidget = page
+    .getByRole('heading', { name: 'Monthly trend' })
+    .locator('xpath=ancestor::div[contains(@class, "react-grid-item")][1]')
+  await expect(reloadedWidget).toBeVisible()
+  await expect
+    .poll(() => reloadedWidget.evaluate((element) => element.style.transform))
+    .toBe(finalTransform)
+})
+
 test('income and expense bars retain one baseline across responsive widths', async ({
   page,
 }) => {

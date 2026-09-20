@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { GridLayout, useContainerWidth } from 'react-grid-layout'
+import { GridLayout, useContainerWidth, type Layout } from 'react-grid-layout'
 import { Link, useLocation } from 'react-router'
 
 import { Button } from '../../components/ui/Controls'
@@ -613,6 +613,11 @@ function Dashboard({
       preferences.layout.find((saved) => saved.i === item.id) ??
       defaultWidgetLayout(item, index),
   )
+  const persistStableLayout = useCallback(
+    (nextLayout: Layout) =>
+      onPreferences({ ...preferences, layout: nextLayout }),
+    [onPreferences, preferences],
+  )
   return (
     <>
       <section className="dashboard-kpis" aria-label={t('Period summary')}>
@@ -722,9 +727,8 @@ function Dashboard({
             dragConfig={{ enabled: true, handle: '.dashboard-widget__handle' }}
             gridConfig={{ cols: 12, margin: [16, 16], rowHeight: 30 }}
             layout={layout}
-            onLayoutChange={(next) =>
-              onPreferences({ ...preferences, layout: next })
-            }
+            onDragStop={persistStableLayout}
+            onResizeStop={persistStableLayout}
             resizeConfig={{ enabled: true }}
             width={width}
           >
