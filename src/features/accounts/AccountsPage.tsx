@@ -9,6 +9,7 @@ import { Card, InfoTooltip } from '../../components/ui/Surfaces'
 import { useLocalization } from '../localization/localization'
 import { formatAccountBalance } from './account-formatting'
 import { getAccounts, synchronizeAccounts } from './accounts-api'
+import { synchronizeTransactions } from '../transactions/transaction-sync-api'
 import { summarizeCurrencyBalances } from './account-summary'
 import type { AccountSummary } from './account-types'
 
@@ -20,9 +21,20 @@ export function AccountsPage() {
     queryKey: ['accounts'],
   })
   const synchronize = useMutation({
-    mutationFn: synchronizeAccounts,
-    onSuccess: (nextAccounts) => {
+    mutationFn: async () => {
+      const nextAccounts = await synchronizeAccounts()
+      await synchronizeTransactions()
+      return nextAccounts
+    },
+    onSuccess: async (nextAccounts) => {
       client.setQueryData(['accounts'], nextAccounts)
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['accounts'] }),
+        client.invalidateQueries({ queryKey: ['transactions'] }),
+        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
+        client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
+        client.invalidateQueries({ queryKey: ['transaction-sync-status'] }),
+      ])
     },
   })
   const balances = useMemo(

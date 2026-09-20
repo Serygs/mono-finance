@@ -5,12 +5,45 @@ interface NextTransactionSyncWindowInput {
   backfillCursorAt: number | null
   historicalStartAt: number
   lastSyncedTransactionAt: number | null
+  lastSuccessfulSyncAt?: number | null
   nowEpochSeconds: number
 }
 
 export interface TransactionSyncWindow {
   fromEpochSeconds: number
   toEpochSeconds: number
+}
+
+export function latestTransactionSyncWindow(
+  input: NextTransactionSyncWindowInput,
+): TransactionSyncWindow | null {
+  const latestSyncAt = maximumTimestamp(
+    input.lastSyncedTransactionAt,
+    input.lastSuccessfulSyncAt ?? null,
+  )
+  if (latestSyncAt !== null && input.nowEpochSeconds <= latestSyncAt) {
+    return null
+  }
+
+  return {
+    fromEpochSeconds: Math.max(
+      input.historicalStartAt,
+      input.nowEpochSeconds - MAXIMUM_STATEMENT_WINDOW_SECONDS,
+      latestSyncAt === null
+        ? input.historicalStartAt
+        : latestSyncAt - INCREMENTAL_SYNC_OVERLAP_SECONDS,
+    ),
+    toEpochSeconds: input.nowEpochSeconds,
+  }
+}
+
+function maximumTimestamp(
+  first: number | null,
+  second: number | null,
+): number | null {
+  if (first === null) return second
+  if (second === null) return first
+  return Math.max(first, second)
 }
 
 export function nextTransactionSyncWindow(

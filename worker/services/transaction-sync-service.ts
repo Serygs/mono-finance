@@ -2,6 +2,7 @@ import type { MonobankClient } from '../monobank/client'
 import { MonobankApiError } from '../monobank/errors'
 import type { TransactionSourceRecord } from '../monobank/internal-dtos'
 import {
+  latestTransactionSyncWindow,
   nextTransactionSyncWindow,
   type TransactionSyncWindow,
 } from './transaction-sync-window'
@@ -25,6 +26,13 @@ export interface TransactionSyncResult {
   window: TransactionSyncWindow | null
 }
 
+export interface TransactionSyncBatchResult {
+  accountIds: string[]
+  importedCount: number
+  skippedDuplicateCount: number
+  status: 'no_accounts' | 'synchronized'
+}
+
 export interface ClaimedTransactionSyncAccount {
   accountId: string
   accountType: string
@@ -32,6 +40,7 @@ export interface ClaimedTransactionSyncAccount {
   backfillStartAt: number
   currencyCode: string
   lastSyncedTransactionAt: number | null
+  lastSuccessfulSyncAt: number | null
   monobankAccountId: string
   userId: string
 }
@@ -47,10 +56,21 @@ export interface TransactionSyncRepository {
     nowEpochSeconds: number,
     historicalStartAt: number,
   ): Promise<ClaimedTransactionSyncAccount | null>
+  claimNextLatest(
+    userId: string,
+    nowEpochSeconds: number,
+    historicalStartAt: number,
+    excludedAccountIds: readonly string[],
+  ): Promise<ClaimedTransactionSyncAccount | null>
   completeEmptyWindow(accountId: string, nowEpochSeconds: number): Promise<void>
   completeWindow(input: {
     accountId: string
     backfillCursorAt: number
+    lastSyncedTransactionAt: number | null
+    nowEpochSeconds: number
+  }): Promise<void>
+  completeLatestWindow(input: {
+    accountId: string
     lastSyncedTransactionAt: number | null
     nowEpochSeconds: number
   }): Promise<void>
@@ -96,6 +116,45 @@ export class TransactionSyncService {
   synchronizeNext(userId: string | null): Promise<TransactionSyncResult> {
     const now = this.nowEpochSeconds()
     return this.synchronizeAt(userId, now)
+  }
+
+  async synchronizeLatestForAll(
+    userId: string,
+  ): Promise<TransactionSyncBatchResult> {
+    const nowEpochSeconds = this.nowEpochSeconds()
+    const historicalStartAt =
+      nowEpochSeconds - DEFAULT_HISTORICAL_BACKFILL_DAYS * 86_400
+    const synchronizedAccountIds: string[] = []
+    let importedCount = 0
+    let skippedDuplicateCount = 0
+
+    while (true) {
+      const account = await this.repository.claimNextLatest(
+        userId,
+        nowEpochSeconds,
+        historicalStartAt,
+        synchronizedAccountIds,
+      )
+      if (account === null) {
+        return {
+          accountIds: synchronizedAccountIds,
+          importedCount,
+          skippedDuplicateCount,
+          status:
+            synchronizedAccountIds.length === 0
+              ? 'no_accounts'
+              : 'synchronized',
+        }
+      }
+
+      const result = await this.synchronizeLatestAccount(
+        account,
+        nowEpochSeconds,
+      )
+      synchronizedAccountIds.push(account.accountId)
+      importedCount += result.importedCount
+      skippedDuplicateCount += result.skippedDuplicateCount
+    }
   }
 
   private async synchronizeAt(
@@ -185,6 +244,70 @@ export class TransactionSyncService {
         accountId: account.accountId,
         failures: 1,
         message: 'transaction_sync_failed',
+        window,
+      })
+      throw error
+    }
+  }
+
+  private async synchronizeLatestAccount(
+    account: ClaimedTransactionSyncAccount,
+    nowEpochSeconds: number,
+  ): Promise<TransactionImportResult> {
+    const window = latestTransactionSyncWindow({
+      backfillCursorAt: account.backfillCursorAt,
+      historicalStartAt: account.backfillStartAt,
+      lastSyncedTransactionAt: account.lastSyncedTransactionAt,
+      lastSuccessfulSyncAt: account.lastSuccessfulSyncAt,
+      nowEpochSeconds,
+    })
+    if (window === null) {
+      await this.repository.completeEmptyWindow(
+        account.accountId,
+        nowEpochSeconds,
+      )
+      return { importedCount: 0, skippedDuplicateCount: 0 }
+    }
+
+    try {
+      const transactions = await this.monobankClient.getStatement({
+        accountId: account.monobankAccountId,
+        fromEpochSeconds: window.fromEpochSeconds,
+        toEpochSeconds: window.toEpochSeconds,
+      })
+      const imported = await this.repository.importTransactions({
+        accountId: account.accountId,
+        currencyCode: account.currencyCode,
+        transactions,
+        userId: account.userId,
+      })
+      await this.repository.completeLatestWindow({
+        accountId: account.accountId,
+        lastSyncedTransactionAt: maximumTimestamp(
+          account.lastSyncedTransactionAt,
+          transactions,
+        ),
+        nowEpochSeconds,
+      })
+      this.log({
+        accountId: account.accountId,
+        importedCount: imported.importedCount,
+        message: 'transaction_latest_sync_completed',
+        skippedDuplicateCount: imported.skippedDuplicateCount,
+        window,
+      })
+      return imported
+    } catch (error) {
+      const errorCode = transactionSyncErrorCode(error)
+      await this.repository.failWindow(
+        account.accountId,
+        errorCode,
+        nowEpochSeconds,
+      )
+      this.log({
+        accountId: account.accountId,
+        failures: 1,
+        message: 'transaction_latest_sync_failed',
         window,
       })
       throw error

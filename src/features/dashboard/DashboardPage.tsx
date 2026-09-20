@@ -228,7 +228,9 @@ function DashboardPageContent() {
     setSyncingAccounts(true)
     try {
       setAccounts(await synchronizeAccounts())
-      await client.invalidateQueries({ queryKey: ['dashboard-analytics'] })
+      await synchronizeTransactions()
+      setSyncStates(await getTransactionSyncStatus())
+      await refreshAfterTransactionSync()
     } catch {
       setError('Accounts could not be synchronized. Try again later.')
     } finally {
@@ -240,15 +242,21 @@ function DashboardPageContent() {
     try {
       await synchronizeTransactions()
       setSyncStates(await getTransactionSyncStatus())
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-        client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
-      ])
+      await refreshAfterTransactionSync()
     } catch {
       setError('Transaction sync is unavailable. Try again later.')
     } finally {
       setSyncingTransactions(false)
     }
+  }
+  function refreshAfterTransactionSync() {
+    return Promise.all([
+      client.invalidateQueries({ queryKey: ['accounts'] }),
+      client.invalidateQueries({ queryKey: ['transactions'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
+      client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
+      client.invalidateQueries({ queryKey: ['transaction-sync-status'] }),
+    ])
   }
   return (
     <PageSurface className="dashboard-page">
@@ -293,7 +301,7 @@ function DashboardPageContent() {
               <div className="dashboard-popover" role="dialog">
                 <div className="dashboard-sync-actions">
                   <Button
-                    disabled={syncingAccounts}
+                    disabled={syncingAccounts || syncingTransactions}
                     loading={syncingAccounts}
                     onClick={() => void syncAccounts()}
                     size="small"
@@ -303,7 +311,7 @@ function DashboardPageContent() {
                     {t('Sync accounts')}
                   </Button>
                   <Button
-                    disabled={syncingTransactions}
+                    disabled={syncingAccounts || syncingTransactions}
                     loading={syncingTransactions}
                     onClick={() => void syncTransactions()}
                     size="small"
