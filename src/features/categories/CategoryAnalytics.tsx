@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { SegmentedControl } from '../../components/ui/Controls'
@@ -22,7 +22,10 @@ import {
   resolveDefaultVisual,
 } from '../visuals/visual-resolver'
 import { getCategories, getCategorySources } from './categories-api'
-import { getVisibleCategoryLegend } from './category-analytics-data'
+import {
+  aggregateCategoryDistribution,
+  categoryPercentage,
+} from './category-analytics-data'
 
 type Direction = 'expense' | 'income'
 
@@ -38,7 +41,6 @@ export function CategoryAnalytics() {
   const [accountId, setAccountId] = useState('')
   const [direction, setDirection] = useState<Direction>('expense')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const [exitingKey, setExitingKey] = useState<string | null>(null)
   const range = useMemo(() => resolveDashboardRange(preset, '', ''), [preset])
   const accounts = useQuery({ queryFn: getAccounts, queryKey: ['accounts'] })
   const currencies = useQuery({
@@ -109,14 +111,21 @@ export function CategoryAnalytics() {
       .sort((left, right) => right.amountMinor - left.amountMinor)
   }, [analytics.data, categories.data, direction])
   const total = values.reduce((sum, item) => sum + item.amountMinor, 0)
-  const top = values.slice(0, 5)
-  const visibleLegend = getVisibleCategoryLegend(values, selectedKey)
-  const exiting = values.find((item) => item.key === exitingKey)
-  const legend =
-    exiting === undefined ||
-    visibleLegend.some((item) => item.key === exiting.key)
-      ? visibleLegend
-      : visibleLegend.concat(exiting)
+  const distribution = useMemo(
+    () =>
+      aggregateCategoryDistribution(values, (amountMinor) => ({
+        amountMinor,
+        categoryId: null,
+        categoryName: t('Other'),
+        currencyCode: values[0]?.currencyCode ?? 'UAH',
+        key: 'aggregate:other',
+        visual: resolveDefaultVisual({
+          categoryName: t('Other'),
+          fallbackKey: 'aggregate:other',
+        }),
+      })),
+    [t, values],
+  )
   const configuredCount = configuredSources.data?.totalItems ?? 0
   const sourceCount = sourceTotal.data?.totalItems ?? 0
   const configuredPercent =
@@ -128,22 +137,6 @@ export function CategoryAnalytics() {
     (sum, item) => sum + item.amountMinor,
     0,
   )
-  const selectCategory = (key: string | null) => {
-    if (
-      selectedKey !== null &&
-      selectedKey !== key &&
-      !top.some((item) => item.key === selectedKey)
-    )
-      setExitingKey(selectedKey)
-    setSelectedKey(key)
-  }
-
-  useEffect(() => {
-    if (exitingKey === null) return undefined
-    const timeout = window.setTimeout(() => setExitingKey(null), 180)
-    return () => window.clearTimeout(timeout)
-  }, [exitingKey])
-
   return (
     <section
       className="category-analytics"
@@ -255,25 +248,19 @@ export function CategoryAnalytics() {
                   ? 'Expense distribution'
                   : 'Income distribution',
               )}
-              values={values}
+              values={distribution}
               selectedKey={selectedKey}
-              setSelectedKey={selectCategory}
+              setSelectedKey={setSelectedKey}
               total={total}
             />
             <ul className="category-distribution__legend">
-              {legend.map((item) => (
+              {distribution.map((item) => (
                 <LegendRow
                   item={item}
                   key={item.key}
                   selected={item.key === selectedKey}
-                  exiting={item.key === exitingKey}
-                  temporary={
-                    selectedKey !== null &&
-                    item.key === selectedKey &&
-                    !top.some((topItem) => topItem.key === item.key)
-                  }
                   total={total}
-                  onSelect={() => selectCategory(item.key)}
+                  onSelect={() => setSelectedKey(item.key)}
                 />
               ))}
             </ul>
@@ -317,31 +304,19 @@ type CategoryValue = CurrencyAmount & {
 }
 
 function LegendRow({
-  exiting,
   item,
   onSelect,
   selected,
-  temporary,
   total,
 }: {
-  exiting: boolean
   item: CategoryValue
   onSelect(): void
   selected: boolean
-  temporary: boolean
   total: number
 }) {
-  const percent = Math.round((item.amountMinor / total) * 100)
+  const percent = categoryPercentage(item.amountMinor, total)
   return (
-    <li
-      className={[
-        selected ? 'is-selected' : undefined,
-        temporary ? 'is-temporary' : undefined,
-        exiting ? 'is-exiting' : undefined,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
+    <li className={selected ? 'is-selected' : undefined}>
       <button onClick={onSelect} type="button">
         <i className={`ui-entity-visual--${item.visual.colorToken}`} />
         <span title={item.categoryName}>{item.categoryName}</span>

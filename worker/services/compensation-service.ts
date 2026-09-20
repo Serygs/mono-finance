@@ -200,7 +200,9 @@ export class CompensationService {
       }))
       .filter(({ availableAmountMinor }) => availableAmountMinor > 0)
     const exactSumExists = hasExactSum(
-      usableWithAvailability.map(({ availableAmountMinor }) => availableAmountMinor),
+      usableWithAvailability.map(
+        ({ availableAmountMinor }) => availableAmountMinor,
+      ),
       remaining,
     )
     return usableWithAvailability

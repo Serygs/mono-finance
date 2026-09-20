@@ -1,26 +1,48 @@
 import { describe, expect, it } from 'vitest'
 
-import { getVisibleCategoryLegend } from './category-analytics-data'
+import {
+  aggregateCategoryDistribution,
+  categoryPercentage,
+} from './category-analytics-data'
 
-describe('getVisibleCategoryLegend', () => {
-  const values = Array.from({ length: 7 }, (_, index) => ({
-    key: `category-${index + 1}`,
-  }))
+describe('aggregateCategoryDistribution', () => {
+  const values = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      amountMinor: count - index,
+      key: `category-${index + 1}`,
+    }))
+  const other = (amountMinor: number) => ({ amountMinor, key: 'other' })
 
-  it('shows the five largest categories by default', () => {
-    expect(getVisibleCategoryLegend(values, null)).toEqual(values.slice(0, 5))
-  })
-
-  it('keeps a selected top category in its existing position', () => {
-    expect(getVisibleCategoryLegend(values, 'category-3')).toEqual(
-      values.slice(0, 5),
+  it.each([0, 1, 10])('returns the %i categories unchanged when no aggregation is needed', (count) => {
+    expect(aggregateCategoryDistribution(values(count), other)).toEqual(
+      values(count),
     )
   })
 
-  it('appends a selected category outside the top five once', () => {
-    expect(getVisibleCategoryLegend(values, 'category-7')).toEqual([
-      ...values.slice(0, 5),
-      values[6],
-    ])
+  it('keeps the ten largest categories and aggregates the eleventh into Other', () => {
+    const distribution = aggregateCategoryDistribution(values(11), other)
+
+    expect(distribution).toHaveLength(11)
+    expect(distribution.slice(0, 10)).toEqual(values(11).slice(0, 10))
+    expect(distribution[10]).toEqual({ amountMinor: 1, key: 'other' })
+    expect(categoryPercentage(distribution[10]!.amountMinor, 66)).toBe(2)
+  })
+
+  it('sorts unsorted input and gives Other the exact total outside the top ten', () => {
+    const distribution = aggregateCategoryDistribution(
+      [
+        { amountMinor: 5, key: 'small-a' },
+        ...values(12),
+        { amountMinor: 4, key: 'small-b' },
+      ],
+      other,
+    )
+
+    expect(distribution).toHaveLength(11)
+    expect(distribution.slice(0, 10).map((item) => item.amountMinor)).toEqual(
+      [12, 11, 10, 9, 8, 7, 6, 5, 5, 4],
+    )
+    expect(distribution[10]).toEqual({ amountMinor: 10, key: 'other' })
+    expect(categoryPercentage(distribution[10]!.amountMinor, 87)).toBe(11)
   })
 })

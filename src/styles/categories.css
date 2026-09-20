@@ -131,25 +131,6 @@
 .category-distribution__legend li.is-selected {
   background: var(--color-surface-soft);
 }
-.category-distribution__legend li.is-temporary {
-  animation: category-legend-enter var(--motion-standard) both;
-}
-.category-distribution__legend li.is-exiting {
-  animation: category-legend-exit var(--motion-standard) both;
-}
-
-@keyframes category-legend-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-0.3rem);
-  }
-}
-@keyframes category-legend-exit {
-  to {
-    opacity: 0;
-    transform: translateY(-0.3rem);
-  }
-}
 .category-distribution__legend button {
   display: grid;
   width: 100%;
@@ -689,9 +670,5 @@
   .category-donut__segment,
   .category-distribution__legend li {
     transition: none;
-  }
-  .category-distribution__legend li.is-temporary,
-  .category-distribution__legend li.is-exiting {
-    animation: none;
   }
 }

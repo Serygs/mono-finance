@@ -1,10 +1,4 @@
-import {
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import {
   useInfiniteQuery,
   useMutation,
@@ -103,8 +97,8 @@ export function TransactionsPage() {
   const [dragError, setDragError] = useState(false)
   const suppressOpenRef = useRef(false)
   const queryClient = useQueryClient()
-  const [isDesktop, setIsDesktop] = useState(() =>
-    window.matchMedia('(min-width: 768px)').matches,
+  const [isDesktop, setIsDesktop] = useState(
+    () => window.matchMedia('(min-width: 768px)').matches,
   )
   useEffect(() => {
     const media = window.matchMedia('(min-width: 768px)')
@@ -335,124 +329,132 @@ export function TransactionsPage() {
                   {group.transactions.map((transaction) => {
                     const dropTarget = dropTargets[transaction.id]
                     const isDropTarget =
-                      draggedOverId === transaction.id && dropTarget !== undefined
+                      draggedOverId === transaction.id &&
+                      dropTarget !== undefined
                     return (
                       <button
-                      aria-pressed={selectedTransaction?.id === transaction.id}
-                      aria-dropeffect={isDropTarget ? 'link' : undefined}
-                      className={`transactions-ledger-row${
-                        draggedIncome?.id === transaction.id
-                          ? ' is-compensation-drag-source'
-                          : ''
-                      }${isDropTarget ? ' is-compensation-drop-target' : ''}`}
-                      draggable={isDesktop && transaction.originalAmountMinor > 0}
-                      key={transaction.id}
-                      onClick={() => {
-                        if (suppressOpenRef.current) return
-                        setSelectedTransaction(transaction)
-                      }}
-                      onDragEnd={() => {
-                        setDraggedIncome(null)
-                        setDraggedOverId(null)
-                        setDropTargets({})
-                        suppressOpenRef.current = true
-                        window.setTimeout(() => {
-                          suppressOpenRef.current = false
-                        }, 0)
-                      }}
-                      onDragOver={(event) => {
-                        if (
-                          draggedIncome === null ||
-                          transaction.originalAmountMinor >= 0
-                        )
-                          return
-                        event.preventDefault()
-                        event.dataTransfer.dropEffect =
-                          dropTarget === undefined ? 'none' : 'link'
-                        setDraggedOverId(
-                          dropTarget === undefined ? null : transaction.id,
-                        )
-                      }}
-                      onDragLeave={() => {
-                        if (draggedOverId === transaction.id)
+                        aria-pressed={
+                          selectedTransaction?.id === transaction.id
+                        }
+                        aria-dropeffect={isDropTarget ? 'link' : undefined}
+                        className={`transactions-ledger-row${
+                          draggedIncome?.id === transaction.id
+                            ? ' is-compensation-drag-source'
+                            : ''
+                        }${isDropTarget ? ' is-compensation-drop-target' : ''}`}
+                        draggable={
+                          isDesktop && transaction.originalAmountMinor > 0
+                        }
+                        key={transaction.id}
+                        onClick={() => {
+                          if (suppressOpenRef.current) return
+                          setSelectedTransaction(transaction)
+                        }}
+                        onDragEnd={() => {
+                          setDraggedIncome(null)
                           setDraggedOverId(null)
-                      }}
-                      onDragStart={(event) => {
-                        if (transaction.originalAmountMinor <= 0) return
-                        setDragError(false)
-                        setDraggedIncome(transaction)
-                        event.dataTransfer.effectAllowed = 'link'
-                        event.dataTransfer.setData('text/plain', transaction.id)
-                        void loadDropTargets(
-                          transaction,
-                          transactions,
-                          queryClient,
-                          setDropTargets,
-                        )
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault()
-                        const source = draggedIncome
-                        if (source === null || dropTarget === undefined) {
-                          setDragError(true)
-                          return
-                        }
-                        compensationMutation.mutate({
-                          amountMinor: Math.min(
-                            dropTarget.availableAmountMinor,
-                            dropTarget.remainingExpenseMinor,
-                          ),
-                          expenseId: transaction.id,
-                          incomeId: source.id,
-                        })
-                      }}
-                      type="button"
-                    >
-                      <TransactionVisual
-                        className="transaction-avatar"
-                        mappings={visualsQuery.data}
-                        transaction={transaction}
-                      />
-                      <span className="transactions-ledger-row__transaction">
-                        <strong>{transaction.originalDescription}</strong>
-                        <TransactionIndicators transaction={transaction} />
-                      </span>
-                      <span
-                        className="transactions-ledger-row__category"
-                        data-account={accountLabel(transaction)}
+                          setDropTargets({})
+                          suppressOpenRef.current = true
+                          window.setTimeout(() => {
+                            suppressOpenRef.current = false
+                          }, 0)
+                        }}
+                        onDragOver={(event) => {
+                          if (
+                            draggedIncome === null ||
+                            transaction.originalAmountMinor >= 0
+                          )
+                            return
+                          event.preventDefault()
+                          event.dataTransfer.dropEffect =
+                            dropTarget === undefined ? 'none' : 'link'
+                          setDraggedOverId(
+                            dropTarget === undefined ? null : transaction.id,
+                          )
+                        }}
+                        onDragLeave={() => {
+                          if (draggedOverId === transaction.id)
+                            setDraggedOverId(null)
+                        }}
+                        onDragStart={(event) => {
+                          if (transaction.originalAmountMinor <= 0) return
+                          setDragError(false)
+                          setDraggedIncome(transaction)
+                          event.dataTransfer.effectAllowed = 'link'
+                          event.dataTransfer.setData(
+                            'text/plain',
+                            transaction.id,
+                          )
+                          void loadDropTargets(
+                            transaction,
+                            transactions,
+                            queryClient,
+                            setDropTargets,
+                          )
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault()
+                          const source = draggedIncome
+                          if (source === null || dropTarget === undefined) {
+                            setDragError(true)
+                            return
+                          }
+                          compensationMutation.mutate({
+                            amountMinor: Math.min(
+                              dropTarget.availableAmountMinor,
+                              dropTarget.remainingExpenseMinor,
+                            ),
+                            expenseId: transaction.id,
+                            incomeId: source.id,
+                          })
+                        }}
+                        type="button"
                       >
-                        {transaction.category.name ?? t('Uncategorized')}
-                      </span>
-                      <span className="transactions-ledger-row__account">
-                        {accountLabel(transaction)}
-                      </span>
-                      <span className="transactions-ledger-row__date">
-                        <span className="transactions-ledger-row__desktop-time">
-                          {formatTransactionClock(
-                            transaction.originalTimestamp,
-                          )}
+                        <TransactionVisual
+                          className="transaction-avatar"
+                          mappings={visualsQuery.data}
+                          transaction={transaction}
+                        />
+                        <span className="transactions-ledger-row__transaction">
+                          <strong>{transaction.originalDescription}</strong>
+                          <TransactionIndicators transaction={transaction} />
                         </span>
-                        <span className="transactions-ledger-row__mobile-time">
-                          {formatTransactionClock(
-                            transaction.originalTimestamp,
-                          )}
+                        <span
+                          className="transactions-ledger-row__category"
+                          data-account={accountLabel(transaction)}
+                        >
+                          {transaction.category.name ?? t('Uncategorized')}
                         </span>
-                      </span>
-                      <span
-                        className={
-                          transaction.effectiveAmountMinor < 0
-                            ? 'transactions-ledger-row__amount is-expense'
-                            : 'transactions-ledger-row__amount is-income'
-                        }
-                      >
-                        {formatTransactionAmount(transaction)}
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className="transactions-ledger-row__action"
-                      >
-                        •••
-                      </span>
+                        <span className="transactions-ledger-row__account">
+                          {accountLabel(transaction)}
+                        </span>
+                        <span className="transactions-ledger-row__date">
+                          <span className="transactions-ledger-row__desktop-time">
+                            {formatTransactionClock(
+                              transaction.originalTimestamp,
+                            )}
+                          </span>
+                          <span className="transactions-ledger-row__mobile-time">
+                            {formatTransactionClock(
+                              transaction.originalTimestamp,
+                            )}
+                          </span>
+                        </span>
+                        <span
+                          className={
+                            transaction.effectiveAmountMinor < 0
+                              ? 'transactions-ledger-row__amount is-expense'
+                              : 'transactions-ledger-row__amount is-income'
+                          }
+                        >
+                          {formatTransactionAmount(transaction)}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="transactions-ledger-row__action"
+                        >
+                          •••
+                        </span>
                       </button>
                     )
                   })}
@@ -539,19 +541,21 @@ async function loadDropTargets(
           -details.summary.remainingPersonalExpenseMinor
         return candidate === undefined || remainingExpenseMinor <= 0
           ? null
-          : [
+          : ([
               expense.id,
               {
                 availableAmountMinor: candidate.availableAmountMinor,
                 remainingExpenseMinor,
               },
-            ] as const
+            ] as const)
       } catch {
         return null
       }
     }),
   )
-  setDropTargets(Object.fromEntries(results.filter((result) => result !== null)))
+  setDropTargets(
+    Object.fromEntries(results.filter((result) => result !== null)),
+  )
 }
 
 function TransactionIndicators({

@@ -116,7 +116,13 @@ describe('CompensationService', () => {
     const repository = new FakeCompensationRepository()
     repository.transactions.set(
       'expense-149',
-      transaction('expense-149', 'expense', -149, 'Shared purchase', 1_700_000_000),
+      transaction(
+        'expense-149',
+        'expense',
+        -149,
+        'Shared purchase',
+        1_700_000_000,
+      ),
     )
     repository.incomes.push(
       ...Array.from({ length: 101 }, (_, index) =>
