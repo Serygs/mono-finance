@@ -174,7 +174,14 @@ test('selected label remains readable through hover, focus, active and disabled 
     for (const state of ['default', 'hover', 'focus', 'active', 'disabled']) {
       if (state === 'default') await page.mouse.move(0, 0)
       if (state === 'hover') await selected.hover()
-      if (state === 'focus') await selected.focus()
+      if (state === 'focus') {
+        await selected.focus()
+        await page.keyboard.press('Tab')
+        await page.keyboard.press('Shift+Tab')
+        expect(
+          await selected.evaluate((node) => node.matches(':focus-visible')),
+        ).toBe(true)
+      }
       if (state === 'active') await page.mouse.down()
       if (state === 'disabled')
         await selected.evaluate(

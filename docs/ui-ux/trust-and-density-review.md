@@ -43,7 +43,7 @@ Completed on synthetic data in Chromium:
 - 55 distinct focused Playwright scenarios in seven suites passed across the main run and corrected/targeted reruns: accounts, categories, overview, transactions, settings, contextual-help, trust-and-density. The initial run exposed defects and outdated expectations; all those failures were corrected and their scenarios rerun successfully. This count is not a claim that a single final command ran all 55 together.
 - The trust-and-density suite plus transaction suite passed 14 scenarios together; the added drag/resize/preferences scenario passed separately; the final settings suite passed all 8 scenarios.
 - Matrices cover 1440, 1200, 768, 430, 390, 375 and 320px; light/dark; uk/en; doubled text; long names; additional suites cover exact large amounts, loading, empty/error/offline, sheets, focus/Escape and keyboard-sized viewports. No horizontal page overflow was detected in those cases.
-- Rendered/computed colors were measured for selected button and nested-label contrast in default/hover/focus/active/disabled states (at least 4.5:1). Existing foreground/chart/control checks also passed. These are automated checks of exercised elements, not a full WCAG conformance declaration.
+- Rendered/computed colors were measured for selected button and nested-label contrast in default/hover/keyboard focus-visible/active/disabled states (at least 4.5:1). Existing foreground/chart/control checks also passed. These are automated checks of exercised elements, not a full WCAG conformance declaration.
 - Touched TS/TSX/CSS/Markdown files pass Prettier; `git diff --check` passes.
 - `npm run build` and `npm run security:client-bundle` pass. Build reports an application chunk-size warning; no dependency or bundling policy was changed.
 
@@ -74,4 +74,4 @@ Local implementation commits:
 - `c1cdd44` — `fix(categories): preserve zero shares and accessible link targets`
 - `f149680` — `fix(filters): retain category labels for empty drill-down results`
 
-The documentation handoff is a separate final commit.
+The documentation handoff is recorded separately. The final verification commit additionally asserts keyboard `:focus-visible` before measuring segment contrast.
