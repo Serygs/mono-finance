@@ -1297,6 +1297,7 @@ button.ui-chip {
 }
 .category-ranking-link {
   display: flex;
+  min-width: 44px;
   min-height: 2.75rem;
   align-items: center;
   overflow-wrap: anywhere;

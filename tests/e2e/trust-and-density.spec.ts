@@ -9,7 +9,7 @@ import type { TransactionListItem } from '../../src/features/transactions/transa
 test.use({ hasTouch: true })
 const artifact = 'phase-trust.local/screenshots'
 const accountId = '00000000-0000-4000-8000-000000000001'
-const amounts = [3890, 2000, 1000, 900, 800, 700, 400, 310]
+const amounts = [3890, 2000, 1000, 900, 800, 700, 400, 310, 0]
 const transactions: TransactionListItem[] = amounts.map((amount, index) => ({
   account: { id: accountId, type: '', maskedPan: null },
   adjustmentNote: null,
@@ -274,6 +274,21 @@ test('category shares use the full total and drill-down preserves identity and c
     group.locator('.category-ranking-copy small').first(),
   ).toHaveText('38.9%')
   await expect(group).toContainText('Other categories')
+  await group
+    .getByRole('button', { name: 'View all categories', exact: true })
+    .click()
+  const zeroTrack = group
+    .locator('li')
+    .filter({ hasText: 'Synthetic category 8' })
+    .locator('.category-ranking-track')
+  expect(
+    await zeroTrack.evaluate(
+      (track) => track.firstElementChild!.getBoundingClientRect().width,
+    ),
+  ).toBe(0)
+  await group
+    .getByRole('button', { name: 'Show leading categories', exact: true })
+    .click()
   await page
     .getByRole('combobox', { name: 'Period', exact: true })
     .selectOption('7d')
