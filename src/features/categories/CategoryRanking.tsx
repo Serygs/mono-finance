@@ -115,7 +115,12 @@ export function CategoryRanking({
                     ) : (
                       <Link
                         className="category-ranking-link"
-                        to={transactionDrillDownUrl(filters)}
+                        to={transactionDrillDownUrl(
+                          filters,
+                          row.categoryId === null
+                            ? {}
+                            : { categoryLabel: name },
+                        )}
                         aria-label={t('View transactions for {category}', {
                           category: name,
                         })}

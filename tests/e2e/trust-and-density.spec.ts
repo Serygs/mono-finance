@@ -299,6 +299,21 @@ test('category shares use the full total and drill-down preserves identity and c
   await expect(page).toHaveURL(/categoryId=5411/)
   await expect(page.locator('.transactions-ledger-row')).toHaveCount(1)
   expect(requests.at(-1)?.searchParams.get('excluded')).toBe('false')
+  const emptyUrl = new URL(page.url())
+  emptyUrl.searchParams.set('currency', 'USD')
+  await page.goto(emptyUrl.toString())
+  await expect(
+    page.getByRole('heading', {
+      name: 'No matching transactions',
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(page.locator('.transactions-ledger-row')).toHaveCount(0)
+  await expect(page.locator('.ui-filter-chips')).toContainText(
+    'Synthetic bank category with a long unabridged name',
+  )
+  expect(requests.at(-1)?.searchParams.has('categoryLabel')).toBe(false)
+  await page.goBack()
   await page.goBack()
   await expect(
     page.getByRole('combobox', { name: 'Period', exact: true }),

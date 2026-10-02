@@ -99,7 +99,12 @@ export function useTransactionLedger() {
   const setAccountIds = (value: string[]) =>
     update({ accountId: value, accountScope: 'explicit' })
   const setCategory = (value: string | null) =>
-    update({ category: value, categoryId: null, uncategorized: null })
+    update({
+      category: value,
+      categoryId: null,
+      categoryLabel: null,
+      uncategorized: null,
+    })
   const setCurrency = (value: string | null) => update({ currency: value })
   const setExcluded = (value: boolean | null) =>
     update({ excluded: value === null ? null : String(value) })
@@ -188,6 +193,7 @@ export function useTransactionLedger() {
         customCategoriesQuery.data?.find(
           (item) => item.id === categoryIdentity.id,
         )?.name ??
+        parameters.get('categoryLabel') ??
         null)
       : null)
 
@@ -242,6 +248,7 @@ export function useTransactionLedger() {
       update({
         category: null,
         categoryId: null,
+        categoryLabel: null,
         uncategorized: null,
         currency: null,
         excluded: null,

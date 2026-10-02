@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   analyticsTransactionFilters,
   transactionDrillDownUrl,
+  transactionFilterParameters,
 } from './transaction-drill-down'
 import { periodCoverage } from './data-freshness'
 const context = {
@@ -30,6 +31,19 @@ describe('traceable analytics navigation', () => {
       excluded: 'false',
     })
     expect(url.searchParams.has('category')).toBe(false)
+    const withLabel = new URL(
+      transactionDrillDownUrl(filters, {
+        categoryLabel: 'A preserved original name',
+      }),
+      'http://localhost',
+    )
+    expect(withLabel.searchParams.get('categoryLabel')).toBe(
+      'A preserved original name',
+    )
+    expect(withLabel.searchParams.get('categoryId')).toBe('5411')
+    expect(transactionFilterParameters(filters).has('categoryLabel')).toBe(
+      false,
+    )
     expect(
       analyticsTransactionFilters(context, { direction: null, currency: null })
         ?.direction,

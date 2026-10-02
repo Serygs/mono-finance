@@ -65,8 +65,12 @@ export function transactionFilterParameters(
 
 export function transactionDrillDownUrl(
   filters: TransactionListFilters,
+  presentation: { categoryLabel?: string } = {},
 ): string {
   const parameters = transactionFilterParameters(filters)
+  // A label is a presentation hint only; server query identity remains categoryId.
+  if (presentation.categoryLabel !== undefined)
+    parameters.set('categoryLabel', presentation.categoryLabel)
   parameters.set('accountScope', 'explicit')
   parameters.set('period', 'custom')
   return `/transactions?${parameters}`
