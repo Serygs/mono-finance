@@ -13,6 +13,12 @@ export interface TransactionSyncStateView {
   accountType: string
   currencyCode: string
   lastErrorCode: string | null
+  /** Fully persisted successful statement request intervals; absent/null means unknown legacy coverage. */
+  coverageIntervals?: Array<{
+    fromEpochSeconds: number
+    toEpochSeconds: number
+    completedAt: number
+  }> | null
   lastSuccessfulSyncAt: number | null
   status: 'idle' | 'running' | 'failed'
 }
@@ -51,6 +57,7 @@ export interface TransactionSyncRepository {
   completeWindow(input: {
     accountId: string
     backfillCursorAt: number
+    window: TransactionSyncWindow
     lastSyncedTransactionAt: number | null
     nowEpochSeconds: number
   }): Promise<void>
@@ -158,8 +165,9 @@ export class TransactionSyncService {
       await this.repository.completeWindow({
         accountId: account.accountId,
         backfillCursorAt: window.fromEpochSeconds,
+        window,
         lastSyncedTransactionAt,
-        nowEpochSeconds,
+        nowEpochSeconds: this.nowEpochSeconds(),
       })
       this.log({
         accountId: account.accountId,

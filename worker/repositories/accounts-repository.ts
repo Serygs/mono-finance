@@ -19,6 +19,7 @@ interface ExistingCardRow {
 interface AccountListRow {
   account_id: string
   account_type: string
+  balance_updated_at: number | null
   balance_minor: number
   card_id: string | null
   card_is_active: number | null
@@ -112,15 +113,16 @@ export class D1AccountsRepository implements AccountRepository {
           .prepare(
             `INSERT INTO accounts (
                id, user_id, monobank_account_id, type, currency_code,
-               balance_minor, credit_limit_minor, is_active, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+               balance_minor, credit_limit_minor, is_active, created_at, updated_at, balance_updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
              ON CONFLICT(monobank_account_id) DO UPDATE SET
                type = excluded.type,
                currency_code = excluded.currency_code,
                balance_minor = excluded.balance_minor,
                credit_limit_minor = excluded.credit_limit_minor,
                is_active = 1,
-               updated_at = excluded.updated_at`,
+               updated_at = excluded.updated_at,
+               balance_updated_at = excluded.balance_updated_at`,
           )
           .bind(
             accountId,
@@ -130,6 +132,7 @@ export class D1AccountsRepository implements AccountRepository {
             currency.code,
             account.balanceMinor,
             account.creditLimitMinor,
+            timestamp,
             timestamp,
             timestamp,
           ),
@@ -174,6 +177,7 @@ export class D1AccountsRepository implements AccountRepository {
            accounts.id AS account_id,
            accounts.type AS account_type,
            accounts.balance_minor,
+           accounts.balance_updated_at,
            accounts.credit_limit_minor,
            accounts.is_active,
            currencies.code AS currency_code,
@@ -256,6 +260,7 @@ function mapAccountRows(rows: AccountListRow[]): AccountView[] {
     let account = accounts.get(row.account_id)
     if (account === undefined) {
       account = {
+        balanceUpdatedAt: row.balance_updated_at,
         balanceMinor: row.balance_minor,
         cards: [],
         creditLimitMinor: row.credit_limit_minor,

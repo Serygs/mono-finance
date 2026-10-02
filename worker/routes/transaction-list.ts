@@ -48,6 +48,8 @@ function parseFilters(
   const limit = nullablePositiveInteger(query['limit']) ?? DEFAULT_PAGE_SIZE
   const currency = nullableCurrency(query['currency'])
   const category = nullableText(query['category'], 120)
+  const categoryId = nullableText(query['categoryId'], 128)
+  const uncategorized = nullableBoolean(query['uncategorized'])
   const cursor = nullableText(query['cursor'], 512)
   const search = nullableText(query['search'], 100)
   if (
@@ -59,6 +61,10 @@ function parseFilters(
     limit > MAX_PAGE_SIZE ||
     currency === undefined ||
     category === undefined ||
+    categoryId === undefined ||
+    uncategorized === undefined ||
+    (categoryId !== null && uncategorized === true) ||
+    (category !== null && (categoryId !== null || uncategorized === true)) ||
     cursor === undefined ||
     (cursor !== null && !isCursor(cursor)) ||
     search === undefined ||
@@ -69,6 +75,11 @@ function parseFilters(
   return {
     accountIds,
     category,
+    ...(categoryId !== null
+      ? { categoryIdentity: { kind: 'id' as const, id: categoryId } }
+      : uncategorized === true
+        ? { categoryIdentity: { kind: 'uncategorized' as const } }
+        : {}),
     cursor,
     currency,
     dateFrom,
