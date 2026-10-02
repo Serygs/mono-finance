@@ -6,15 +6,18 @@ import {
 } from './transaction-formatting'
 import type { TransactionListItem } from './transaction-types'
 import { TransactionRow } from './TransactionRow'
+import type { CustomCategory } from '../categories/categories-api'
 
 export function TransactionLedger({
   transactions,
   selectedTransaction,
   onSelect,
+  categories,
 }: {
   transactions: TransactionListItem[]
   selectedTransaction: TransactionListItem | null
   onSelect(transaction: TransactionListItem): void
+  categories: CustomCategory[]
 }) {
   const { locale, t } = useLocalization()
   const transactionGroups = groupTransactionsByDate(transactions)
@@ -31,32 +34,39 @@ export function TransactionLedger({
           <span>{t('Account')}</span>
           <span>{t('Date and time')}</span>
           <span>{t('Effective amount')}</span>
-          <span>{t('Actions')}</span>
         </div>
         {transactionGroups.map((group) => {
-          const firstTransaction = group.transactions[0]
-          if (firstTransaction === undefined) return null
+          const shownAmount = formatDateGroupAmount(group.transactions, locale)
           return (
             <section className="transactions-date-group" key={group.dateKey}>
-              <h2>
-                <span>
+              <header className="transactions-date-heading">
+                <h2>
                   {formatTransactionDateGroup(group.dateKey, {
                     locale,
                     now: dateGroupNow,
                     today: t('Today'),
                     yesterday: t('Yesterday'),
                   })}
-                </span>
-                <span>{formatDateGroupAmount(group.transactions)}</span>
-              </h2>
-              {group.transactions.map((transaction) => (
-                <TransactionRow
-                  key={transaction.id}
-                  transaction={transaction}
-                  selected={selectedTransaction?.id === transaction.id}
-                  onSelect={onSelect}
-                />
-              ))}
+                </h2>
+                {shownAmount === '' ? null : (
+                  <p className="transactions-shown-total">
+                    <span>{t('Shown transactions total')}</span>
+                    <strong>{shownAmount}</strong>
+                  </p>
+                )}
+              </header>
+              <ul>
+                {group.transactions.map((transaction) => (
+                  <li key={transaction.id}>
+                    <TransactionRow
+                      transaction={transaction}
+                      selected={selectedTransaction?.id === transaction.id}
+                      onSelect={onSelect}
+                      categories={categories}
+                    />
+                  </li>
+                ))}
+              </ul>
             </section>
           )
         })}

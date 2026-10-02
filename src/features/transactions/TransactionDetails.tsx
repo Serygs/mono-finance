@@ -1,4 +1,5 @@
-import { Alert } from '../../components/ui/Feedback'
+import { Button } from '../../components/ui/Controls'
+import { useEffect, useRef } from 'react'
 import { useLocalization } from '../localization/localization'
 import type {
   TransactionCorrection,
@@ -22,6 +23,7 @@ export interface TransactionDetailsProps {
       category?: TransactionListItem['category']
       originalCategory?: TransactionListItem['originalCategory']
       exclusionReason?: string | null
+      hasCompensation?: boolean
     },
   ): void
   transaction: TransactionListItem | null
@@ -49,31 +51,88 @@ function TransactionDetailsContent({
 }) {
   const { t } = useLocalization()
   const details = useTransactionDetails({ transaction, onTransactionUpdated })
-  const { validationMessage, mutationError } = details
+  const actionButtons = useRef<HTMLDivElement>(null)
+  const editorContainer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (details.editor !== null)
+      editorContainer.current
+        ?.querySelector<HTMLElement>('input, select, textarea, button')
+        ?.focus()
+  }, [details.editor])
+  function cancelEditing() {
+    const previousEditor = details.editor
+    details.cancelEditing()
+    requestAnimationFrame(() =>
+      actionButtons.current
+        ?.querySelector<HTMLButtonElement>(`[data-editor="${previousEditor}"]`)
+        ?.focus({ preventScroll: true }),
+    )
+  }
+  const editing = { ...details, cancelEditing }
   return (
     <div className="transaction-details">
       <TransactionSummary transaction={transaction} />
-      <TransactionCategorySection transaction={transaction} details={details} />
-      <TransactionCompensationSection
-        transaction={transaction}
-        details={details}
-      />
-      <TransactionAdjustmentSection
-        transaction={transaction}
-        details={details}
-      />
-      <TransactionExclusionSection
-        transaction={transaction}
-        details={details}
-      />
-      {validationMessage !== null ? (
-        <Alert tone="danger">{validationMessage}</Alert>
+      {details.editor === null ? (
+        <div className="transaction-detail-actions" ref={actionButtons}>
+          <h3>{t('Manage transaction')}</h3>
+          <Button
+            data-editor="category"
+            variant="secondary"
+            onClick={() => details.beginEditing('category')}
+          >
+            {t('Analytics category')}
+          </Button>
+          <Button
+            data-editor="adjustment"
+            variant="secondary"
+            onClick={() => details.beginEditing('adjustment')}
+          >
+            {t('Analytics adjustment')}
+          </Button>
+          {transaction.originalAmountMinor < 0 ? (
+            <Button
+              data-editor="compensation"
+              variant="secondary"
+              onClick={() => details.beginEditing('compensation')}
+            >
+              {t('Compensations')}
+            </Button>
+          ) : null}
+          <Button
+            data-editor="exclusion"
+            variant="secondary"
+            onClick={() => details.beginEditing('exclusion')}
+          >
+            {t('Analytics exclusion')}
+          </Button>
+        </div>
       ) : null}
-      {mutationError !== null ? (
-        <Alert tone="danger">
-          {t('Transaction correction could not be saved. Try again later.')}
-        </Alert>
-      ) : null}
+      <div className="transaction-editor" ref={editorContainer}>
+        {details.editor === 'category' ? (
+          <TransactionCategorySection
+            transaction={transaction}
+            details={editing}
+          />
+        ) : null}
+        {details.editor === 'compensation' ? (
+          <TransactionCompensationSection
+            transaction={transaction}
+            details={editing}
+          />
+        ) : null}
+        {details.editor === 'adjustment' ? (
+          <TransactionAdjustmentSection
+            transaction={transaction}
+            details={editing}
+          />
+        ) : null}
+        {details.editor === 'exclusion' ? (
+          <TransactionExclusionSection
+            transaction={transaction}
+            details={editing}
+          />
+        ) : null}
+      </div>
       {transaction.hasAdjustment ? (
         <p className="transaction-detail-note">
           {t('Adjusted. Original imported data remains unchanged.')}

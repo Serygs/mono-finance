@@ -1,4 +1,8 @@
 import { Button } from '../../components/ui/Controls'
+import { Alert } from '../../components/ui/Feedback'
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
+import { Icon } from '../../components/ui/Icon'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
 import {
@@ -20,31 +24,36 @@ export function TransactionSummary({
 }: {
   transaction: TransactionListItem
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   return (
-    <>
-      {' '}
-      <div className="transaction-details-heading">
-        <div>
-          <p className="eyebrow">{t('Transaction details')}</p>
-          <h2>{transaction.originalDescription}</h2>
-        </div>
-      </div>
-      <div>
-        <strong className="transaction-details-amount">
-          {formatTransactionAmount(transaction)}
-        </strong>
-        {transaction.hasAdjustment ? (
-          <span className="transaction-original-amount">
-            {t('Original')}:{' '}
-            {formatMinorAmount(transaction.originalAmountMinor, transaction)}
-          </span>
-        ) : null}
-      </div>
+    <section
+      className="transaction-summary"
+      aria-label={t('Transaction details')}
+    >
+      <h3 className="transaction-merchant">
+        {transaction.originalDescription}
+      </h3>
+      <strong
+        className={`transaction-details-amount${transaction.effectiveAmountMinor > 0 ? ' is-income' : ''}`}
+      >
+        {formatTransactionAmount(transaction, locale)}
+      </strong>
+      {transaction.hasAdjustment ? (
+        <p className="transaction-original-amount">
+          <span>{t('Original')}:</span>{' '}
+          {formatMinorAmount(
+            transaction.originalAmountMinor,
+            transaction,
+            locale,
+          )}
+        </p>
+      ) : null}
       <dl className="transaction-details-list">
         <div>
           <dt>{t('Date and time')}</dt>
-          <dd>{formatTransactionTime(transaction.originalTimestamp)}</dd>
+          <dd>
+            {formatTransactionTime(transaction.originalTimestamp, locale)}
+          </dd>
         </div>
         <div>
           <dt>{t('Account')}</dt>
@@ -52,19 +61,52 @@ export function TransactionSummary({
         </div>
         <div>
           <dt>{t('Category')}</dt>
-          <dd>
-            {transaction.category.name ?? t('Uncategorized')}
-            {(transaction.category.source === 'custom' ||
-              transaction.category.source === 'mapped') &&
-            transaction.originalCategory.name !== null ? (
-              <span className="transaction-original-amount">
-                {t('Original')}: {transaction.originalCategory.name}
-              </span>
-            ) : null}
-          </dd>
+          <dd>{transaction.category.name ?? t('Uncategorized')}</dd>
         </div>
       </dl>
-    </>
+      <details className="transaction-original-information">
+        <summary>
+          <span>{t('Original bank information')}</span>
+          <Icon name="chevron" />
+        </summary>
+        <dl className="transaction-details-list">
+          <div>
+            <dt>{t('Description')}</dt>
+            <dd>{transaction.originalDescription}</dd>
+          </div>
+          <div>
+            <dt>{t('Original amount')}</dt>
+            <dd>
+              {formatMinorAmount(
+                transaction.originalAmountMinor,
+                transaction,
+                locale,
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>{t('Original category')}</dt>
+            <dd>{transaction.originalCategory.name ?? t('Uncategorized')}</dd>
+          </div>
+          <div>
+            <dt>{t('MCC')}</dt>
+            <dd>{transaction.originalMcc ?? t('Not available')}</dd>
+          </div>
+          <div>
+            <dt>{t('Account')}</dt>
+            <dd>
+              {transaction.account.type}
+              <br />
+              {transaction.account.maskedPan ?? transaction.account.id}
+            </dd>
+          </div>
+          <div>
+            <dt>{t('Account ID')}</dt>
+            <dd>{transaction.account.id}</dd>
+          </div>
+        </dl>
+      </details>
+    </section>
   )
 }
 export function TransactionCategorySection({
@@ -98,7 +140,10 @@ export function TransactionCategorySection({
         <FormField label={t('Custom category')}>
           <Select
             value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
+            onChange={(event) => {
+              details.clearFeedback()
+              setCategoryId(event.target.value)
+            }}
             disabled={isSaving || categoriesQuery.isPending}
           >
             <option value="">{t('Select a custom category')}</option>
@@ -109,7 +154,19 @@ export function TransactionCategorySection({
             ))}
           </Select>
         </FormField>
-        <div className="ui-form-actions">
+        {categoriesQuery.isError ? (
+          <p role="alert">
+            {t('Categories could not be loaded.')}{' '}
+            <Button
+              variant="quiet"
+              onClick={() => void categoriesQuery.refetch()}
+            >
+              {t('Retry')}
+            </Button>
+          </p>
+        ) : null}
+        <Link to="/settings#categories">{t('Manage category visuals')}</Link>
+        <TransactionEditActions details={details}>
           <Button
             disabled={isSaving || categoryId === ''}
             loading={categoryMutation.isPending}
@@ -122,15 +179,20 @@ export function TransactionCategorySection({
           {transaction.category.source === 'custom' ? (
             <Button
               disabled={isSaving}
+              loading={resetCategoryMutation.isPending}
               onClick={() => resetCategoryMutation.mutate()}
               size="small"
               type="button"
               variant="secondary"
             >
-              {t('Reset to original')}
+              {t(
+                resetCategoryMutation.isPending
+                  ? 'Resetting…'
+                  : 'Reset to original',
+              )}
             </Button>
           ) : null}
-        </div>
+        </TransactionEditActions>
       </section>
     </>
   )
@@ -167,9 +229,13 @@ export function TransactionAdjustmentSection({
         >
           <input
             autoComplete="off"
+            disabled={isSaving}
             inputMode="decimal"
             name="effective-amount"
-            onChange={(event) => setAdjustmentAmount(event.target.value)}
+            onChange={(event) => {
+              details.clearFeedback()
+              setAdjustmentAmount(event.target.value)
+            }}
             required
             type="text"
             value={adjustmentAmount}
@@ -178,27 +244,36 @@ export function TransactionAdjustmentSection({
         <FormField label={t('Note')} hint={t('Optional')}>
           <textarea
             autoComplete="off"
+            disabled={isSaving}
             maxLength={1_000}
             name="adjustment-note"
-            onChange={(event) => setAdjustmentNote(event.target.value)}
+            onChange={(event) => {
+              details.clearFeedback()
+              setAdjustmentNote(event.target.value)
+            }}
             value={adjustmentNote}
           />
         </FormField>
-        <div className="ui-form-actions">
-          <Button loading={adjustmentMutation.isPending} type="submit">
+        <TransactionEditActions details={details}>
+          <Button
+            disabled={isSaving}
+            loading={adjustmentMutation.isPending}
+            type="submit"
+          >
             {t(adjustmentMutation.isPending ? 'Saving…' : 'Save adjustment')}
           </Button>
           {transaction.hasAdjustment ? (
             <Button
               disabled={isSaving}
+              loading={resetMutation.isPending}
               onClick={() => resetMutation.mutate()}
               type="button"
               variant="secondary"
             >
-              {t('Reset adjustment')}
+              {t(resetMutation.isPending ? 'Resetting…' : 'Reset adjustment')}
             </Button>
           ) : null}
-        </div>
+        </TransactionEditActions>
       </form>
     </>
   )
@@ -216,20 +291,34 @@ export function TransactionExclusionSection({
     exclusionMutation,
   } = details
   return (
-    <>
-      {' '}
-      <section
-        className="transaction-exclusion"
-        aria-labelledby="exclusion-title"
-      >
-        <div>
-          <h3 id="exclusion-title">{t('Analytics exclusion')}</h3>
-          <p>
-            {t(
-              'Excluded transactions stay in the ledger but are omitted from normal analytics.',
-            )}
-          </p>
-        </div>
+    <section
+      className="transaction-exclusion"
+      aria-labelledby="exclusion-title"
+    >
+      <div>
+        <h3 id="exclusion-title">{t('Analytics exclusion')}</h3>
+        <p>
+          {t(
+            'Excluded transactions stay in the ledger but are omitted from normal analytics.',
+          )}
+        </p>
+      </div>
+      {!transaction.isExcluded ? (
+        <FormField label={t('Reason')} hint={t('Optional')}>
+          <textarea
+            autoComplete="off"
+            disabled={isSaving}
+            maxLength={1000}
+            name="exclusion-reason"
+            onChange={(event) => {
+              details.clearFeedback()
+              setExclusionReason(event.target.value)
+            }}
+            value={exclusionReason}
+          />
+        </FormField>
+      ) : null}
+      <TransactionEditActions details={details}>
         {transaction.isExcluded ? (
           <Button
             disabled={isSaving}
@@ -243,32 +332,64 @@ export function TransactionExclusionSection({
             )}
           </Button>
         ) : (
-          <>
-            <FormField label={t('Reason')} hint={t('Optional')}>
-              <textarea
-                autoComplete="off"
-                maxLength={1_000}
-                name="exclusion-reason"
-                onChange={(event) => setExclusionReason(event.target.value)}
-                value={exclusionReason}
-              />
-            </FormField>
-            <Button
-              disabled={isSaving}
-              loading={exclusionMutation.isPending}
-              onClick={() =>
-                exclusionMutation.mutate(exclusionReason.trim() || null)
-              }
-              type="button"
-              variant="danger"
-            >
-              {exclusionMutation.isPending
-                ? t('Excluding…')
-                : t('Exclude from analytics')}
-            </Button>
-          </>
+          <Button
+            disabled={isSaving}
+            loading={exclusionMutation.isPending}
+            onClick={() =>
+              exclusionMutation.mutate(exclusionReason.trim() || null)
+            }
+            type="button"
+            variant="danger"
+          >
+            {t(
+              exclusionMutation.isPending
+                ? 'Excluding…'
+                : 'Exclude from analytics',
+            )}
+          </Button>
         )}
-      </section>
-    </>
+      </TransactionEditActions>
+    </section>
+  )
+}
+
+// Every editor shares one keyboard-safe action/feedback area inside the native sheet.
+export function TransactionEditActions({
+  details,
+  children,
+}: {
+  details: ReturnType<typeof useTransactionDetails>
+  children: ReactNode
+}) {
+  const { t } = useLocalization()
+  return (
+    <div className="transaction-edit-actions">
+      {details.validationMessage !== null ? (
+        <Alert tone="danger">{details.validationMessage}</Alert>
+      ) : null}
+      {details.mutationError !== null ? (
+        <Alert tone="danger">
+          {t(
+            details.editor === 'compensation'
+              ? 'Compensation could not be saved. Try again later.'
+              : 'Transaction correction could not be saved. Try again later.',
+          )}
+        </Alert>
+      ) : null}
+      {details.saved && details.validationMessage === null ? (
+        <Alert tone="success">{t('Changes saved.')}</Alert>
+      ) : null}
+      <div className="transaction-edit-buttons">
+        <Button
+          disabled={details.isSaving}
+          variant="quiet"
+          type="button"
+          onClick={details.cancelEditing}
+        >
+          {t('Cancel')}
+        </Button>
+        {children}
+      </div>
+    </div>
   )
 }

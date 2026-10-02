@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { TransactionListFilters } from './transaction-types'
+import { dashboardQueryKeys } from '../dashboard/dashboard-query-keys'
 
 export const transactionQueryKeys = {
   all: ['transactions'] as const,
@@ -9,9 +10,14 @@ export const transactionQueryKeys = {
     ['compensations', transactionId] as const,
 }
 
-// Keep the existing correction and compensation refresh boundaries explicit.
+// Corrections affect the ledger and financial projections, not account balances
+// or category definitions. Inactive views are marked stale for their next visit.
 export function refreshTransactionLedger(client: QueryClient) {
-  return client.invalidateQueries({ queryKey: transactionQueryKeys.all })
+  return Promise.all([
+    client.invalidateQueries({ queryKey: transactionQueryKeys.all }),
+    client.invalidateQueries({ queryKey: dashboardQueryKeys.recent }),
+    client.invalidateQueries({ queryKey: dashboardQueryKeys.analytics }),
+  ])
 }
 
 export function refreshCompensationDetails(

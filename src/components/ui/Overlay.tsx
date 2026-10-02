@@ -6,6 +6,7 @@ import { IconButton } from './Controls'
 import { Icon } from './Icon'
 
 interface OverlayProps {
+  className?: string
   children: ReactNode
   onClose(): void
   open: boolean
@@ -22,6 +23,7 @@ export function Dialog(props: OverlayProps) {
 
 function OverlayFrame({
   children,
+  className,
   kind,
   onClose,
   open,
@@ -37,7 +39,7 @@ function OverlayFrame({
     <dialog
       aria-labelledby={titleId}
       aria-modal="true"
-      className={`ui-overlay ui-overlay--${kind}`}
+      className={`ui-overlay ui-overlay--${kind}${className ? ` ${className}` : ''}`}
       onCancel={onCancel}
       onClick={onBackdropClick}
       ref={dialogRef}

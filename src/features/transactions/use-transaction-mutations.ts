@@ -6,6 +6,7 @@ import {
 import {
   refreshCompensationDetails,
   refreshTransactionLedger,
+  transactionQueryKeys,
 } from './transaction-queries'
 import type { TransactionListItem } from './transaction-types'
 import type { TransactionDetailsProps } from './TransactionDetails'
@@ -22,6 +23,7 @@ export function useTransactionMutations(
   transaction: TransactionListItem,
   onTransactionUpdated: TransactionDetailsProps['onTransactionUpdated'],
   onCategoryReset: () => void,
+  onAdjustmentReset: () => void,
 ) {
   const queryClient = useQueryClient()
   const refreshTransactions = () => void refreshTransactionLedger(queryClient)
@@ -35,6 +37,7 @@ export function useTransactionMutations(
     onSuccess: (correction, input) => {
       onTransactionUpdated(correction, { adjustmentNote: input.note })
       refreshTransactions()
+      void refreshCompensationDetails(queryClient, transaction.id)
     },
   })
   const resetMutation = useMutation({
@@ -42,8 +45,10 @@ export function useTransactionMutations(
       return resetTransactionAdjustment(transaction.id)
     },
     onSuccess: (correction) => {
+      onAdjustmentReset()
       onTransactionUpdated(correction, { adjustmentNote: null })
       refreshTransactions()
+      void refreshCompensationDetails(queryClient, transaction.id)
     },
   })
   const exclusionMutation = useMutation({
@@ -96,13 +101,33 @@ export function useTransactionMutations(
       compensationTransactionId: string
       compensatedAmountMinor: number
     }) => linkCompensation(transaction.id, input),
-    onSuccess: () =>
-      void refreshCompensationDetails(queryClient, transaction.id),
+    onSuccess: (result) => {
+      queryClient.setQueryData(
+        transactionQueryKeys.compensations(transaction.id),
+        result,
+      )
+      onTransactionUpdated(
+        { id: transaction.id },
+        { hasCompensation: result.links.length > 0 },
+      )
+      void refreshCompensationDetails(queryClient, transaction.id)
+      refreshTransactions()
+    },
   })
   const unlinkCompensationMutation = useMutation({
     mutationFn: (linkId: string) => unlinkCompensation(transaction.id, linkId),
-    onSuccess: () =>
-      void refreshCompensationDetails(queryClient, transaction.id),
+    onSuccess: (result) => {
+      queryClient.setQueryData(
+        transactionQueryKeys.compensations(transaction.id),
+        result,
+      )
+      onTransactionUpdated(
+        { id: transaction.id },
+        { hasCompensation: result.links.length > 0 },
+      )
+      void refreshCompensationDetails(queryClient, transaction.id)
+      refreshTransactions()
+    },
   })
 
   const isSaving =
@@ -111,14 +136,23 @@ export function useTransactionMutations(
     exclusionMutation.isPending ||
     restoreMutation.isPending ||
     categoryMutation.isPending ||
-    resetCategoryMutation.isPending
-  const mutationError =
-    adjustmentMutation.error ??
-    resetMutation.error ??
-    exclusionMutation.error ??
-    restoreMutation.error ??
-    categoryMutation.error ??
-    resetCategoryMutation.error
+    resetCategoryMutation.isPending ||
+    compensationMutation.isPending ||
+    unlinkCompensationMutation.isPending
+  const mutations = [
+    adjustmentMutation,
+    resetMutation,
+    exclusionMutation,
+    restoreMutation,
+    categoryMutation,
+    resetCategoryMutation,
+    compensationMutation,
+    unlinkCompensationMutation,
+  ]
+  const latest = [...mutations].sort(
+    (left, right) => right.submittedAt - left.submittedAt,
+  )[0]
+  const mutationError = latest?.error ?? null
 
   return {
     adjustmentMutation,
@@ -131,5 +165,9 @@ export function useTransactionMutations(
     unlinkCompensationMutation,
     isSaving,
     mutationError,
+    saved: !isSaving && latest?.isSuccess === true,
+    clearFeedback() {
+      for (const mutation of mutations) mutation.reset()
+    },
   }
 }

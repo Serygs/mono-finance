@@ -16,11 +16,10 @@ export function TransactionDetailsSheet({
   } = selection
   return (
     <BottomSheet
+      className="transaction-details-overlay"
       onClose={() => setSelectedTransaction(null)}
       open={selectedTransaction !== null}
-      title={
-        selectedTransaction?.originalDescription ?? t('Transaction details')
-      }
+      title={t('Transaction details')}
     >
       <TransactionDetails
         onTransactionUpdated={updateSelectedTransaction}

@@ -1,5 +1,9 @@
-import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query'
-import { useDeferredValue, useMemo, useState } from 'react'
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { loadAccountFilter } from '../accounts/account-filter-storage'
 import { useAccountsQuery } from '../accounts/account-queries'
 import { useCategoriesQuery } from '../categories/category-queries'
@@ -13,8 +17,10 @@ import type {
   TransactionPage,
 } from './transaction-types'
 import { getTransactions } from './transactions-api'
+import { loadedTransactions } from './transaction-ledger-data'
 
 export function useTransactionLedger() {
+  const queryClient = useQueryClient()
   const [datePreset, setDatePreset] = useState<TransactionDatePreset>('30d')
   const [customDateFrom, setCustomDateFrom] = useState('')
   const [customDateTo, setCustomDateTo] = useState('')
@@ -54,9 +60,32 @@ export function useTransactionLedger() {
     queryFn: ({ pageParam }) => getTransactions(filters, pageParam),
     queryKey: transactionQueryKeys.list(filters),
   })
-  const transactions =
-    transactionsQuery.data?.pages.flatMap((page) => page.transactions) ?? []
+  // Changing criteria starts at the first cursor page, including a filter with
+  // cached pages. Mutations and loading more leave the current pages intact.
+  useEffect(() => {
+    queryClient.setQueryData<InfiniteData<TransactionPage>>(
+      transactionQueryKeys.list(filters),
+      (current) =>
+        current === undefined || current.pages.length <= 1
+          ? current
+          : {
+              ...current,
+              pages: current.pages.slice(0, 1),
+              pageParams: current.pageParams.slice(0, 1),
+            },
+    )
+  }, [filters, queryClient])
+  const transactions = loadedTransactions(transactionsQuery.data?.pages ?? [])
+  const searchPending = search.trim() !== deferredSearch
+  const activeFilterCount = [
+    accountIds.length > 0,
+    category !== null,
+    direction !== null,
+    search.trim() !== '',
+    datePreset !== '30d',
+  ].filter(Boolean).length
   const categories = [
+    ...(category === null ? [] : [category]),
     ...(customCategoriesQuery.data ?? []).map((item) => item.name),
     ...new Set(
       transactions.flatMap((transaction) =>
@@ -86,6 +115,19 @@ export function useTransactionLedger() {
     transactionsQuery,
     transactions,
     categories,
+    customCategoriesQuery,
+    searchPending,
+    activeFilterCount,
+    selectionScope: JSON.stringify({ ...filters, search: search.trim() }),
+    resetFilters() {
+      setDatePreset('30d')
+      setCustomDateFrom('')
+      setCustomDateTo('')
+      setAccountIds([])
+      setCategory(null)
+      setDirection(null)
+      setSearch('')
+    },
   }
 }
 function loadSelectedAccounts(): string[] {

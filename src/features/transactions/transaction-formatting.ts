@@ -1,18 +1,31 @@
 import { formatEpochDate } from '../../lib/date-presentation'
 import { formatMoney } from '../../lib/money-presentation'
 import type { TransactionListItem } from './transaction-types'
+import { ENGLISH_MESSAGES, UKRAINIAN_MESSAGES } from '../localization/messages'
 
 export function formatTransactionAmount(
   transaction: TransactionListItem,
+  locale?: string,
 ): string {
-  return formatMinorAmount(transaction.effectiveAmountMinor, transaction)
+  return formatMinorAmount(
+    transaction.effectiveAmountMinor,
+    transaction,
+    locale,
+  )
 }
 
-export function formatTransactionTime(epochSeconds: number): string {
-  return formatEpochDate(epochSeconds, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
+export function formatTransactionTime(
+  epochSeconds: number,
+  locale?: string,
+): string {
+  return formatEpochDate(
+    epochSeconds,
+    {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    },
+    locale,
+  )
 }
 
 export function formatTransactionDate(epochSeconds: number): string {
@@ -70,7 +83,7 @@ export function groupTransactionsByDate<
 export function accountLabel(transaction: TransactionListItem): string {
   const type = `${transaction.account.type.charAt(0).toUpperCase()}${transaction.account.type.slice(1)}`
   return transaction.account.maskedPan === null
-    ? `${type} account`
+    ? `${type} · ${transaction.currencyCode} · ${transaction.account.id}`
     : `${type} •••• ${transaction.account.maskedPan.slice(-4)}`
 }
 
@@ -103,6 +116,7 @@ export function parseAmountInputToMinor(
 
 export function formatDateGroupAmount(
   transactions: TransactionListItem[],
+  locale?: string,
 ): string {
   const [firstTransaction] = transactions
   if (
@@ -119,21 +133,30 @@ export function formatDateGroupAmount(
     (sum, transaction) => sum + BigInt(transaction.effectiveAmountMinor),
     0n,
   )
-  return formatMinorAmount(amountMinor, firstTransaction)
+  return formatMinorAmount(amountMinor, firstTransaction, locale)
 }
 
-export function formatTransactionClock(epochSeconds: number): string {
-  return formatEpochDate(epochSeconds, { timeStyle: 'short' })
+export function formatTransactionClock(
+  epochSeconds: number,
+  locale?: string,
+): string {
+  return formatEpochDate(epochSeconds, { timeStyle: 'short' }, locale)
 }
 
 export function formatMinorAmount(
   amountMinor: number | bigint,
   transaction: TransactionListItem,
+  locale?: string,
 ): string {
   return formatMoney(amountMinor, {
     currencyCode: transaction.currencyCode,
     minorUnit: transaction.currencyMinorUnit,
-  })
+    ...(locale === undefined ? {} : { locale }),
+    signDisplay: 'exceptZero',
+    unknownMinorUnitsLabel: (locale === 'uk'
+      ? UKRAINIAN_MESSAGES
+      : ENGLISH_MESSAGES)['minor units'],
+  }).replace(/^-/, '\u2212')
 }
 
 export function formatRecentTransactionDate(

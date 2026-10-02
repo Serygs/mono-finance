@@ -163,11 +163,32 @@ export async function installFinanceApiMock(
       return
     }
     if (
+      path === '/api/transactions/expense-1/category' &&
+      method === 'DELETE'
+    ) {
+      state.category = 'Food'
+      return void route.fulfill(
+        json({
+          data: {
+            category: { id: 'mcc-5812', name: 'Food', source: 'original' },
+            originalCategory: { id: 'mcc-5812', name: 'Food' },
+          },
+        }),
+      )
+    }
+    if (
       path === '/api/transactions/expense-1/compensations' &&
       method === 'GET'
     ) {
       await route.fulfill(json({ data: compensationDetails(state) }))
       return
+    }
+    if (
+      path === '/api/transactions/expense-1/compensations/link-1' &&
+      method === 'DELETE'
+    ) {
+      state.compensated = false
+      return void route.fulfill(json({ data: compensationDetails(state) }))
     }
     if (
       path === '/api/transactions/expense-1/compensations' &&

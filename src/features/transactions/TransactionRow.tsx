@@ -11,64 +11,72 @@ import {
   formatTransactionClock,
 } from './transaction-formatting'
 import type { TransactionListItem } from './transaction-types'
-import { resolveTransactionCategoryVisual } from './transaction-visual'
+import {
+  resolveRecentTransactionVisual,
+  resolveTransactionCategoryVisual,
+} from './transaction-visual'
+import type { CustomCategory } from '../categories/categories-api'
 
 export function TransactionRow({
   transaction,
   selected,
   onSelect,
+  categories,
 }: {
   transaction: TransactionListItem
   selected: boolean
   onSelect(transaction: TransactionListItem): void
+  categories: CustomCategory[]
 }) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
+  const visual = resolveRecentTransactionVisual(transaction, categories)
+  const amount = formatTransactionAmount(transaction, locale)
   return (
     <button
       aria-pressed={selected}
-      className="transactions-ledger-row"
+      aria-haspopup="dialog"
+      className={`transactions-ledger-row${amount.length > 18 ? ' transactions-ledger-row--wide-amount' : ''}`}
       key={transaction.id}
       onClick={() => onSelect(transaction)}
       type="button"
     >
       <span
         aria-hidden="true"
-        className={`transaction-avatar transaction-avatar--${resolveTransactionCategoryVisual(transaction.category.name).tone}`}
+        className={`transaction-avatar transaction-avatar--${resolveTransactionCategoryVisual(transaction.category.name).tone}${visual.colorToken === null ? '' : ` ui-visual--${visual.colorToken}`}`}
       >
-        <TransactionCategoryVisual transaction={transaction} />
+        {visual.icon === null ? (
+          transaction.originalDescription.slice(0, 1)
+        ) : (
+          <CategoryIcon token={visual.icon} />
+        )}
       </span>
       <span className="transactions-ledger-row__transaction">
         <strong>{transaction.originalDescription}</strong>
         <TransactionIndicators transaction={transaction} />
       </span>
-      <span
-        className="transactions-ledger-row__category"
-        data-account={accountLabel(transaction)}
-      >
+      <span className="transactions-ledger-row__category">
         {transaction.category.name ?? t('Uncategorized')}
       </span>
       <span className="transactions-ledger-row__account">
         {accountLabel(transaction)}
       </span>
       <span className="transactions-ledger-row__date">
-        <span className="transactions-ledger-row__desktop-time">
-          {formatTransactionClock(transaction.originalTimestamp)}
-        </span>
-        <span className="transactions-ledger-row__mobile-time">
-          {formatTransactionClock(transaction.originalTimestamp)}
-        </span>
+        <time
+          dateTime={new Date(
+            transaction.originalTimestamp * 1000,
+          ).toISOString()}
+        >
+          {formatTransactionClock(transaction.originalTimestamp, locale)}
+        </time>
       </span>
       <span
         className={
-          transaction.effectiveAmountMinor < 0
-            ? 'transactions-ledger-row__amount is-expense'
-            : 'transactions-ledger-row__amount is-income'
+          transaction.effectiveAmountMinor > 0
+            ? 'transactions-ledger-row__amount is-income'
+            : 'transactions-ledger-row__amount'
         }
       >
-        {formatTransactionAmount(transaction)}
-      </span>
-      <span aria-hidden="true" className="transactions-ledger-row__action">
-        •••
+        {amount}
       </span>
     </button>
   )
@@ -93,19 +101,6 @@ function TransactionIndicators({
   )
 }
 
-function TransactionCategoryVisual({
-  transaction,
-}: {
-  transaction: TransactionListItem
-}) {
-  const visual = resolveTransactionCategoryVisual(transaction.category.name)
-  return visual.icon === null ? (
-    <span>{transaction.originalDescription.slice(0, 1)}</span>
-  ) : (
-    <CategoryIcon token={visual.icon} />
-  )
-}
-
 // The overview and ledger deliberately retain different row compositions.
 export function RecentTransactionRow({
   transaction,
@@ -123,6 +118,7 @@ export function RecentTransactionRow({
     <li>
       <button
         className="recent-transaction-row"
+        aria-haspopup="dialog"
         type="button"
         onClick={() => onSelect(transaction)}
       >

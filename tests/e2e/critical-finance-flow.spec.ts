@@ -43,11 +43,18 @@ test('an owner can complete the critical private-finance workflow', async ({
   await page.getByRole('button', { name: /Restaurant/ }).click()
   await expect(page.getByRole('heading', { name: 'Restaurant' })).toBeVisible()
 
+  await page
+    .getByRole('button', { name: 'Analytics adjustment', exact: true })
+    .click()
   await page.getByLabel('Effective amount (UAH)').fill('-10.00')
   await page.getByLabel('Note').fill('Shared dinner')
   await page.getByRole('button', { name: 'Save adjustment' }).click()
   await expect(page.getByText('Original:')).toBeVisible()
 
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Analytics exclusion', exact: true })
+    .click()
   await page.getByLabel('Reason').fill('Reimbursed')
   await page.getByRole('button', { name: 'Exclude from analytics' }).click()
   await expect(
@@ -55,12 +62,18 @@ test('an owner can complete the critical private-finance workflow', async ({
   ).toBeVisible()
   await page.getByRole('button', { name: 'Restore to analytics' }).click()
 
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Analytics category', exact: true })
+    .click()
   await page.getByLabel('Custom category').selectOption('category-dining')
   await page.getByRole('button', { name: 'Save category' }).click()
   await expect(
     page.getByRole('button', { name: /Restaurant/ }).getByText('Dining'),
   ).toBeVisible()
 
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page.getByRole('button', { name: 'Compensations', exact: true }).click()
   await page
     .getByLabel('Suggested incoming transaction')
     .selectOption('income-1')

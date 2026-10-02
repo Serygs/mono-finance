@@ -19,6 +19,9 @@ export function useTransactionDetails({
   transaction: TransactionListItem
 }) {
   const { t } = useLocalization()
+  const [editor, setEditor] = useState<
+    'category' | 'adjustment' | 'compensation' | 'exclusion' | null
+  >(null)
   const [adjustmentAmount, setAdjustmentAmount] = useState(() =>
     toEditableAmount(
       transaction.effectiveAmountMinor,
@@ -52,11 +55,21 @@ export function useTransactionDetails({
     transaction,
     onTransactionUpdated,
     () => setCategoryId(''),
+    () => {
+      setAdjustmentAmount(
+        toEditableAmount(
+          transaction.originalAmountMinor,
+          transaction.currencyMinorUnit,
+        ),
+      )
+      setAdjustmentNote('')
+    },
   )
   const { adjustmentMutation } = mutations
 
   function submitAdjustment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (mutations.isSaving) return
     const adjustedAmountMinor = parseAmountInputToMinor(
       adjustmentAmount,
       transaction.currencyMinorUnit,
@@ -86,6 +99,33 @@ export function useTransactionDetails({
   }
 
   return {
+    editor,
+    beginEditing(next: NonNullable<typeof editor>) {
+      mutations.clearFeedback()
+      setValidationMessage(null)
+      setAdjustmentAmount(
+        toEditableAmount(
+          transaction.effectiveAmountMinor,
+          transaction.currencyMinorUnit,
+        ),
+      )
+      setAdjustmentNote(transaction.adjustmentNote ?? '')
+      setExclusionReason(transaction.exclusionReason ?? '')
+      setCategoryId(
+        transaction.category.source === 'custom'
+          ? (transaction.category.id ?? '')
+          : '',
+      )
+      setCompensationTransactionId('')
+      setCompensationAmount('')
+      setEditor(next)
+    },
+    cancelEditing() {
+      if (mutations.isSaving) return
+      mutations.clearFeedback()
+      setValidationMessage(null)
+      setEditor(null)
+    },
     adjustmentAmount,
     setAdjustmentAmount,
     adjustmentNote,
@@ -103,6 +143,10 @@ export function useTransactionDetails({
     compensationAmount,
     setCompensationAmount,
     ...mutations,
+    clearFeedback() {
+      mutations.clearFeedback()
+      setValidationMessage(null)
+    },
     submitAdjustment,
   }
 }

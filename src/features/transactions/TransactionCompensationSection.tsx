@@ -1,4 +1,5 @@
 import { Button } from '../../components/ui/Controls'
+import { TransactionEditActions } from './TransactionDetailSections'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
@@ -19,7 +20,7 @@ export function TransactionCompensationSection({
   transaction,
   details,
 }: DetailSectionProps) {
-  const { t } = useLocalization()
+  const { locale, t } = useLocalization()
   const {
     compensationQuery,
     compensationMutation,
@@ -29,6 +30,7 @@ export function TransactionCompensationSection({
     compensationAmount,
     setCompensationAmount,
     setValidationMessage,
+    isSaving,
   } = details
   return (
     <>
@@ -55,6 +57,7 @@ export function TransactionCompensationSection({
                     {formatMinorAmount(
                       compensationQuery.data.summary.originalExpenseAmountMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -64,6 +67,7 @@ export function TransactionCompensationSection({
                     {formatMinorAmount(
                       compensationQuery.data.summary.compensatedAmountMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -74,6 +78,7 @@ export function TransactionCompensationSection({
                       compensationQuery.data.summary
                         .remainingPersonalExpenseMinor,
                       transaction,
+                      locale,
                     )}
                   </dd>
                 </div>
@@ -85,23 +90,35 @@ export function TransactionCompensationSection({
                     {formatMinorAmount(
                       link.compensatedAmountMinor,
                       transaction,
+                      locale,
                     )}
                   </span>
                   <Button
-                    disabled={unlinkCompensationMutation.isPending}
+                    disabled={isSaving}
+                    loading={
+                      unlinkCompensationMutation.isPending &&
+                      unlinkCompensationMutation.variables === link.id
+                    }
                     onClick={() => unlinkCompensationMutation.mutate(link.id)}
                     size="small"
                     type="button"
                     variant="quiet"
                   >
-                    {t('Unlink')}
+                    {t(
+                      unlinkCompensationMutation.isPending &&
+                        unlinkCompensationMutation.variables === link.id
+                        ? 'Unlinking…'
+                        : 'Unlink',
+                    )}
                   </Button>
                 </div>
               ))}
               <FormField label={t('Suggested incoming transaction')}>
                 <Select
+                  disabled={isSaving}
                   value={compensationTransactionId}
                   onChange={(event) => {
+                    details.clearFeedback()
                     const candidate = compensationQuery.data?.suggestions.find(
                       (item) => item.transactionId === event.target.value,
                     )
@@ -135,55 +152,101 @@ export function TransactionCompensationSection({
                 label={`${t('Compensated amount')} (${transaction.currencyCode})`}
               >
                 <input
+                  disabled={isSaving}
                   autoComplete="off"
                   inputMode="decimal"
                   name="compensated-amount"
                   value={compensationAmount}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    details.clearFeedback()
                     setCompensationAmount(event.target.value)
-                  }
+                  }}
                 />
               </FormField>
-              <Button
-                disabled={
-                  compensationTransactionId === '' ||
-                  compensationMutation.isPending
-                }
-                onClick={() => {
-                  const amount = parseAmountInputToMinor(
-                    compensationAmount,
-                    transaction.currencyMinorUnit,
-                  )
-                  if (amount === null || amount <= 0) {
-                    setValidationMessage(
-                      t('Enter a valid positive compensation amount.'),
-                    )
-                    return
+              <TransactionEditActions details={details}>
+                <Button
+                  disabled={
+                    compensationTransactionId === '' ||
+                    isSaving ||
+                    compensationQuery.isFetching
                   }
-                  setValidationMessage(null)
-                  compensationMutation.mutate({
-                    compensationTransactionId,
-                    compensatedAmountMinor: amount,
-                  })
-                }}
-                loading={compensationMutation.isPending}
-                type="button"
-              >
-                {compensationMutation.isPending
-                  ? t('Linking…')
-                  : t('Link compensation')}
-              </Button>
+                  onClick={() => {
+                    if (isSaving) return
+                    const amount = parseAmountInputToMinor(
+                      compensationAmount,
+                      transaction.currencyMinorUnit,
+                    )
+                    if (amount === null || amount <= 0) {
+                      setValidationMessage(
+                        t('Enter a valid positive compensation amount.'),
+                      )
+                      return
+                    }
+                    const candidate = compensationQuery.data?.suggestions.find(
+                      (item) =>
+                        item.transactionId === compensationTransactionId,
+                    )
+                    if (
+                      !candidate ||
+                      amount > candidate.availableAmountMinor ||
+                      amount >
+                        -compensationQuery.data.summary
+                          .remainingPersonalExpenseMinor
+                    ) {
+                      setValidationMessage(
+                        t(
+                          'Compensation exceeds the available income or remaining expense.',
+                        ),
+                      )
+                      return
+                    }
+                    setValidationMessage(null)
+                    compensationMutation.mutate(
+                      {
+                        compensationTransactionId,
+                        compensatedAmountMinor: amount,
+                      },
+                      {
+                        onSuccess: () => {
+                          setCompensationTransactionId('')
+                          setCompensationAmount('')
+                        },
+                      },
+                    )
+                  }}
+                  loading={compensationMutation.isPending}
+                  type="button"
+                >
+                  {compensationMutation.isPending
+                    ? t('Linking…')
+                    : t('Link compensation')}
+                </Button>
+              </TransactionEditActions>
+              {compensationQuery.data.suggestions.length === 0 ? (
+                <p>
+                  {t('No incoming transactions available for compensation.')}
+                </p>
+              ) : null}
             </>
           ) : null}
           {compensationQuery.isPending ? (
             <Skeleton label={t('Loading compensation details…')} lines={2} />
           ) : null}
-          {compensationQuery.isError ||
-          compensationMutation.isError ||
-          unlinkCompensationMutation.isError ? (
+          {compensationQuery.isError ? (
             <Alert tone="danger">
-              {t('Compensation could not be saved. Try again later.')}
+              <p>{t('Compensation details could not be loaded.')}</p>
+              <Button
+                variant="secondary"
+                onClick={() => void compensationQuery.refetch()}
+              >
+                {t('Retry')}
+              </Button>
             </Alert>
+          ) : null}
+          {!compensationQuery.data ? (
+            <Button variant="quiet" onClick={details.cancelEditing}>
+              {t('Cancel')}
+            </Button>
           ) : null}
         </section>
       ) : null}

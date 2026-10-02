@@ -27,7 +27,11 @@ describe('feature cache refresh policies', () => {
       refreshCategorySourceMapping,
       ['category-sources', 'transactions', 'dashboard-analytics'],
     ],
-    ['transaction corrections', refreshTransactionLedger, ['transactions']],
+    [
+      'transaction corrections',
+      refreshTransactionLedger,
+      ['transactions', 'dashboard-recent', 'dashboard-analytics'],
+    ],
   ] as const)(
     'retains the cache boundaries for %s',
     async (_name, refresh, invalidated) => {

@@ -5,6 +5,7 @@ interface MoneyPresentation {
   minorUnit: number
   locale?: string
   signDisplay?: Intl.NumberFormatOptions['signDisplay']
+  unknownMinorUnitsLabel?: string
   // Accounts historically use a fixed suffix and Unicode minus; other screens
   // use Intl currency placement. Adapters retain those outputs in Phase 1.
   presentation?: 'currency' | 'code-suffix'
@@ -17,6 +18,7 @@ export function formatMoney(
     minorUnit,
     locale,
     signDisplay = 'auto',
+    unknownMinorUnitsLabel = 'minor units',
     presentation = 'currency',
   }: MoneyPresentation,
 ): string {
@@ -32,7 +34,14 @@ export function formatMoney(
     maximumFractionDigits: 0,
   })
   if (!ISO_ALPHA_CODE.test(currencyCode)) {
-    return `${amount < 0n ? '−' : ''}${integerFormat.format(absolute)} minor units · ISO ${currencyCode}`
+    const sign =
+      amount < 0n
+        ? '−'
+        : signDisplay === 'always' ||
+            (signDisplay === 'exceptZero' && amount !== 0n)
+          ? '+'
+          : ''
+    return `${sign}${integerFormat.format(absolute)} ${unknownMinorUnitsLabel} · ISO ${currencyCode}`
   }
   const factor = 10n ** BigInt(minorUnit)
   const whole = absolute / factor

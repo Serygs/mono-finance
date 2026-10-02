@@ -24,10 +24,15 @@ export function AccountPicker({
       <MultiSelect
         {...selection}
         ariaLabel={t('Accounts')}
-        options={accounts.map((account) => ({
-          label: `${account.type} · ${account.currency.code}`,
-          value: account.id,
-        }))}
+        options={accounts.map((account) => {
+          const maskedPan = (
+            account.cards.find((card) => card.isActive) ?? account.cards[0]
+          )?.maskedPan
+          return {
+            label: `${account.type} · ${account.currency.code} · ${maskedPan ? maskedPan.slice(-4) : account.id}`,
+            value: account.id,
+          }
+        })}
       />
     </FormField>
   )

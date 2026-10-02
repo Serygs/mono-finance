@@ -115,6 +115,9 @@ test('overview and ledger use one correction workflow with focus return', async 
 }) => {
   const overviewRow = page.locator('.recent-transaction-row').first()
   await overviewRow.click()
+  await page
+    .getByRole('button', { name: 'Analytics adjustment', exact: true })
+    .click()
   await page.getByLabel('Effective amount (UAH)').fill('-10.00')
   await page.getByLabel('Note').fill('Shared dinner')
   await page.getByRole('button', { name: 'Save adjustment' }).click()
@@ -127,6 +130,9 @@ test('overview and ledger use one correction workflow with focus return', async 
     .first()
     .click()
   await page.getByRole('button', { name: /Restaurant/ }).click()
+  await page
+    .getByRole('button', { name: 'Analytics adjustment', exact: true })
+    .click()
   await expect(page.getByLabel('Effective amount (UAH)')).toHaveValue('-10.00')
   await page.getByRole('button', { name: 'Reset adjustment' }).click()
   await expect(page.getByText('Original:')).toHaveCount(0)

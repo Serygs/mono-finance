@@ -1,521 +1,495 @@
-/* transactions feature presentation. See docs/FRONTEND_STRUCTURE.md. */
-
-.transactions-page {
-  gap: clamp(1.25rem, 3vw, 2rem);
-}
-
-.transaction-layout {
-  display: block;
-  margin-top: 0;
-}
-
-.transaction-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.transaction-details {
-  position: static;
-  gap: 1.25rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-
-.transaction-details-heading {
-  display: none;
-}
-
-.transaction-details-amount {
-  font-variant-numeric: tabular-nums;
-}
-
-.transaction-correction-form,
-.transaction-exclusion {
-  border-color: var(--color-border);
-}
-
-.transaction-detail-note {
-  background: var(--color-action-soft);
-  color: var(--color-action-hover);
-}
-
-.transaction-detail-excluded {
-  background: var(--color-danger-soft);
-  color: var(--color-expense);
-}
-
-.transaction-sync-status {
-  display: block;
-  gap: 0;
-  margin-top: clamp(1.25rem, 4vw, 3rem);
-  padding: 0;
-}
-
-.transaction-sync-status > .ui-card__body {
-  display: grid;
-  gap: 1rem;
-}
-
-.transaction-sync-status .ui-empty-state {
-  border: 0;
-  background: var(--color-surface-soft);
-  box-shadow: none;
-}
-
-.transaction-sync-status p {
-  color: var(--color-text-tertiary);
-}
+/* Transactions owns ledger, filters and detail presentation. Shared controls,
+   native overlay lifecycle and semantic colors remain in UI/global styles. */
 .transactions-page--ledger {
   width: 100%;
   max-width: 75rem;
   margin-inline: auto;
-  gap: 1rem;
+  gap: 1.25rem;
 }
-
-.transactions-page--ledger > .ui-page-header {
-  padding: 0.25rem 0 0.5rem;
-}
-
-.transactions-page--ledger .ui-page-header h1 {
-  max-width: none;
-  font-size: clamp(2rem, 3vw, 2.25rem);
-  letter-spacing: -0.045em;
-}
-
-.transactions-page--ledger .ui-page-description {
-  margin-top: 0.3rem;
-}
-
 .transactions-toolbar {
   display: grid;
-  grid-template-columns:
-    minmax(8.75rem, 0.7fr) minmax(11rem, 1fr) minmax(10rem, 0.85fr)
-    minmax(12rem, 1.45fr);
+  grid-template-columns: minmax(0, 12rem) minmax(0, 15rem) auto minmax(0, 1fr);
   align-items: end;
-  gap: 0.6rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
-  padding: 0.7rem;
+  gap: 0.75rem;
 }
-
-.transactions-toolbar .ui-field-label {
-  color: var(--color-text-tertiary);
-  font-size: 0.72rem;
-}
-
-.transactions-toolbar
-  :is(
-    .ui-select,
-    .ui-multi-select__trigger,
-    .ui-search-field,
-    .ui-popover__trigger
-  ) {
-  min-height: 2.5rem;
-  border-color: var(--color-border);
-  background: var(--color-surface);
-  box-shadow: none;
-  font-size: 0.84rem;
-}
-
 .transactions-toolbar__search {
-  grid-column: 4;
-  grid-row: 1;
+  grid-column: 1 / -1;
 }
-
-.transactions-toolbar__period {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.transactions-toolbar__account {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.transactions-toolbar__category {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.transactions-toolbar > .ui-segmented-control {
-  grid-column: 1 / span 2;
-  grid-row: 2;
-  max-width: 20rem;
-}
-
-.transactions-toolbar > .ui-segmented-control .ui-field-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .transactions-toolbar__more-filters {
-  display: none;
+  justify-self: start;
 }
-
+.transactions-toolbar > .ui-segmented-control {
+  justify-self: end;
+  width: min(100%, 22rem);
+}
+.transactions-toolbar > .ui-segmented-control .ui-field-label {
+  font-size: 0.75rem;
+}
+.transactions-filter-count {
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  min-width: 1.25rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.transactions-filter-popover {
+  display: grid;
+  gap: 1rem;
+  width: min(22rem, 100%);
+}
+.transactions-filter-popover > p {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  margin: 0;
+}
 .transactions-custom-dates {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: 0.75rem;
 }
-
-.transactions-toolbar__custom-dates {
-  grid-column: 3 / -1;
-  grid-row: 2;
-}
-
-.transactions-filter-popover {
-  display: grid;
-  min-width: min(18rem, calc(100vw - 3rem));
-  gap: 0.65rem;
-}
-
-.transactions-ledger-shell {
-  min-width: 0;
-}
-
 .transactions-ledger {
   display: grid;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
-
-.transactions-ledger__header,
-.transactions-ledger-row {
-  display: grid;
-  grid-template-columns:
-    2.15rem minmax(13rem, 1.55fr) minmax(7rem, 0.85fr)
-    minmax(8rem, 0.95fr) minmax(9rem, 0.95fr) minmax(7rem, 0.75fr) 3.75rem;
-  gap: 0.75rem;
-}
-
 .transactions-ledger__header {
-  align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-tertiary);
-  font-size: 0.75rem;
-  font-weight: 650;
-  padding: 0.68rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--surface-secondary);
+  display: none;
 }
-
-.transactions-ledger__header::before {
-  content: '';
-}
-
-.transactions-ledger__header > :last-child,
-.transactions-ledger__header > :nth-last-child(2) {
-  text-align: right;
-}
-
 .transactions-date-group {
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
+  min-width: 0;
 }
-
-.transactions-date-group h2 {
+.transactions-date-heading {
   display: flex;
-  min-height: 2.85rem;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-secondary);
-  color: var(--color-text);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  padding: 0.55rem 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0 0.25rem 0.75rem;
 }
-
-.transactions-date-group h2 > :last-child {
-  color: var(--color-text-secondary);
-  font-size: 0.78rem;
+.transactions-date-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+.transactions-shown-total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
-
-.transactions-date-group + .transactions-date-group .transactions-ledger-row {
-  border-top: 1px solid var(--color-border);
+.transactions-shown-total strong {
+  overflow-wrap: anywhere;
+  min-width: 0;
+  font-weight: 600;
 }
-
+.transactions-date-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.125rem;
+  background: var(--surface-primary);
+}
+.transactions-date-group li {
+  min-width: 0;
+}
+.transactions-date-group li + li {
+  border-top: 1px solid var(--border-subtle);
+}
 .transactions-ledger-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1.4fr) minmax(0, 0.9fr);
+  grid-template-areas: 'visual merchant amount' 'visual category amount' 'visual account time';
+  align-items: start;
+  gap: 0.25rem 0.75rem;
   width: 100%;
-  min-height: 3.65rem;
-  align-items: center;
+  min-height: 5rem;
+  padding: 0.875rem 1rem;
   border: 0;
-  border-bottom: 1px solid var(--color-border);
+  border-radius: inherit;
   background: transparent;
-  color: var(--color-text);
+  color: var(--text-primary);
   cursor: pointer;
   font: inherit;
-  padding: 0.55rem 1rem;
   text-align: left;
   transition: background-color var(--motion-fast);
 }
-
-.transactions-date-group:last-child .transactions-ledger-row:last-child {
-  border-bottom: 0;
+.transactions-date-group li:first-child {
+  border-radius: 1.125rem 1.125rem 0 0;
 }
-
+.transactions-date-group li:last-child {
+  border-radius: 0 0 1.125rem 1.125rem;
+}
+.transactions-date-group li:only-child {
+  border-radius: 1.125rem;
+}
 .transactions-ledger-row:hover,
 .transactions-ledger-row[aria-pressed='true'] {
-  background: var(--color-surface-soft);
+  background: var(--surface-secondary);
 }
-
+.transactions-ledger-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.transactions-ledger-row--wide-amount {
+  grid-template-areas: 'visual merchant merchant' 'visual amount amount' 'visual category time' 'visual account account';
+}
+.transactions-ledger-row--wide-amount .transactions-ledger-row__amount {
+  text-align: left;
+}
 .transaction-avatar {
+  grid-area: visual;
   display: grid;
-  width: 2.15rem;
-  height: 2.15rem;
-  grid-column: 1;
-  border-radius: 0.72rem;
-  color: var(--transaction-icon-color, var(--color-text-secondary));
-  background: var(--transaction-icon-background, var(--surface-secondary));
-  font-size: 0.82rem;
-  font-weight: 700;
   place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.875rem;
+  background: color-mix(
+    in srgb,
+    var(--visual-color, var(--fallback-visual-color, var(--text-secondary))) 12%,
+    var(--surface-primary)
+  );
+  color: var(
+    --visual-color,
+    var(--fallback-visual-color, var(--text-secondary))
+  );
+  font-weight: 650;
 }
-
 .transaction-avatar svg {
-  width: 1.12rem;
-  height: 1.12rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
-
-.transaction-avatar--groceries {
-  --transaction-icon-color: var(--chart-mint);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-mint),
-    transparent 84%
-  );
+.transaction-avatar--groceries,
+.transaction-avatar--transfer {
+  --fallback-visual-color: var(--positive);
 }
-
 .transaction-avatar--transport {
-  --transaction-icon-color: var(--chart-cyan);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-cyan),
-    transparent 84%
-  );
+  --fallback-visual-color: var(--info);
 }
-
 .transaction-avatar--housing,
 .transaction-avatar--subscriptions {
-  --transaction-icon-color: var(--chart-violet);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-violet),
-    transparent 84%
-  );
+  --fallback-visual-color: var(--metric-violet);
 }
-
-.transaction-avatar--dining {
-  --transaction-icon-color: var(--chart-coral);
-  --transaction-icon-background: color-mix(
-    in srgb,
-    var(--chart-coral),
-    transparent 84%
-  );
-}
-
+.transaction-avatar--dining,
 .transaction-avatar--health {
-  --transaction-icon-color: var(--negative);
-  --transaction-icon-background: var(--negative-soft);
+  --fallback-visual-color: var(--negative);
 }
-
-.transaction-avatar--transfer {
-  --transaction-icon-color: var(--positive);
-  --transaction-icon-background: var(--positive-soft);
-}
-
 .transactions-ledger-row__transaction {
-  display: grid;
+  grid-area: merchant;
   min-width: 0;
-  gap: 0.17rem;
+  display: grid;
+  gap: 0.25rem;
 }
-
-.transactions-ledger-row__transaction > strong {
+.transactions-ledger-row__transaction strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  color: var(--color-text);
-  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+  font-size: 0.9375rem;
   font-weight: 650;
-  letter-spacing: -0.012em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
-
+.transactions-ledger-row__category {
+  grid-area: category;
+}
+.transactions-ledger-row__account {
+  grid-area: account;
+}
+.transactions-ledger-row__date {
+  grid-area: time;
+  text-align: right;
+}
+.transactions-ledger-row__category,
+.transactions-ledger-row__account,
+.transactions-ledger-row__date {
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.transactions-ledger-row__amount {
+  grid-area: amount;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.transactions-ledger-row__amount.is-income,
+.transaction-details .is-income {
+  color: var(--positive);
+}
 .transaction-indicators {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
 }
-
 .transaction-indicators span {
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface-soft);
-  color: var(--color-text-tertiary);
-  font-size: 0.64rem;
-  font-weight: 600;
-  line-height: 1.15;
-  padding: 0.1rem 0.32rem;
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.375rem;
 }
-
-.transactions-ledger-row
-  :is(
-    .transactions-ledger-row__category,
-    .transactions-ledger-row__account,
-    .transactions-ledger-row__date
-  ) {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-text-secondary);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.transactions-ledger-row__amount {
-  justify-self: end;
-  font-size: 0.9rem;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.transactions-ledger-row__amount.is-expense {
-  color: var(--color-text);
-}
-
-.transactions-ledger-row__amount.is-income {
-  color: var(--color-income);
-}
-
-.transactions-ledger-row__action {
-  justify-self: center;
-  color: var(--color-text-tertiary);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-}
-
-.transactions-ledger-row__mobile-time {
-  display: none;
-}
-
 .transactions-pagination {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   justify-content: center;
-  margin-top: 0.25rem;
 }
-
-@media (max-width: 74.99rem) and (min-width: 48rem) {
-  .transactions-toolbar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .transactions-toolbar__search {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .transactions-toolbar__period,
-  .transactions-toolbar__account,
-  .transactions-toolbar__category {
-    grid-row: 2;
-  }
-
-  .transactions-toolbar__period {
-    grid-column: 1;
-  }
-
-  .transactions-toolbar__account {
-    grid-column: 2;
-  }
-
-  .transactions-toolbar__category {
-    grid-column: 3;
-  }
-
-  .transactions-toolbar > .ui-segmented-control {
-    grid-column: 1 / span 2;
-    grid-row: 3;
-  }
-
-  .transactions-toolbar__custom-dates {
-    grid-column: 1 / -1;
-    grid-row: 4;
-  }
-
+.transactions-refresh-status {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  margin: 0 0 0.5rem;
+}
+/* The single native sheet is a full-height detail panel on mobile and a
+   contained side panel on desktop. No competing modal or secondary sheet. */
+.transaction-details-overlay .ui-overlay__surface {
+  width: min(100%, 40rem);
+}
+.transaction-details {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.transaction-summary {
+  min-width: 0;
+}
+.transaction-merchant {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+.transaction-details-amount {
+  display: block;
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.transaction-original-amount {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  margin: 0.375rem 0;
+  font-variant-numeric: tabular-nums;
+}
+.transaction-details-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.transaction-details-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  gap: 1rem;
+}
+.transaction-details-list dt {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+.transaction-details-list dd {
+  margin: 0;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.transaction-original-information {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.transaction-original-information summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+  min-height: 2.75rem;
+  padding: 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.transaction-original-information summary::-webkit-details-marker {
+  display: none;
+}
+.transaction-original-information summary::marker {
+  content: '';
+}
+.transaction-original-information[open] summary svg {
+  transform: rotate(90deg);
+}
+.transaction-original-information summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.transaction-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.transaction-detail-actions h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+.transaction-detail-actions .ui-button {
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  text-align: left;
+}
+.transaction-editor:empty {
+  display: none;
+}
+.transaction-correction-form,
+.transaction-exclusion {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  min-width: 0;
+}
+.transaction-correction-form h3,
+.transaction-exclusion h3 {
+  margin: 0 0 0.375rem;
+  font-size: 1rem;
+}
+.transaction-correction-form p,
+.transaction-exclusion p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+.transaction-edit-actions {
+  position: sticky;
+  bottom: -1.15rem;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-primary);
+}
+.transaction-edit-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.transaction-edit-actions .ui-button {
+  min-height: 2.75rem;
+  flex: 1 1 auto;
+}
+.compensation-summary {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  border-radius: 1rem;
+  background: var(--info-soft);
+  padding: 1rem;
+}
+.compensation-summary > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+.compensation-summary dt {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.compensation-summary dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.compensation-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-block: 0.5rem;
+  font-size: 0.875rem;
+}
+.compensation-link > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.transaction-detail-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.transaction-detail-excluded {
+  color: var(--negative);
+}
+@media (min-width: 75rem) {
   .transactions-ledger__header,
   .transactions-ledger-row {
+    display: grid;
     grid-template-columns:
-      2.15rem minmax(11rem, 1.35fr) minmax(6rem, 0.75fr)
-      minmax(7rem, 0.85fr) minmax(6rem, auto);
+      2.5rem minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr)
+      minmax(0, 0.65fr) minmax(0, 1.2fr);
+    gap: 0.75rem;
   }
-
-  .transactions-ledger__header > :nth-child(3),
-  .transactions-ledger__header > :last-child,
-  .transactions-ledger-row__account,
-  .transactions-ledger-row__action {
-    display: none;
+  .transactions-ledger-row {
+    grid-template-areas: 'visual merchant category account time amount';
+    align-items: center;
+    min-height: 4.25rem;
+    padding-block: 0.75rem;
+  }
+  .transactions-ledger__header {
+    padding: 0 1rem;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+  }
+  .transactions-ledger__header::before {
+    content: '';
+  }
+  .transactions-ledger__header > :last-child {
+    text-align: right;
+  }
+  .transactions-ledger-row__date {
+    text-align: left;
+  }
+  .transactions-ledger-row--wide-amount {
+    grid-template-areas: 'visual merchant category account time time' 'visual merchant category account amount amount';
+  }
+  .transactions-ledger-row--wide-amount .transactions-ledger-row__amount,
+  .transactions-ledger-row--wide-amount .transactions-ledger-row__date {
+    text-align: right;
   }
 }
-
+@media (min-width: 48rem) and (max-width: 74.99rem) {
+  .transactions-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) auto;
+  }
+  .transactions-toolbar > .ui-segmented-control {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
 @media (max-width: 47.99rem) {
   .transactions-page--ledger {
-    gap: 0.9rem;
+    gap: 1rem;
   }
-
-  .transactions-page--ledger > .ui-page-header {
-    padding: 0;
-  }
-
-  .transactions-page--ledger .ui-page-header h1 {
-    font-size: clamp(1.625rem, 7vw, 1.875rem);
-  }
-
-  .transactions-page--ledger .ui-page-description {
-    margin-top: 0.25rem;
-    font-size: 0.85rem;
-  }
-
   .transactions-toolbar {
-    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.3fr) 2.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    padding: 0;
   }
-
-  .transactions-toolbar
-    :is(
-      .ui-select,
-      .ui-multi-select__trigger,
-      .ui-search-field,
-      .ui-popover__trigger
-    ) {
-    min-height: 2.75rem;
-    font-size: 1rem;
+  .transactions-toolbar__more-filters {
+    grid-column: 1 / -1;
   }
-
-  .transactions-toolbar .ui-field-label {
+  .transactions-toolbar > .ui-segmented-control {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .transactions-toolbar .ui-field-label,
+  .transactions-toolbar > .ui-segmented-control legend {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -523,248 +497,86 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
-
-  .transactions-toolbar__search {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .transactions-toolbar__period {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .transactions-toolbar__account {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .transactions-toolbar__category {
-    display: none;
-  }
-
-  .transactions-toolbar__more-filters {
-    display: inline-flex;
-    grid-column: 3;
-    grid-row: 2;
-  }
-
-  .transactions-toolbar__more-filters .ui-popover__trigger {
-    width: 2.75rem;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .transactions-filter-icon {
-    font-size: 1.2rem;
-    line-height: 1;
-  }
-
-  .transactions-toolbar > .ui-segmented-control {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    max-width: none;
-  }
-
-  .transactions-toolbar > .ui-segmented-control button {
+  .transactions-toolbar .ui-segmented-control button {
     min-height: 2.75rem;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
   }
-
-  .transactions-toolbar__custom-dates {
-    display: none;
-  }
-
-  .ui-popover__content.transactions-toolbar__more-filters {
-    width: min(20rem, calc(100vw - 2rem));
-    max-height: min(22rem, 54dvh);
+  .transactions-ledger-row {
     padding: 0.75rem;
+    gap: 0.25rem 0.5rem;
   }
-
-  .transactions-filter-popover .ui-field-label {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-    white-space: normal;
+  .transactions-shown-total {
+    width: 100%;
   }
-
-  .transactions-filter-popover .transactions-custom-dates {
+  .transaction-details-overlay .ui-overlay__surface {
+    height: var(--overlay-viewport-height, 100dvh);
+    max-height: var(--overlay-viewport-height, 100dvh);
+    border-radius: 0;
+  }
+  .transaction-details-overlay .ui-overlay__header {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .transaction-details-list > div {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .transaction-details-amount {
+    font-size: 1.5rem;
+  }
+  .transaction-details-overlay .ui-overlay__content {
+    padding: 1rem max(1rem, env(safe-area-inset-right))
+      max(1rem, env(safe-area-inset-bottom))
+      max(1rem, env(safe-area-inset-left));
+  }
+  .transaction-edit-actions {
+    bottom: -1rem;
+  }
+}
+@media (max-width: 22rem) {
+  .transactions-ledger-row {
+    grid-template-columns: 2rem minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+  .transaction-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.625rem;
+  }
+  .transaction-detail-actions {
     grid-template-columns: 1fr;
   }
-
-  .transactions-ledger {
-    display: grid;
-    gap: 0.75rem;
-    overflow: visible;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .transactions-ledger__header {
-    display: none;
-  }
-
-  .transactions-date-group h2 {
-    position: sticky;
-    z-index: 2;
-    top: 0;
-    display: flex;
-    min-height: 3rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin: 0;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    padding: 0.65rem 0.9rem;
-  }
-
-  .transactions-date-group h2 > :last-child {
-    color: var(--color-text-secondary);
-    font-size: 0.82rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
-
-  .transactions-date-group + .transactions-date-group .transactions-ledger-row {
-    border-top: 0;
-  }
-
-  .transactions-ledger-row {
-    grid-template-columns: 2.4rem minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    min-height: 4.55rem;
-    gap: 0.1rem 0.7rem;
-    border-bottom: 1px solid var(--color-border);
-    padding: 0.65rem 0.9rem;
-  }
-
-  .transaction-avatar {
-    width: 2.35rem;
-    height: 2.35rem;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    border-radius: 0.8rem;
-    color: var(--color-text);
-    font-size: 0.9rem;
-    font-weight: 700;
-    place-items: center;
-  }
-
-  .transaction-avatar--expense {
-    background: var(--color-surface-soft);
-  }
-
-  .transaction-avatar--income {
-    background: var(--color-success-soft);
-    color: var(--color-income);
-  }
-
-  .transactions-ledger-row__transaction {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: end;
-    gap: 0.16rem;
-  }
-
-  .transactions-ledger-row__transaction > strong {
-    font-size: 0.93rem;
-  }
-
-  .transactions-ledger-row__category {
-    display: block;
-    grid-column: 2;
-    grid-row: 2;
-    overflow: hidden;
-    color: var(--color-text-secondary);
-    font-size: 0.77rem;
-    line-height: 1.3;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .transactions-ledger-row__category::after {
-    content: ' · ' attr(data-account);
-  }
-
-  .transactions-ledger-row .transaction-indicators {
-    display: none;
-  }
-
-  .transactions-ledger-row__account,
-  .transactions-ledger-row__action {
-    display: none;
-  }
-
-  .transactions-ledger-row__date {
-    grid-column: 3;
-    grid-row: 1;
-    align-self: end;
-    justify-self: end;
-    color: var(--color-text-tertiary);
-    font-size: 0.72rem;
-    white-space: nowrap;
-  }
-
-  .transactions-ledger-row__desktop-time {
-    display: none;
-  }
-
-  .transactions-ledger-row__mobile-time {
-    display: inline;
-  }
-
-  .transactions-ledger-row__amount {
-    grid-column: 3;
-    grid-row: 2;
-    align-self: start;
-    font-size: 0.94rem;
-  }
-
-  .transactions-pagination {
-    margin-top: 0.1rem;
-    padding-bottom: 0.5rem;
+  .transactions-custom-dates {
+    grid-template-columns: 1fr;
   }
 }
-
-@media (max-width: 22rem) {
-  .transactions-toolbar {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 2.75rem;
-  }
-
-  .transactions-ledger-row {
-    grid-template-columns: 2.15rem minmax(0, 1fr) auto;
-    gap: 0.1rem 0.5rem;
-    padding-inline: 0.72rem;
-  }
-
-  .transaction-avatar {
-    width: 2.1rem;
-    height: 2.1rem;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .transactions-ledger-row {
     transition: none;
   }
 }
-
+/* Sync presentation is still reused by Settings; it is outside the ledger. */
+.transaction-sync-status {
+  display: block;
+  margin-top: clamp(1.25rem, 4vw, 3rem);
+  padding: 0;
+}
+.transaction-sync-status > .ui-card__body {
+  display: grid;
+  gap: 1rem;
+}
+.transaction-sync-status .ui-empty-state {
+  border: 0;
+  background: var(--color-surface-soft);
+  box-shadow: none;
+}
+.transaction-sync-status p {
+  color: var(--color-text-tertiary);
+}
 .sync-state {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   color: var(--color-text-secondary);
 }
-
 .sync-state::before {
   width: 0.4rem;
   height: 0.4rem;
@@ -773,11 +585,9 @@
   background: var(--color-text-tertiary);
   content: '';
 }
-
 .sync-state-running::before {
   background: var(--color-action);
 }
-
 .sync-state-failed::before {
   background: var(--color-expense);
 }

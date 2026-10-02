@@ -54,14 +54,16 @@ The shared form-action layout is `ui-form-actions`.
 ## Compatibility boundaries
 
 - Money formatting divides bigint integer minor units and formats the remainder
-  exactly. Accounts retain en-US suffix output and Unicode minus; ledger/details
-  retain the browser locale's currency-code placement; dashboard retains the
-  selected UI locale. Numeric unknown currencies retain explicit minor units.
+  exactly. Accounts retain en-US suffix output and Unicode minus; Overview,
+  ledger and details use the selected UI locale. Phase 3 adds explicit income
+  signs and a consistent minus in ledger/details. Numeric unknown currencies
+  retain explicit minor units, localized in ledger/details.
 - Date helpers use local midnight. Dashboard rejects incomplete custom ranges;
   ledger allows partial bounds. Both retain the existing fixed-second inclusive
   custom end. No UTC/local or DST contract migration is included.
-- Feature query-key builders retain tuple identities and existing invalidation
-  boundaries. API functions keep their encrypted offline wrappers. Dashboard
+- Feature query-key builders retain tuple identities. Transaction mutations now
+  invalidate ledger, recent rows and shared analytics; compensation also refreshes
+  its detail query. API functions keep their encrypted offline wrappers. Dashboard
   reuses the accounts cache rather than maintaining separate manual fetch state.
 - Category visual resolution retains its existing name normalization and token
   matching. The current transaction contract has no merchant/custom-asset fields;
@@ -114,3 +116,43 @@ and order, and verifies that these interactions do not fetch financial data.
 contrast/touch targets, category expansion, loading/error recovery and long
 synthetic names/amounts at 200% text scaling. State screenshots are written under
 ignored `phase2.local/states/`; no financial screenshots are committed.
+
+## Transactions and shared details (Phase 3)
+
+- `TransactionFilters` composes full-width search, period/accounts, direction,
+  and a labeled secondary filter popover/mobile sheet. Account options include
+  masked card identity or the real account identifier when a card is unavailable.
+  Shared multiselect Escape returns focus to its trigger.
+- `useTransactionLedger` owns filter/query state. Criteria changes truncate only
+  the matching cached cursor chain to its first page; loading more and mutations
+  keep the current pages. Deferred search hides previous results while changing.
+  `transaction-ledger-data` deduplicates cursor overlap without changing records.
+- `TransactionLedger` and explicit row variants own desktop/mobile presentation.
+  Category and account context remain separate. Very long amounts receive more
+  row width; full imported description/MCC/account/original values remain in details.
+  Date sums are labeled **Shown transactions total**, include only loaded effective
+  values, and are omitted for mixed currencies/precision. They are not day-wide
+  or analytics totals, even after the final cursor page.
+- `TransactionDetailsSheet` remains the single Overview/ledger workflow. The
+  native overlay is a full-height mobile view and contained desktop side panel.
+  Summary and original bank information are separate from one active editor.
+  `TransactionEditActions` in the detail section group owns sticky feedback,
+  cancel and action presentation above the observed visual viewport boundary.
+- `useTransactionDetails` owns drafts, validation and editor selection. Cancel
+  discards a draft; closing the sheet discards unsaved drafts as before. Successful
+  correction responses update selection; successful compensation responses update
+  detail cache/flags and clear the incoming selection to prevent accidental repeats.
+  `transaction-queries` owns ledger/recent/analytics invalidation without refetching
+  unrelated accounts or category definitions.
+- Transaction-specific visuals are limited to existing category appearance APIs;
+  details links to Categories for these choices. No merchant editor or new API is
+  invented. Source records, input parsers, date boundaries and encrypted offline
+  wrappers remain unchanged.
+
+`transactions-foundation.spec.ts` covers cursor overlap, retry/scroll retention,
+cached-filter cursor reset, account/direction/custom date semantics, exact payloads,
+failed-save drafts, reset/restore/unlink, focus return, pending submission guards,
+offline display, touch targets, contrast and all required responsive widths in
+both locales/themes. Synthetic normal/detail/state screenshots live only under
+ignored `phase3.local/`. Software-keyboard clearance is tested with a reduced
+viewport; physical iOS PWA verification remains manual.

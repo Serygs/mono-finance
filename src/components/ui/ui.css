@@ -364,6 +364,15 @@
   font-size: var(--font-size-sm);
   padding: var(--space-2);
 }
+.ui-multi-select__menu {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.ui-multi-select__option > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 .ui-multi-select__option:hover {
   background: var(--color-surface-soft);

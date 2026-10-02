@@ -1,4 +1,5 @@
-import { SegmentedControl } from '../../components/ui/Controls'
+import { Button, SegmentedControl } from '../../components/ui/Controls'
+import { Icon } from '../../components/ui/Icon'
 import {
   FormField,
   SearchField,
@@ -77,20 +78,37 @@ export function TransactionFilters({
       <AccountPicker
         accounts={accountsQuery.data ?? []}
         className="transactions-toolbar__account"
-        onChange={setAccountIds}
-        value={accountIds}
-      />
-      <CategoryField
-        categories={categories}
-        className="transactions-toolbar__category"
-        onChange={setCategory}
-        t={t}
-        value={category}
+        onChange={(selected) =>
+          setAccountIds(
+            selected.length === (accountsQuery.data?.length ?? 0)
+              ? []
+              : selected,
+          )
+        }
+        value={
+          accountIds.length === 0
+            ? (accountsQuery.data ?? []).map((account) => account.id)
+            : accountIds
+        }
+        triggerLabel={
+          accountIds.length === 0
+            ? t('All accounts ({count})', {
+                count: accountsQuery.data?.length ?? 0,
+              })
+            : t('{count} accounts selected', { count: accountIds.length })
+        }
       />
       <Popover
         className="transactions-toolbar__more-filters"
+        mobileSheet
+        description={t('{count} active filters', {
+          count: ledger.activeFilterCount,
+        })}
         content={
           <div className="transactions-filter-popover">
+            <p>
+              {t('{count} active filters', { count: ledger.activeFilterCount })}
+            </p>
             <CategoryField
               categories={categories}
               onChange={setCategory}
@@ -106,25 +124,25 @@ export function TransactionFilters({
                 t={t}
               />
             ) : null}
+            <Button
+              disabled={ledger.activeFilterCount === 0}
+              variant="secondary"
+              onClick={ledger.resetFilters}
+            >
+              {t('Reset filters')}
+            </Button>
           </div>
         }
         label={t('Filters')}
       >
-        <span aria-hidden="true" className="transactions-filter-icon">
-          ☷
-        </span>
-        <span className="sr-only">{t('Filters')}</span>
+        <Icon name="filters" />
+        <span>{t('Filters')}</span>
+        {ledger.activeFilterCount > 0 ? (
+          <span className="transactions-filter-count">
+            {ledger.activeFilterCount}
+          </span>
+        ) : null}
       </Popover>
-      {datePreset === 'custom' ? (
-        <CustomDateFields
-          className="transactions-toolbar__custom-dates"
-          customDateFrom={customDateFrom}
-          customDateTo={customDateTo}
-          onFromChange={setCustomDateFrom}
-          onToChange={setCustomDateTo}
-          t={t}
-        />
-      ) : null}
       <SegmentedControl
         label={t('Direction')}
         onChange={(value) => setDirection(value === 'all' ? null : value)}

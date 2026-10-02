@@ -1,4 +1,24 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'Resetting…',
+  'Unlinking…',
+  'Account ID',
+  'minor units',
+  'Shown transactions total',
+  'More transactions could not be loaded. Shown transactions are preserved.',
+  'Choose another period to see imported transactions.',
+  'Reset filters',
+  'Refreshing transactions…',
+  'Original bank information',
+  'Description',
+  'Original amount',
+  'Original category',
+  'Not available',
+  'Manage transaction',
+  'Changes saved.',
+  'Compensation exceeds the available income or remaining expense.',
+  'No incoming transactions available for compensation.',
+  'Compensation details could not be loaded.',
+  'Manage category visuals',
   '{count} active filters',
   'Scale',
   'Chart details',
@@ -397,6 +417,31 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
   >
 
 export const UKRAINIAN_MESSAGES = {
+  'Resetting…': 'Скидання…',
+  'Unlinking…': 'Від’єднання…',
+  'Account ID': 'Ідентифікатор рахунку',
+  'minor units': 'мінорних одиниць',
+  'Shown transactions total': 'Сума показаних транзакцій',
+  'More transactions could not be loaded. Shown transactions are preserved.':
+    'Не вдалося завантажити наступні транзакції. Показані транзакції збережено.',
+  'Choose another period to see imported transactions.':
+    'Виберіть інший період, щоб переглянути імпортовані транзакції.',
+  'Reset filters': 'Скинути фільтри',
+  'Refreshing transactions…': 'Оновлення транзакцій…',
+  'Original bank information': 'Початкові банківські дані',
+  Description: 'Опис',
+  'Original amount': 'Початкова сума',
+  'Original category': 'Початкова категорія',
+  'Not available': 'Немає даних',
+  'Manage transaction': 'Керування транзакцією',
+  'Changes saved.': 'Зміни збережено.',
+  'Compensation exceeds the available income or remaining expense.':
+    'Компенсація перевищує доступний дохід або залишок витрати.',
+  'No incoming transactions available for compensation.':
+    'Немає вхідних транзакцій для компенсації.',
+  'Compensation details could not be loaded.':
+    'Не вдалося завантажити дані компенсації.',
+  'Manage category visuals': 'Змінити вигляд категорій',
   '{count} active filters': 'Активних фільтрів: {count}',
   Scale: 'Шкала',
   'Chart details': 'Деталі діаграми',

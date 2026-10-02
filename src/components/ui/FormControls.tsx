@@ -104,6 +104,7 @@ export function MultiSelect({
   const [open, setOpen] = useState(false)
   const contentId = useId()
   const reference = useRef<HTMLDivElement>(null)
+  const trigger = useRef<HTMLButtonElement>(null)
   const selectedLabels = options
     .filter((option) => value.includes(option.value))
     .map((option) => option.label)
@@ -114,15 +115,25 @@ export function MultiSelect({
     }
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        setOpen(false)
+        trigger.current?.focus({ preventScroll: true })
+      }
+    }
+    function closeOnFocusOutside(event: FocusEvent) {
+      if (!reference.current?.contains(event.target as Node)) setOpen(false)
     }
 
     if (!open) return
     document.addEventListener('pointerdown', closeOnPointerDown)
     document.addEventListener('keydown', closeOnEscape)
+    document.addEventListener('focusin', closeOnFocusOutside)
     return () => {
       document.removeEventListener('pointerdown', closeOnPointerDown)
       document.removeEventListener('keydown', closeOnEscape)
+      document.removeEventListener('focusin', closeOnFocusOutside)
     }
   }, [open])
 
@@ -139,6 +150,7 @@ export function MultiSelect({
         aria-description={triggerLabel}
         className="ui-multi-select__trigger"
         onClick={() => setOpen((current) => !current)}
+        ref={trigger}
         type="button"
       >
         <span>{triggerLabel ?? (selectedLabels.join(', ') || ariaLabel)}</span>
