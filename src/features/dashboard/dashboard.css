@@ -1,4 +1,297 @@
-/* Overview: page-specific composition built on the shared design system. */
+/* dashboard feature presentation. See docs/FRONTEND_STRUCTURE.md. */
+
+.dashboard-page > .ui-page-header {
+  gap: 1rem 2rem;
+  padding-block: 0;
+}
+
+.dashboard-page > .ui-page-header h1 {
+  line-height: 1.1;
+}
+
+.dashboard-sync-actions {
+  justify-content: end;
+}
+.dashboard-command-bar,
+.dashboard-toolbar,
+.dashboard-toolbar-actions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.dashboard-command-bar {
+  justify-content: space-between;
+}
+
+.dashboard-toolbar .ui-field {
+  min-width: 0;
+}
+.dashboard-toolbar select {
+  width: 100%;
+  min-height: 2.6rem;
+}
+.dashboard-toolbar-menu {
+  min-width: 0;
+}
+.dashboard-toolbar-menu > summary {
+  display: inline-flex;
+  min-height: 2.6rem;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 650;
+  list-style: none;
+  padding: 0.65rem 0.85rem;
+}
+.dashboard-toolbar-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.dashboard-toolbar-menu[open] {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.65rem;
+}
+.dashboard-toolbar-menu[open] > summary {
+  grid-column: 1 / -1;
+  width: fit-content;
+}
+.dashboard-toolbar-menu > div,
+.dashboard-toolbar-menu > .ui-field {
+  margin-top: 0.55rem;
+}
+.dashboard-toolbar-actions {
+  justify-content: end;
+}
+.dashboard-popover {
+  margin-top: 0.5rem;
+}
+.dashboard-popover .dashboard-sync-actions {
+  justify-content: start;
+  margin-bottom: 0.7rem;
+}
+
+.dashboard-kpis .ui-kpi::before {
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+}
+.dashboard-grid .react-grid-item > .dashboard-widget {
+  height: 100%;
+}
+.dashboard-grid .ui-card {
+  height: 100%;
+}
+.dashboard-grid .ui-card,
+.dashboard-mobile-widgets .ui-card {
+  border-color: color-mix(in srgb, var(--color-border), transparent 10%);
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.dashboard-grid .ui-card__header,
+.dashboard-mobile-widgets .ui-card__header {
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+}
+.dashboard-widget__handle {
+  letter-spacing: -0.2rem;
+  user-select: none;
+}
+.dashboard-mobile-widgets {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 1rem;
+}
+.dashboard-mobile-widgets > div {
+  min-width: 0;
+}
+.income-expense-legend {
+  margin-bottom: 0.55rem;
+  color: var(--color-text-secondary);
+}
+.income-expense-legend i {
+  display: inline-block;
+}
+.recent-transactions-list .recent-transaction-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.55rem 0;
+}
+.recent-transactions-list span,
+.recent-transactions-list small {
+  display: grid;
+  min-width: 0;
+}
+.recent-transactions-list b {
+  text-align: right;
+}
+.income-expense-bars {
+  height: 9.5rem;
+}
+.income-expense-bars .income-bar {
+  background: var(--color-income);
+}
+.income-expense-bars .expense-bar {
+  background: var(--color-action);
+}
+.weekday-vertical-chart {
+  align-items: end;
+}
+.weekday-vertical-chart > div {
+  flex: 1 1 0;
+}
+.weekday-vertical-chart > div > span:first-child {
+  max-height: 9.5rem;
+}
+.weekday-vertical-chart > div > small {
+  color: var(--color-text-secondary);
+}
+.recurring-expenses-list b {
+  display: grid;
+  text-align: right;
+}
+.recurring-expenses-list b small {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+.dashboard-dialog {
+  overflow: auto;
+}
+.dashboard-dialog header,
+.dashboard-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.dashboard-widget-toggles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.dashboard-widget-toggles label {
+  text-transform: capitalize;
+}
+
+.metric-values,
+.metric-values strong {
+  min-width: 0;
+}
+
+.metric-values strong {
+  color: var(--color-text);
+  font-size: clamp(1.18rem, 2vw, 1.55rem);
+  font-weight: 680;
+  overflow-wrap: anywhere;
+}
+
+.line-chart-grid {
+  stroke: var(--color-border);
+}
+
+.line-chart-path,
+.line-chart circle {
+  stroke: var(--color-action);
+}
+
+.income-bar {
+  background: var(--color-income);
+}
+
+.expense-bar,
+.bar-chart i {
+  background: var(--color-action);
+}
+
+.bar-chart i[class*='donut-segment-'] {
+  background: var(--donut-color);
+}
+
+@media (max-width: 47.99rem) {
+  .dashboard-page > .ui-page-header {
+    gap: 0.35rem;
+  }
+
+  .dashboard-command-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.65rem;
+  }
+
+  .dashboard-toolbar .ui-field:nth-child(1),
+  .dashboard-toolbar .ui-field:nth-child(2),
+  .dashboard-toolbar-menu {
+    grid-column: auto;
+  }
+
+  .dashboard-toolbar-menu > summary,
+  .dashboard-toolbar .ui-field .ui-select {
+    width: 100%;
+  }
+
+  .dashboard-toolbar-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .dashboard-toolbar-actions .ui-button,
+  .dashboard-sync-popover {
+    flex: 1 1 0;
+  }
+
+  .dashboard-sync-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .dashboard-sync-actions .ui-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 0.65rem;
+  }
+
+  .dashboard-toolbar {
+    align-items: end;
+    padding: 0.75rem;
+  }
+
+  .dashboard-toolbar .ui-field:nth-child(2),
+  .dashboard-toolbar-menu,
+  .dashboard-toolbar-menu[open] {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-toolbar-menu > summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-command-bar .dashboard-toolbar {
+    display: contents;
+    padding: 0;
+  }
+
+  .dashboard-command-bar .dashboard-toolbar .ui-field:nth-child(2),
+  .dashboard-command-bar .dashboard-toolbar-menu,
+  .dashboard-command-bar .dashboard-toolbar-menu[open] {
+    grid-column: auto;
+  }
+}
 .dashboard-page {
   width: 100%;
   max-width: 75rem;
@@ -147,12 +440,6 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.7rem;
-}
-@keyframes dashboard-popover-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-0.2rem) scale(0.985);
-  }
 }
 
 .dashboard-kpis {
@@ -307,12 +594,9 @@
   list-style: none;
   padding: 0;
 }
-.recent-transactions-list li {
+.recent-transactions-list .recent-transaction-row {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: 'merchant amount' 'category date';
-  gap: 0.15rem 0.75rem;
   align-items: center;
   min-height: 3.35rem;
   border-bottom: 1px solid var(--color-border);
@@ -320,7 +604,6 @@
 }
 .recent-transactions-list time {
   grid-area: date;
-  justify-self: end;
 }
 .recent-transaction-merchant {
   grid-area: merchant;
@@ -380,14 +663,12 @@
   height: 100%;
   min-height: 11rem;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.55rem;
 }
 .income-expense-legend {
   display: flex;
   justify-content: end;
   gap: 0.8rem;
   margin: 0;
-  font-size: 0.72rem;
 }
 .income-expense-legend span {
   display: inline-flex;
@@ -444,7 +725,6 @@
   display: block;
   min-width: 0;
   color: var(--color-text-tertiary);
-  font-size: 0.66rem;
   text-wrap: balance;
 }
 .weekday-vertical-chart {
@@ -468,7 +748,6 @@
   align-self: end;
   justify-self: center;
   border-radius: 0.35rem 0.35rem 0.1rem 0.1rem;
-  background: var(--chart-violet);
 }
 .weekday-vertical-chart small {
   color: var(--color-text-tertiary);
@@ -476,17 +755,14 @@
 }
 .bar-chart {
   display: grid;
-  gap: 0.6rem;
   margin: 0;
   padding: 0;
 }
 .bar-chart li {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(5.5rem, 1fr) minmax(4rem, 2fr) auto;
   gap: 0.65rem;
   align-items: center;
-  font-size: 0.76rem;
 }
 .bar-chart li > span {
   overflow: hidden;
@@ -494,7 +770,6 @@
   white-space: nowrap;
 }
 .bar-chart li > div {
-  height: 0.55rem;
   overflow: hidden;
   border-radius: 999px;
   background: var(--color-surface-soft);
@@ -507,7 +782,6 @@
 .bar-chart strong {
   min-width: 5.5rem;
   text-align: right;
-  font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
 }
 .line-chart {
@@ -531,7 +805,6 @@
 }
 .line-chart circle {
   fill: var(--chart-expense);
-  opacity: 0;
   transition: opacity var(--motion-fast);
 }
 .line-chart circle:hover {
@@ -546,9 +819,6 @@
   place-items: center;
   text-align: center;
 }
-
-/* Shared widget treatment — charts and evidence lists use the same surface,
-   header rhythm, and compact financial hierarchy. */
 .dashboard-recent-card,
 .dashboard-widget-card {
   border-color: var(--border-subtle);
@@ -619,7 +889,7 @@
   box-shadow: var(--focus-ring);
 }
 
-.recent-transactions-list li {
+.recent-transactions-list .recent-transaction-row {
   grid-template-columns: 2.25rem minmax(0, 1fr) auto;
   grid-template-areas: 'icon merchant amount' 'icon date date';
   gap: 0.15rem 0.65rem;
@@ -798,6 +1068,13 @@
 }
 
 .dashboard-dialog-backdrop {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  color: inherit;
   position: fixed;
   z-index: 50;
   inset: 0;
@@ -980,7 +1257,7 @@
   .recent-transactions-list {
     grid-template-columns: 1fr;
   }
-  .recent-transactions-list li {
+  .recent-transactions-list .recent-transaction-row {
     min-height: 3.8rem;
   }
   .recent-transaction-merchant small {
@@ -1007,9 +1284,6 @@
   .income-expense-plot {
     gap: 0.2rem;
   }
-  .income-expense-plot small {
-    font-size: 0.57rem;
-  }
   .bar-chart li {
     grid-template-areas: 'label value' 'bar bar';
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1029,11 +1303,6 @@
       100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)
     );
   }
-}
-
-/* The older screen-layout file is still shared by untouched routes. Keep its
-   broad mobile dashboard selectors from changing this dedicated composition. */
-@media (max-width: 47.99rem) {
   .dashboard-page .dashboard-command-bar {
     display: block;
   }
@@ -1107,5 +1376,15 @@
 
   .dashboard-evidence-list strong {
     font-size: 0.86rem;
+  }
+}
+
+.dashboard-dialog-backdrop::backdrop {
+  background: transparent;
+}
+@keyframes dashboard-popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.2rem) scale(0.985);
   }
 }

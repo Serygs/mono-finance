@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import {
+  categoryQueryKeys,
+  refreshCategorySourceMapping,
+} from './category-queries'
 
-import { Button } from '../../components/ui/Controls'
 import { StatusBadge } from '../../components/ui/Chips'
 import { CompactTable } from '../../components/ui/Collections'
+import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import {
   FormField,
@@ -38,7 +42,7 @@ export function CategorySourceManagement({
         pageSize,
         query,
       }),
-    queryKey: ['category-sources', { mappingFilter, page, query }],
+    queryKey: categoryQueryKeys.sourcesFor({ mappingFilter, page, query }),
   })
   const save = useMutation({
     mutationFn: ({
@@ -51,13 +55,7 @@ export function CategorySourceManagement({
       categoryId === ''
         ? resetCategorySourceMapping(sourceCode)
         : saveCategorySourceMapping(sourceCode, categoryId),
-    onSuccess: async () => {
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['category-sources'] }),
-        client.invalidateQueries({ queryKey: ['transactions'] }),
-        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-      ])
-    },
+    onSuccess: () => refreshCategorySourceMapping(client),
   })
   const totalPages = Math.max(
     1,

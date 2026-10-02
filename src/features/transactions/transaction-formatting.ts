@@ -1,30 +1,22 @@
+import { formatEpochDate } from '../../lib/date-presentation'
+import { formatMoney } from '../../lib/money-presentation'
 import type { TransactionListItem } from './transaction-types'
 
 export function formatTransactionAmount(
   transaction: TransactionListItem,
 ): string {
-  return new Intl.NumberFormat(undefined, {
-    currency: transaction.currencyCode,
-    currencyDisplay: 'code',
-    minimumFractionDigits: transaction.currencyMinorUnit,
-    maximumFractionDigits: transaction.currencyMinorUnit,
-    style: 'currency',
-  }).format(
-    transaction.effectiveAmountMinor / 10 ** transaction.currencyMinorUnit,
-  )
+  return formatMinorAmount(transaction.effectiveAmountMinor, transaction)
 }
 
 export function formatTransactionTime(epochSeconds: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return formatEpochDate(epochSeconds, {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(epochSeconds * 1_000)
+  })
 }
 
 export function formatTransactionDate(epochSeconds: number): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(
-    epochSeconds * 1_000,
-  )
+  return formatEpochDate(epochSeconds, { dateStyle: 'full' })
 }
 
 export function formatTransactionDateGroup(
@@ -107,4 +99,50 @@ export function parseAmountInputToMinor(
   const amount = Number(whole) * scale + Number(fraction.padEnd(minorUnit, '0'))
   if (!Number.isSafeInteger(amount)) return null
   return match[1] === '-' ? -amount : amount
+}
+
+export function formatDateGroupAmount(
+  transactions: TransactionListItem[],
+): string {
+  const [firstTransaction] = transactions
+  if (
+    firstTransaction === undefined ||
+    transactions.some(
+      (transaction) =>
+        transaction.currencyCode !== firstTransaction.currencyCode ||
+        transaction.currencyMinorUnit !== firstTransaction.currencyMinorUnit,
+    )
+  ) {
+    return ''
+  }
+  const amountMinor = transactions.reduce(
+    (sum, transaction) => sum + BigInt(transaction.effectiveAmountMinor),
+    0n,
+  )
+  return formatMinorAmount(amountMinor, firstTransaction)
+}
+
+export function formatTransactionClock(epochSeconds: number): string {
+  return formatEpochDate(epochSeconds, { timeStyle: 'short' })
+}
+
+export function formatMinorAmount(
+  amountMinor: number | bigint,
+  transaction: TransactionListItem,
+): string {
+  return formatMoney(amountMinor, {
+    currencyCode: transaction.currencyCode,
+    minorUnit: transaction.currencyMinorUnit,
+  })
+}
+
+export function formatRecentTransactionDate(
+  timestamp: number,
+  locale: string,
+): string {
+  return formatEpochDate(
+    timestamp,
+    { day: 'numeric', hour: '2-digit', minute: '2-digit', month: 'short' },
+    locale,
+  )
 }

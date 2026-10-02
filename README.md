@@ -236,7 +236,7 @@ Known limitation: a browser restarted while offline cannot reopen financial data
 
 Mono Finance uses an original Apple-inspired visual system without copying Apple assets. Financial legibility takes priority over decoration.
 
-- Role tokens are defined in `src/styles/index.css`; reusable primitive styles are in `src/styles/design-system.css`; screen composition is in `src/styles/screen-layouts.css`.
+- Role tokens, reset and base typography are defined in `src/styles/index.css`; shared primitive styles live in `src/components/ui/ui.css`; shell/navigation styles live in `src/app/app-shell.css`; feature styles are adjacent to their owners. See [frontend ownership](docs/FRONTEND_STRUCTURE.md) for the structure and compatibility boundaries.
 - Use reusable components from `src/components/ui/` before adding feature-specific primitives.
 - Keep content surfaces mostly opaque; reserve restrained blur for shell chrome and modal backdrops.
 - Use tabular numerals and show immutable original values secondarily when an effective value differs.

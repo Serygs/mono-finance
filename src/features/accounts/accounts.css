@@ -1,4 +1,8 @@
-/* Accounts: a dedicated composition for the existing /#accounts route. */
+/* accounts feature presentation. See docs/FRONTEND_STRUCTURE.md. */
+
+.account-filter {
+  margin-top: clamp(1.25rem, 4vw, 3.5rem);
+}
 .accounts-page--summary {
   width: 100%;
   max-width: 75rem;

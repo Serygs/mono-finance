@@ -1,43 +1,22 @@
-import { CategoryManagement } from '../categories/CategoryManagement'
-import { PageHeader, PageSurface } from '../../components/ui/Page'
-import { CurrencyPreferences } from './CurrencyPreferences'
-import { SettingsSyncStatus } from './SettingsSyncStatus'
-import { useLocalization } from '../localization/localization'
-import { useAuth } from '../auth/auth-context'
-import { SettingsGroup, SettingsRow } from './SettingsSections'
-import { useLocation, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { SegmentedControl } from '../../components/ui/Controls'
+import { PageHeader, PageSurface } from '../../components/ui/Page'
+import { useAuth } from '../auth/auth-context'
+import { useLocalization } from '../localization/localization'
 import { THEME_MODES, useTheme } from '../theme/theme'
+import { CurrencyPreferences } from './CurrencyPreferences'
+import { SettingsGroup, SettingsRow } from './SettingsSections'
+import { SettingsSyncStatus } from './SettingsSyncStatus'
 
 export function SettingsPage() {
   const { t } = useLocalization()
   const { mode, setMode } = useTheme()
   const { logout } = useAuth()
-  const location = useLocation()
   const navigate = useNavigate()
 
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
-  }
-
-  if (location.hash === '#categories') {
-    return (
-      <PageSurface className="categories-page">
-        <PageHeader
-          description={
-            <p>
-              {t(
-                'Use these for personal analytics. Imported Monobank and MCC categories remain unchanged.',
-              )}
-            </p>
-          }
-          id="categories-title"
-          title={t('Categories')}
-        />
-        <CategoryManagement />
-      </PageSurface>
-    )
   }
 
   return (

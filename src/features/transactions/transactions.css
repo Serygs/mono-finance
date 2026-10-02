@@ -1,4 +1,73 @@
-/* Transactions: a dense desktop ledger and a separately composed mobile feed. */
+/* transactions feature presentation. See docs/FRONTEND_STRUCTURE.md. */
+
+.transactions-page {
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.transaction-layout {
+  display: block;
+  margin-top: 0;
+}
+
+.transaction-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.transaction-details {
+  position: static;
+  gap: 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.transaction-details-heading {
+  display: none;
+}
+
+.transaction-details-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-correction-form,
+.transaction-exclusion {
+  border-color: var(--color-border);
+}
+
+.transaction-detail-note {
+  background: var(--color-action-soft);
+  color: var(--color-action-hover);
+}
+
+.transaction-detail-excluded {
+  background: var(--color-danger-soft);
+  color: var(--color-expense);
+}
+
+.transaction-sync-status {
+  display: block;
+  gap: 0;
+  margin-top: clamp(1.25rem, 4vw, 3rem);
+  padding: 0;
+}
+
+.transaction-sync-status > .ui-card__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.transaction-sync-status .ui-empty-state {
+  border: 0;
+  background: var(--color-surface-soft);
+  box-shadow: none;
+}
+
+.transaction-sync-status p {
+  color: var(--color-text-tertiary);
+}
 .transactions-page--ledger {
   width: 100%;
   max-width: 75rem;
@@ -687,4 +756,28 @@
   .transactions-ledger-row {
     transition: none;
   }
+}
+
+.sync-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-secondary);
+}
+
+.sync-state::before {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  content: '';
+}
+
+.sync-state-running::before {
+  background: var(--color-action);
+}
+
+.sync-state-failed::before {
+  background: var(--color-expense);
 }

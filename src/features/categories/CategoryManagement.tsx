@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type useCategoriesQuery } from './category-queries'
+import { useCategoryManagement } from './use-category-management'
 
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { CompactList } from '../../components/ui/Collections'
@@ -13,105 +13,38 @@ import {
 import { Dialog } from '../../components/ui/Overlay'
 import { OverflowMenu } from '../../components/ui/Popover'
 import { useLocalization } from '../localization/localization'
-import {
-  createCategory,
-  deleteCategory,
-  getCategories,
-  mergeCategories,
-  type CategoryInput,
-  updateCategory,
-} from './categories-api'
+import { type CategoryInput } from './categories-api'
 import { CategoryAppearanceFields } from './CategoryAppearanceFields'
-import { CategorySourceManagement } from './CategorySourceManagement'
 
 const EMPTY: CategoryInput = { colorToken: null, icon: null, name: '' }
 
-export function CategoryManagement() {
+export function CategoryManagement({
+  categories,
+}: {
+  categories: ReturnType<typeof useCategoriesQuery>
+}) {
   const { t } = useLocalization()
-  const client = useQueryClient()
-  const categories = useQuery({
-    queryFn: getCategories,
-    queryKey: ['categories'],
-  })
-  const [editing, setEditing] = useState<{
-    id: string
-    input: CategoryInput
-  } | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [pendingDelete, setPendingDelete] = useState<{
-    id: string
-    name: string
-  } | null>(null)
-  const [pendingMerge, setPendingMerge] = useState<{
-    id: string
-    name: string
-  } | null>(null)
-  const [mergeTargetId, setMergeTargetId] = useState('')
-  const [query, setQuery] = useState('')
-
-  const mutation = useMutation({
-    mutationFn: async (input: CategoryInput) =>
-      editing === null
-        ? createCategory(input)
-        : updateCategory(editing.id, input),
-    onSuccess: () => {
-      setEditing(null)
-      setIsCreating(false)
-      void refreshCategoryData()
-    },
-  })
-  const removal = useMutation({
-    mutationFn: deleteCategory,
-    onSuccess: () => {
-      setPendingDelete(null)
-      void refreshCategoryData()
-    },
-  })
-  const merge = useMutation({
-    mutationFn: (input: {
-      sourceCategoryId: string
-      targetCategoryId: string
-    }) => mergeCategories(input.sourceCategoryId, input.targetCategoryId),
-    onSuccess: () => {
-      setPendingMerge(null)
-      setMergeTargetId('')
-      void refreshCategoryData()
-    },
-  })
-
-  const visibleCategories = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase()
-    if (normalizedQuery === '') return categories.data ?? []
-    return (categories.data ?? []).filter((category) =>
-      category.name.toLocaleLowerCase().includes(normalizedQuery),
-    )
-  }, [categories.data, query])
-
-  function refreshCategoryData(): Promise<unknown[]> {
-    return Promise.all([
-      client.invalidateQueries({ queryKey: ['categories'] }),
-      client.invalidateQueries({ queryKey: ['category-sources'] }),
-      client.invalidateQueries({ queryKey: ['transactions'] }),
-      client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-      client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
-    ])
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    mutation.mutate({
-      name: String(form.get('name')).trim(),
-      icon: optional(String(form.get('icon'))),
-      colorToken: optional(String(form.get('colorToken'))),
-    })
-  }
-
+  const {
+    editing,
+    setEditing,
+    isCreating,
+    setIsCreating,
+    pendingDelete,
+    setPendingDelete,
+    pendingMerge,
+    setPendingMerge,
+    mergeTargetId,
+    setMergeTargetId,
+    query,
+    setQuery,
+    mutation,
+    removal,
+    merge,
+    visibleCategories,
+    submit,
+  } = useCategoryManagement(categories)
   return (
-    <section
-      aria-labelledby="categories-title"
-      className="category-management categories-management"
-    >
+    <>
       <header className="categories-section-heading">
         <h2>{t('Custom categories')}</h2>
         {!isCreating && editing === null ? (
@@ -148,7 +81,7 @@ export function CategoryManagement() {
             icon={editing?.input.icon ?? EMPTY.icon}
             translate={t}
           />
-          <div className="transaction-correction-actions">
+          <div className="ui-form-actions">
             <Button loading={mutation.isPending} type="submit">
               {mutation.isPending
                 ? t('Saving…')
@@ -254,7 +187,6 @@ export function CategoryManagement() {
           )}
         </div>
       ) : null}
-      <CategorySourceManagement categories={categories.data ?? []} />
       <Dialog
         onClose={() => {
           if (!removal.isPending) {
@@ -278,7 +210,7 @@ export function CategoryManagement() {
             )}
           </Alert>
         ) : null}
-        <div className="transaction-correction-actions">
+        <div className="ui-form-actions">
           <Button
             disabled={removal.isPending}
             onClick={() => setPendingDelete(null)}
@@ -327,7 +259,7 @@ export function CategoryManagement() {
         {merge.isError ? (
           <Alert tone="danger">{t('Categories could not be merged.')}</Alert>
         ) : null}
-        <div className="transaction-correction-actions">
+        <div className="ui-form-actions">
           <Button
             disabled={merge.isPending}
             onClick={() => setPendingMerge(null)}
@@ -352,12 +284,8 @@ export function CategoryManagement() {
           </Button>
         </div>
       </Dialog>
-    </section>
+    </>
   )
-}
-
-function optional(value: string): string | null {
-  return value.trim() || null
 }
 
 interface CategoryRowActionsProps {

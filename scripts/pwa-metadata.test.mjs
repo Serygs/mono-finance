@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 describe('iOS PWA metadata', () => {
   it('opts into safe-area layout and standalone status-bar integration', () => {
     const html = readFileSync('index.html', 'utf8')
-    const mobileStyles = readFileSync('src/styles/screen-layouts.css', 'utf8')
+    const mobileStyles = readFileSync('src/app/app-shell.css', 'utf8')
 
     expect(html).toContain('viewport-fit=cover')
     expect(html).toMatch(

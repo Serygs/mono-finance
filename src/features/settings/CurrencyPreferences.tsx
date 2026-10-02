@@ -1,16 +1,17 @@
-import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { FormEvent } from 'react'
+import { settingsQueryKeys } from '../settings/settings-query-keys'
 
 import { Button } from '../../components/ui/Controls'
 import { Alert } from '../../components/ui/Feedback'
 import { FormField } from '../../components/ui/FormControls'
 import { Popover } from '../../components/ui/Popover'
+import { useLocalization } from '../localization/localization'
 import {
   getCurrencyPreferences,
   saveCurrencyPreferences,
   synchronizeExchangeRates,
 } from './currency-preferences-api'
-import { useLocalization } from '../localization/localization'
 import { SettingsRowContent } from './SettingsSections'
 
 export function CurrencyPreferences() {
@@ -18,12 +19,12 @@ export function CurrencyPreferences() {
   const { t } = useLocalization()
   const preferences = useQuery({
     queryFn: getCurrencyPreferences,
-    queryKey: ['currency-preferences'],
+    queryKey: settingsQueryKeys.currency,
   })
   const save = useMutation({
     mutationFn: saveCurrencyPreferences,
     onSuccess: () =>
-      void client.invalidateQueries({ queryKey: ['currency-preferences'] }),
+      void client.invalidateQueries({ queryKey: settingsQueryKeys.currency }),
   })
   const rates = useMutation({ mutationFn: synchronizeExchangeRates })
 

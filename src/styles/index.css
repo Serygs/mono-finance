@@ -1,3 +1,4 @@
+/* Global tokens, reset and base typography. See docs/FRONTEND_STRUCTURE.md. */
 :root {
   color-scheme: light;
   color: var(--text-primary);
@@ -162,54 +163,30 @@ a {
   color: inherit;
 }
 
-/* Authentication remains outside the app shell, but uses the same surface and
-   control primitives as the signed-in experience. */
-.login-page,
-.session-loading {
-  display: grid;
-  min-height: 100dvh;
-  place-items: center;
-  padding: var(--space-5);
-}
-
-.login-card {
-  width: min(100%, 28rem);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-hero);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-overlay);
-  padding: clamp(var(--space-7), 7vw, var(--space-12));
-}
-
-.login-brand {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.login-card h1 {
-  max-width: 14ch;
-  margin: var(--space-8) 0 0;
-  font-size: clamp(2rem, 8vw, 2.75rem);
-  letter-spacing: -0.04em;
-  line-height: 1.08;
-}
-
-.login-copy {
-  margin: var(--space-3) 0 0;
-  color: var(--color-text-secondary);
-}
-
-.login-form {
-  display: grid;
-  gap: var(--space-3);
-  margin-top: var(--space-8);
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
   }
+}
+:where(button, input, select, textarea) {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+:where(select option, select optgroup) {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
+:where(h1, h2, h3) {
+  text-wrap: balance;
+  scroll-margin-top: 6rem;
+}
+
+:where(input, select, select[multiple], option, textarea, button) {
+  font: inherit;
+  color: inherit;
 }

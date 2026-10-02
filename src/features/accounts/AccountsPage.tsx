@@ -1,5 +1,6 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { accountQueryKeys, useAccountsQuery } from './account-queries'
 
 import { StatusBadge } from '../../components/ui/Chips'
 import { Button } from '../../components/ui/Controls'
@@ -8,21 +9,18 @@ import { PageHeader, PageSurface } from '../../components/ui/Page'
 import { Card, InfoTooltip } from '../../components/ui/Surfaces'
 import { useLocalization } from '../localization/localization'
 import { formatAccountBalance } from './account-formatting'
-import { getAccounts, synchronizeAccounts } from './accounts-api'
 import { summarizeCurrencyBalances } from './account-summary'
 import type { AccountSummary } from './account-types'
+import { synchronizeAccounts } from './accounts-api'
 
 export function AccountsPage() {
   const { t } = useLocalization()
   const client = useQueryClient()
-  const accounts = useQuery({
-    queryFn: getAccounts,
-    queryKey: ['accounts'],
-  })
+  const accounts = useAccountsQuery()
   const synchronize = useMutation({
     mutationFn: synchronizeAccounts,
     onSuccess: (nextAccounts) => {
-      client.setQueryData(['accounts'], nextAccounts)
+      client.setQueryData(accountQueryKeys.all, nextAccounts)
     },
   })
   const balances = useMemo(

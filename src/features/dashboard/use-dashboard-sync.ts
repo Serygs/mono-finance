@@ -1,0 +1,66 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { accountQueryKeys, useAccountsQuery } from '../accounts/account-queries'
+import { synchronizeAccounts } from '../accounts/accounts-api'
+import { dashboardQueryKeys } from '../dashboard/dashboard-query-keys'
+import type { TranslationKey } from '../localization/localization'
+import {
+  getTransactionSyncStatus,
+  synchronizeTransactions,
+} from '../transactions/transaction-sync-api'
+import type { TransactionSyncState } from '../transactions/transaction-sync-types'
+
+export function useDashboardSync() {
+  const client = useQueryClient()
+  const accountsQuery = useAccountsQuery()
+  const [syncingAccounts, setSyncingAccounts] = useState(false)
+  const [syncingTransactions, setSyncingTransactions] = useState(false)
+  const [syncStates, setSyncStates] = useState<TransactionSyncState[] | null>(
+    null,
+  )
+  const [error, setError] = useState<TranslationKey | null>(null)
+  useEffect(() => {
+    void getTransactionSyncStatus()
+      .then(setSyncStates)
+      .catch(() => setError('Transaction sync status could not be loaded.'))
+  }, [])
+  async function syncAccounts() {
+    setSyncingAccounts(true)
+    try {
+      client.setQueryData(accountQueryKeys.all, await synchronizeAccounts())
+      await client.invalidateQueries({ queryKey: dashboardQueryKeys.analytics })
+    } catch {
+      setError('Accounts could not be synchronized. Try again later.')
+    } finally {
+      setSyncingAccounts(false)
+    }
+  }
+  async function syncTransactions() {
+    setSyncingTransactions(true)
+    try {
+      await synchronizeTransactions()
+      setSyncStates(await getTransactionSyncStatus())
+      await Promise.all([
+        client.invalidateQueries({ queryKey: dashboardQueryKeys.analytics }),
+        client.invalidateQueries({ queryKey: dashboardQueryKeys.recent }),
+      ])
+    } catch {
+      setError('Transaction sync is unavailable. Try again later.')
+    } finally {
+      setSyncingTransactions(false)
+    }
+  }
+  return {
+    accounts: accountsQuery.data,
+    syncingAccounts,
+    syncingTransactions,
+    syncStates,
+    syncAccounts,
+    syncTransactions,
+    error:
+      error ??
+      (accountsQuery.isError
+        ? 'Accounts could not be loaded. Try again later.'
+        : null),
+  }
+}

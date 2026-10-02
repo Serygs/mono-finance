@@ -5,6 +5,7 @@ import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { Popover } from '../../components/ui/Popover'
 import { useLocalization, type Translate } from '../localization/localization'
 import { getTransactionSyncStatus } from '../transactions/transaction-sync-api'
+import { transactionQueryKeys } from '../transactions/transaction-queries'
 import type { TransactionSyncState } from '../transactions/transaction-sync-types'
 import { SettingsRowContent } from './SettingsSections'
 
@@ -12,7 +13,7 @@ export function SettingsSyncStatus() {
   const { locale, t } = useLocalization()
   const status = useQuery({
     queryFn: getTransactionSyncStatus,
-    queryKey: ['transaction-sync-status'],
+    queryKey: transactionQueryKeys.syncStatus,
     staleTime: 30_000,
   })
 

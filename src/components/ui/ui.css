@@ -1,5 +1,4 @@
-/* Shared design-system layer. Feature styles remain layout-specific;
-   these role-based primitives own shared color, type, geometry, and states. */
+/* Domain-neutral UI primitives and their responsive states. See docs/FRONTEND_STRUCTURE.md. */
 
 .sr-only {
   position: absolute;
@@ -9,214 +8,6 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   clip-path: inset(50%);
-}
-
-/* Native form controls do not reliably inherit document typography. Keep every
-   control on the same type scale as the surrounding design-system field. */
-:where(button, input, select, textarea) {
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-}
-
-/* Browser support for option styling varies, but inheriting where supported
-   keeps expanded single- and multi-select menus visually aligned as well. */
-:where(select option, select optgroup) {
-  color: inherit;
-  font: inherit;
-  line-height: inherit;
-}
-
-.skip-link {
-  position: fixed;
-  z-index: 100;
-  top: 0;
-  left: -100vw;
-  border-radius: var(--radius-control);
-  background: var(--color-text);
-  color: var(--color-surface);
-  padding: 0.7rem 1rem;
-}
-
-.skip-link:focus-visible {
-  top: max(0.5rem, env(safe-area-inset-top));
-  left: max(0.75rem, env(safe-area-inset-left));
-}
-
-:where(h1, h2, h3) {
-  text-wrap: balance;
-  scroll-margin-top: 6rem;
-}
-
-.app-shell {
-  width: 100%;
-  max-width: 100%;
-  min-height: 100dvh;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  z-index: 20;
-  top: 0;
-  width: min(calc(100% - 2rem), 75rem);
-  max-width: calc(100% - 2rem);
-  min-width: 0;
-  min-height: 4rem;
-  margin: max(0.5rem, env(safe-area-inset-top)) auto 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
-  padding: 0.5rem 0.75rem;
-}
-
-.brand-lockup {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
-}
-
-.app-header-actions,
-.login-card__topline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.profile-menu .ui-popover__trigger {
-  width: 2.5rem;
-  min-height: var(--control-height);
-  justify-content: center;
-  border-radius: 50%;
-  padding: 0;
-}
-
-.ui-popover__content.profile-menu {
-  right: 0;
-  left: auto;
-  min-width: 9rem;
-}
-
-.profile-menu__avatar {
-  display: grid;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  background: var(--color-text);
-  color: var(--color-surface);
-  font-size: 0.7rem;
-  font-weight: 750;
-  place-items: center;
-}
-
-.profile-menu__sign-out {
-  width: 100%;
-  justify-content: flex-start;
-}
-
-.login-card__topline {
-  justify-content: space-between;
-}
-
-.language-switcher select {
-  min-width: 3.75rem;
-  min-height: 2.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding-inline: 0.65rem;
-}
-
-.language-switcher select:focus-visible {
-  outline: 2px solid var(--color-action);
-  outline-offset: 3px;
-  box-shadow: var(--focus-ring);
-}
-
-.brand-mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
-  border-radius: 0.65rem;
-  background: var(--color-text);
-  color: var(--color-surface);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  place-items: center;
-}
-
-.brand {
-  color: var(--text-primary);
-  overflow: hidden;
-  font-size: 0.95rem;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.brand:visited,
-.brand:hover,
-.brand:active {
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.primary-navigation {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.primary-navigation a,
-.mobile-navigation a {
-  display: grid;
-  min-height: 2.5rem;
-  align-items: center;
-  border-radius: 0.75rem;
-  color: var(--color-text-secondary);
-  font-size: 0.88rem;
-  font-weight: 600;
-  padding-inline: 0.7rem;
-  text-decoration: none;
-}
-
-.primary-navigation a:hover,
-.mobile-navigation a:hover {
-  background: var(--color-surface-soft);
-  color: var(--color-text);
-}
-
-.primary-navigation a[aria-current='page'],
-.mobile-navigation a[aria-current='page'] {
-  background: var(--color-action-soft);
-  color: var(--color-action);
-  text-decoration: none;
-}
-
-.mobile-navigation {
-  display: none;
-}
-
-.page-content {
-  width: min(calc(100% - 3rem), 75rem);
-  max-width: 100%;
-  min-width: 0;
-  margin-inline: auto;
-  padding-block: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .ui-page {
@@ -387,25 +178,6 @@
   background: var(--color-surface-soft);
   color: var(--color-text);
   font-size: 1.35rem;
-}
-
-:where(
-  .ui-button,
-  .ui-icon-button,
-  .ui-select,
-  .ui-multi-select__trigger,
-  .ui-popover__trigger,
-  .ui-info-tooltip__trigger,
-  .ui-field input,
-  .ui-field textarea,
-  .ui-chip,
-  .ui-segmented-control button,
-  .primary-navigation a,
-  .mobile-navigation a
-):focus-visible {
-  outline: 2px solid var(--color-action);
-  outline-offset: 3px;
-  box-shadow: var(--focus-ring);
 }
 
 .ui-field {
@@ -910,11 +682,6 @@
   color: var(--color-text);
 }
 
-:where(input, select, select[multiple], option, textarea, button) {
-  font: inherit;
-  color: inherit;
-}
-
 .ui-info-tooltip {
   position: relative;
   display: inline-flex;
@@ -1190,5 +957,117 @@ button.ui-chip {
   from {
     opacity: 0;
     transform: translateX(2rem) scale(0.985);
+  }
+}
+
+.ui-kpi {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 47.99rem) {
+  .ui-select,
+  .ui-field .ui-select,
+  .ui-field input,
+  .ui-field textarea,
+  .ui-multi-select__trigger,
+  .ui-popover__trigger {
+    font-size: 16px;
+  }
+
+  .ui-page-header {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 1.15rem;
+  }
+
+  .ui-page-header h1 {
+    font-size: clamp(1.625rem, 7vw, 1.875rem);
+    line-height: 1.12;
+  }
+
+  :where(
+    .ui-button,
+    .ui-icon-button,
+    .ui-select,
+    .ui-multi-select__trigger,
+    .ui-popover__trigger,
+    .ui-search-field,
+    .ui-chip
+  ) {
+    min-height: 2.75rem;
+  }
+
+  .ui-page-header__actions {
+    display: block;
+    min-width: 0;
+  }
+
+  .ui-alert {
+    grid-template-columns: 1fr;
+  }
+
+  .ui-overlay--sheet {
+    display: grid;
+    align-items: end;
+  }
+
+  .ui-overlay--sheet .ui-overlay__surface {
+    width: 100%;
+    height: auto;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-radius: var(--radius-hero) var(--radius-hero) 0 0;
+  }
+
+  .ui-overlay--sheet .ui-overlay__header {
+    padding-top: 1rem;
+  }
+}
+
+@keyframes overlay-enter {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.985);
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .ui-popover__content {
+    right: auto;
+    left: 0;
+  }
+
+  .ui-info-tooltip__content {
+    right: 0;
+    left: auto;
+    width: min(18rem, calc(100vw - 2rem));
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-overlay__surface,
+  .ui-skeleton > span:not(.sr-only),
+  .ui-multi-select__menu,
+  .ui-popover__content,
+  .ui-info-tooltip__content {
+    animation: none;
+  }
+
+  :where(
+    .ui-button,
+    .ui-icon-button,
+    .ui-select,
+    .ui-field input,
+    .ui-field textarea,
+    .ui-search-field,
+    .ui-multi-select__trigger,
+    .ui-popover__trigger,
+    .ui-segmented-control button,
+    .ui-card,
+    .ui-kpi,
+    .ui-empty-state
+  ) {
+    transition: none;
   }
 }

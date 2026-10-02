@@ -1,0 +1,19 @@
+/* offline feature presentation. See docs/FRONTEND_STRUCTURE.md. */
+
+.offline-status {
+  z-index: 40;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  border-color: color-mix(in srgb, var(--color-warning), transparent 55%);
+  border-radius: var(--radius-control);
+  background: var(--color-warning-soft);
+  box-shadow: var(--shadow-card);
+  color: var(--color-warning);
+}
+
+@media (max-width: 47.99rem) {
+  .offline-status {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
