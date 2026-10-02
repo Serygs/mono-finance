@@ -1,3 +1,4 @@
+import type { AnalyticsTransactionContext } from '../transactions/transaction-drill-down'
 import { useState } from 'react'
 import { GridLayout, useContainerWidth } from 'react-grid-layout'
 import { Link } from 'react-router'
@@ -25,6 +26,7 @@ import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget'
 
 export function DashboardLayout({
   accounts,
+  context,
   analytics,
   currency,
   onPreferences,
@@ -35,6 +37,7 @@ export function DashboardLayout({
   filtered,
   transactions,
 }: {
+  context: AnalyticsTransactionContext
   accounts: AccountSummary[]
   analytics: DashboardAnalytics
   currency: string | null
@@ -90,13 +93,13 @@ export function DashboardLayout({
   )
   return (
     <>
-      <DashboardKpis displayed={displayed} units={units} />
+      <DashboardKpis displayed={displayed} units={units} context={context} />
       {preferences.enabledWidgetIds.includes('recent-transactions') ? (
         <Card
           actions={
             <div className="recent-transactions-actions">
               <Link to="/transactions">
-                <span>{t('View all transactions')}</span>
+                <span>{t('All transactions')}</span>
                 <Icon name="chevron" />
               </Link>
             </div>

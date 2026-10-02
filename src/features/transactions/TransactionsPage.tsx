@@ -1,3 +1,5 @@
+import { AnalyticsPeriod } from '../dashboard/AnalyticsPeriod'
+import { DataFreshness } from './DataFreshness'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
@@ -42,6 +44,29 @@ export function TransactionsPage() {
       <PageHeader id="transactions-title" title={t('Transactions')} />
 
       <TransactionFilters ledger={ledger} />
+      <div className="analytics-meta">
+        <AnalyticsPeriod
+          range={
+            ledger.filters.dateFrom === null || ledger.filters.dateTo === null
+              ? null
+              : {
+                  dateFrom: ledger.filters.dateFrom,
+                  dateTo: ledger.filters.dateTo,
+                }
+          }
+        />
+        <DataFreshness
+          accountIds={ledger.accountIds}
+          range={
+            ledger.filters.dateFrom === null || ledger.filters.dateTo === null
+              ? null
+              : {
+                  dateFrom: ledger.filters.dateFrom,
+                  dateTo: ledger.filters.dateTo,
+                }
+          }
+        />
+      </div>
 
       {transactionsQuery.isPending || ledger.searchPending ? (
         <Skeleton label={t('Loading transactions…')} lines={5} />
@@ -55,21 +80,21 @@ export function TransactionsPage() {
       transactions.length === 0 ? (
         <EmptyState
           title={t(
-            ledger.activeFilterCount > 0
+            ledger.isFiltered
               ? 'No matching transactions'
               : 'No transactions in this period.',
           )}
           action={
             ledger.activeFilterCount > 0 ? (
               <Button variant="secondary" onClick={ledger.resetFilters}>
-                {t('Reset filters')}
+                {t('Reset additional filters')}
               </Button>
             ) : undefined
           }
         >
           <p>
             {t(
-              ledger.activeFilterCount > 0
+              ledger.isFiltered
                 ? 'No transactions match these filters.'
                 : 'Choose another period to see imported transactions.',
             )}

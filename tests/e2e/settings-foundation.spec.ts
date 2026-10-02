@@ -119,6 +119,28 @@ async function fixture(page: Page) {
       ),
     }),
   )
+  await page.route('**/api/accounts', (route) =>
+    route.fulfill({
+      json: {
+        data: {
+          accounts: syncStates.map((item) => ({
+            id: item.accountId,
+            type: item.accountType,
+            currency: {
+              code: item.currencyCode,
+              minorUnit: 2,
+              numericCode: '000',
+              displayName: item.currencyCode,
+            },
+            cards: [],
+            isActive: true,
+            balanceMinor: 10000,
+            creditLimitMinor: null,
+          })),
+        },
+      },
+    }),
+  )
   await page.goto('/login')
   await page.getByLabel('Email').fill('owner@example.com')
   await page.getByLabel('Password').fill('correct-password')
@@ -255,7 +277,9 @@ test('currency validation, pending/failure/success and exchange-rate updates ref
     .getByRole('link', { name: 'Accounts', exact: true })
     .first()
     .click()
-  await expect(page.locator('.account-row__balance')).toContainText('UAH')
+  await expect(page.locator('.account-row__balance').first()).toContainText(
+    'UAH',
+  )
 })
 
 test('sync status reports actual running/failure/time state, and errors/cached status remain recoverable offline', async ({
@@ -273,7 +297,7 @@ test('sync status reports actual running/failure/time state, and errors/cached s
   await expect(
     list.getByText('Sync needs retry', { exact: true }),
   ).toBeVisible()
-  await expect(list.getByText(/Last successful update/)).toHaveCount(1)
+  await expect(list.getByText(/Transaction sync succeeded/)).toHaveCount(2)
   await expect(list.getByText('Not synced yet', { exact: true })).toBeVisible()
   await expect(page.getByRole('dialog')).toContainText(
     'Older history may still be incomplete.',
@@ -541,7 +565,7 @@ test('Overview transaction refresh invalidates the cached ledger and updates Mor
     .getByRole('button', { name: 'Refresh transactions', exact: true })
     .click()
   await expect(
-    page.getByRole('dialog').getByText(/Last successful update/),
+    page.getByRole('dialog').getByText(/Transaction sync succeeded/),
   ).toHaveCount(4)
   expect(syncCalls).toBe(1)
   await page.keyboard.press('Escape')
@@ -553,7 +577,7 @@ test('Overview transaction refresh invalidates the cached ledger and updates Mor
   await page.getByRole('link', { name: 'More', exact: true }).first().click()
   await page.getByRole('button', { name: 'Sync status', exact: true }).click()
   await expect(
-    page.getByRole('dialog').getByText(/Last successful update/),
+    page.getByRole('dialog').getByText(/Transaction sync succeeded/),
   ).toHaveCount(4)
 })
 

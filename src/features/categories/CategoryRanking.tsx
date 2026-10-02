@@ -1,3 +1,9 @@
+import { Link } from 'react-router'
+import {
+  analyticsTransactionFilters,
+  transactionDrillDownUrl,
+  type AnalyticsTransactionContext,
+} from '../transactions/transaction-drill-down'
 import { useState } from 'react'
 import { MoneyText } from '../../components/ui/MoneyText'
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
@@ -18,7 +24,9 @@ export function CategoryRanking({
   categories,
   units,
   direction,
+  context,
 }: {
+  context: AnalyticsTransactionContext
   group: ReturnType<typeof categoryRankings>[number]
   categories: CustomCategory[]
   units: Map<string, number>
@@ -52,7 +60,6 @@ export function CategoryRanking({
       ? t('Less than {percent}', { percent: format.format(0.1) })
       : format.format(ratio)
   }
-  const largest = group.all[0]!
   return (
     <section className="category-ranking" aria-label={group.currencyCode}>
       <header className="category-analysis-summary">
@@ -68,22 +75,10 @@ export function CategoryRanking({
           </InfoTooltip>
           <strong>{money(group.total)}</strong>
         </div>
-        {group.total > 0n ? (
-          <div>
-            <span>
-              {t(
-                direction === 'expense'
-                  ? 'Largest expense category'
-                  : 'Largest income category',
-              )}
-            </span>
-            <b>{largest.categoryName}</b>
-            <small>
-              {money(largest.amountMinor)} · {percent(largest.amountMinor)}%
-            </small>
-          </div>
-        ) : null}
       </header>
+      <p className="category-ranking-scale">
+        {t('Category tracks show shares of the full currency total.')}
+      </p>
       <ol className="category-ranking-list">
         {(expanded ? group.all : group.leading).map((row) => {
           const appearance = resolveCategoryAppearance(
@@ -102,26 +97,44 @@ export function CategoryRanking({
               </span>
               <div className="category-ranking-copy">
                 <div>
-                  <span>{row.categoryName}</span>
+                  {(() => {
+                    const filters = analyticsTransactionFilters(context, {
+                      currency: group.currencyCode,
+                      direction,
+                      categoryIdentity:
+                        row.categoryId === null
+                          ? { kind: 'uncategorized' }
+                          : { kind: 'id', id: row.categoryId },
+                    })
+                    const name =
+                      row.categoryId === null
+                        ? t('Uncategorized')
+                        : row.categoryName
+                    return filters === null ? (
+                      <span>{name}</span>
+                    ) : (
+                      <Link
+                        className="category-ranking-link"
+                        to={transactionDrillDownUrl(filters)}
+                        aria-label={t('View transactions for {category}', {
+                          category: name,
+                        })}
+                      >
+                        {name}
+                      </Link>
+                    )
+                  })()}
                   <strong>{money(row.amountMinor)}</strong>
                 </div>
                 <div className="category-ranking-track" aria-hidden="true">
                   <i
                     className={`ui-visual--${color}`}
                     style={{
-                      width: `${minorRatioPercent(row.amountMinor, largest.amountMinor)}%`,
-                      minWidth: row.amountMinor > 0n ? 2 : 0,
+                      width: `${minorRatioPercent(row.amountMinor, group.total)}%`,
                     }}
                   />
                 </div>
-                <small>
-                  {t(
-                    direction === 'expense'
-                      ? '{percent}% of category spending'
-                      : '{percent}% of category income',
-                    { percent: percent(row.amountMinor) },
-                  )}
-                </small>
+                <small>{percent(row.amountMinor)}%</small>
               </div>
             </li>
           )
