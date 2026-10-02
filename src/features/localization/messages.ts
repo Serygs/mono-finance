@@ -1,4 +1,10 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'Active describes account availability, not when its balance was updated.',
+  'Your accounts',
+  'Syncing accounts…',
+  'Connect to the internet to sync accounts. Previously loaded balances remain visible.',
+  'Updating account balances. This does not import transaction history.',
+  'Account balances updated. Transaction history sync is separate.',
   'Less than {percent}',
   'Loading analytics…',
   'Analytics could not be loaded.',
@@ -442,6 +448,16 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
   >
 
 export const UKRAINIAN_MESSAGES = {
+  'Active describes account availability, not when its balance was updated.':
+    'Статус «Активний» означає доступність рахунку, а не час оновлення залишку.',
+  'Your accounts': 'Ваші рахунки',
+  'Syncing accounts…': 'Синхронізація рахунків…',
+  'Connect to the internet to sync accounts. Previously loaded balances remain visible.':
+    'Підключіться до інтернету, щоб синхронізувати рахунки. Раніше завантажені залишки залишаються видимими.',
+  'Updating account balances. This does not import transaction history.':
+    'Оновлення залишків на рахунках. Історія транзакцій не імпортується.',
+  'Account balances updated. Transaction history sync is separate.':
+    'Залишки на рахунках оновлено. Історія транзакцій синхронізується окремо.',
   'Less than {percent}': 'Менше ніж {percent}',
   'Loading analytics…': 'Завантаження аналітики…',
   'Analytics could not be loaded.': 'Не вдалося завантажити аналітику.',

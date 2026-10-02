@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { getOfflineStatus, subscribeOfflineStatus } from './offline-api'
 import { type Translate, useLocalization } from '../localization/localization'
+import { useOnlineState } from '../../lib/use-online-state'
 import { dashboardQueryKeys } from '../dashboard/dashboard-query-keys'
 import { transactionQueryKeys } from '../transactions/transaction-queries'
 
@@ -38,22 +39,6 @@ export function OfflineStatus() {
             date: formatCachedAt(status.cachedAt, locale, t),
           })}
     </p>
-  )
-}
-
-function useOnlineState(): boolean {
-  const subscribe = (listener: () => void) => {
-    window.addEventListener('online', listener)
-    window.addEventListener('offline', listener)
-    return () => {
-      window.removeEventListener('online', listener)
-      window.removeEventListener('offline', listener)
-    }
-  }
-  return useSyncExternalStore(
-    subscribe,
-    () => navigator.onLine,
-    () => true,
   )
 }
 

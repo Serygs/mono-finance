@@ -3,6 +3,21 @@ import { describe, expect, it } from 'vitest'
 import { summarizeCurrencyBalances } from './account-summary'
 
 describe('account currency summary', () => {
+  it('sums safe balances exactly beyond the number range, preserving zero and negative currencies', () => {
+    const balances = summarizeCurrencyBalances([
+      account({ balanceMinor: Number.MAX_SAFE_INTEGER, id: 'a' }),
+      account({ balanceMinor: Number.MAX_SAFE_INTEGER, id: 'b' }),
+      account({ balanceMinor: -120, code: 'USD', id: 'c' }),
+      account({ balanceMinor: 0, code: 'EUR', id: 'd' }),
+    ])
+    expect(
+      balances.map(({ code, balanceMinor }) => [code, balanceMinor]),
+    ).toEqual([
+      ['UAH', 18_014_398_509_481_982n],
+      ['USD', -120n],
+      ['EUR', 0n],
+    ])
+  })
   it('groups balances by original currency without converting them', () => {
     const balances = summarizeCurrencyBalances([
       account({ balanceMinor: 1_250, id: 'uah-1' }),

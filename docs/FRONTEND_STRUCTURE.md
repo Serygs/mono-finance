@@ -187,3 +187,27 @@ viewport; physical iOS PWA verification remains manual.
 history, exact totals, direction labels, CRUD/protection, pagination, zero-result
 recovery, row remounts/pending/errors, focus, contrast, touch targets and required
 widths in both locales/themes. Captures live only in ignored `phase4.local/`.
+
+## Accounts (Phase 5)
+
+`AccountsPage` composes original-currency balance summaries and compact account
+rows. `account-summary` retains exact bigint aggregation without conversion;
+`account-formatting` owns locale-aware exact display, currency names and stable
+type/identity visuals. The API exposes type rather than a custom account name,
+and no balance freshness timestamp, so neither field is invented.
+
+`use-account-sync` owns the existing accounts POST and cache update. Mutation
+state survives page remounts; pending/offline guards prevent repeat submissions,
+automatic mutation retries remain disabled, and older account queries are
+cancelled before sync. Existing balances stay visible during refresh/failure.
+Account availability and transaction-history synchronization remain separate.
+
+`accounts.css` owns these layouts. Shared `MoneyText` wraps existing formatted
+strings at locale grouping boundaries, also used by Categories. The existing
+online subscription now lives in `lib/use-online-state`; encrypted cache and
+logout behavior remain unchanged.
+
+`accounts-foundation.spec.ts` uses synthetic balances to cover sync/retry,
+remounts, empty/error/loading/offline states, separate currencies, large amounts,
+stable visuals, contrast, touch/keyboard, both themes/locales, required widths and
+200% text scaling. Screenshots live only under ignored `phase5.local/`.

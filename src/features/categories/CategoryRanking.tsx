@@ -1,4 +1,5 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
+import { MoneyText } from '../../components/ui/MoneyText'
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { Button } from '../../components/ui/Controls'
 import { InfoTooltip } from '../../components/ui/Surfaces'
@@ -33,9 +34,6 @@ export function CategoryRanking({
           currency: group.currencyCode,
         }).resolvedOptions().maximumFractionDigits ?? 2)
       : 0)
-  const grouping = new Intl.NumberFormat(locale)
-    .formatToParts(1000)
-    .find((part) => part.type === 'group')?.value
   const money = (amount: bigint) => {
     const formatted = formatMoney(amount, {
       currencyCode: group.currencyCode,
@@ -43,20 +41,7 @@ export function CategoryRanking({
       locale,
       unknownMinorUnitsLabel: t('minor units'),
     })
-    // Keep grouped digits and the decimal fraction together when amounts wrap.
-    const segments =
-      grouping === undefined ? [formatted] : formatted.split(grouping)
-    return segments.map((segment, index) => (
-      <Fragment key={index}>
-        {index === 0 ? null : (
-          <>
-            {grouping}
-            <wbr />
-          </>
-        )}
-        {segment}
-      </Fragment>
-    ))
+    return <MoneyText value={formatted} locale={locale} />
   }
   const percent = (amount: bigint) => {
     const ratio = parseFloat(minorRatioPercent(amount, group.total))
