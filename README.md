@@ -286,7 +286,7 @@ npx playwright install chromium
 
 Coverage floors are 65% statements, 60% branches, 62% functions, and 67% lines. Do not reduce them to accept a regression.
 
-Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
+Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Service workers are blocked in this suite so shell caching cannot interfere with navigation or Vite development assets. Layout matrices run as separate theme/locale cases to keep each test within its time budget. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
 
 ## CI/CD and production deployment
 

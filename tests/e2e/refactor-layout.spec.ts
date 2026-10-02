@@ -1,19 +1,19 @@
 import { expect, test } from '@playwright/test'
 import { installFinanceApiMock } from './fixtures/finance-api'
 
-test('all five legacy destinations retain their layout in both themes and locales', async ({
-  page,
-}) => {
-  test.setTimeout(120_000)
-  await installFinanceApiMock(page)
-  await page.clock.install({ time: new Date('2025-01-15T12:00:00Z') })
-  await page.goto('/login')
-  await page.getByLabel('Email').fill('owner@example.com')
-  await page.getByLabel('Password').fill('correct-password')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.locator('.dashboard-recent-card')).toBeVisible()
-  for (const theme of ['light', 'dark']) {
-    for (const locale of ['en', 'uk']) {
+for (const theme of ['light', 'dark']) {
+  for (const locale of ['en', 'uk']) {
+    test(`all five legacy destinations retain their layout in ${theme} theme and ${locale} locale`, async ({
+      page,
+    }) => {
+      test.setTimeout(60_000)
+      await installFinanceApiMock(page)
+      await page.clock.install({ time: new Date('2025-01-15T12:00:00Z') })
+      await page.goto('/login')
+      await page.getByLabel('Email').fill('owner@example.com')
+      await page.getByLabel('Password').fill('correct-password')
+      await page.getByRole('button', { name: 'Sign in' }).click()
+      await expect(page.locator('.dashboard-recent-card')).toBeVisible()
       await page.evaluate(
         ({ theme, locale }) => {
           localStorage.setItem('mono-finance-theme-v1', theme)
@@ -50,6 +50,6 @@ test('all five legacy destinations retain their layout in both themes and locale
           ).toBe(true)
         }
       }
-    }
+    })
   }
-})
+}

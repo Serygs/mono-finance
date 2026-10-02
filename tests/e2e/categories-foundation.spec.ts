@@ -320,15 +320,15 @@ test('custom category creation/edit/merge/delete preserve protections, errors an
   })
 })
 
-test('narrow layouts, both themes/locales and enlarged text keep values, actions and pickers inside the viewport', async ({
-  page,
-}) => {
-  test.setTimeout(120_000)
-  await installCategoryApiMock(page)
-  await login(page)
-  mkdirSync('phase4.local/screenshots', { recursive: true })
-  for (const locale of ['en', 'uk'])
-    for (const theme of ['light', 'dark']) {
+for (const locale of ['en', 'uk']) {
+  for (const theme of ['light', 'dark']) {
+    test(`narrow category layouts keep values and actions inside the viewport in ${locale} locale and ${theme} theme`, async ({
+      page,
+    }) => {
+      test.setTimeout(60_000)
+      await installCategoryApiMock(page)
+      await login(page)
+      mkdirSync('phase4.local/screenshots', { recursive: true })
       await page.evaluate(
         ({ locale, theme }) => {
           localStorage.setItem('mono-finance-locale-v1', locale)
@@ -366,7 +366,20 @@ test('narrow layouts, both themes/locales and enlarged text keep values, actions
             })
         }
       }
-    }
+    })
+  }
+}
+
+test('enlarged category text keeps pickers and forms inside the viewport', async ({
+  page,
+}) => {
+  await installCategoryApiMock(page)
+  await login(page)
+  await page.evaluate(() => {
+    localStorage.setItem('mono-finance-locale-v1', 'uk')
+    localStorage.setItem('mono-finance-theme-v1', 'dark')
+  })
+  mkdirSync('phase4.local/screenshots', { recursive: true })
   await page.setViewportSize({ width: 320, height: 844 })
   await page.goto('/settings?categoryView=bank-types#categories')
   await page.evaluate(() => {
