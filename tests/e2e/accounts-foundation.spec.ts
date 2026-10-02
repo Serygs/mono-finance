@@ -131,7 +131,7 @@ test('exact original-currency balances, supplied identity and stable visuals sur
   )
   await expect(page.locator('.accounts-list :is(button,a)')).toHaveCount(0)
   await expect(page.locator('[data-account-id=black-one]')).toContainText(
-    '537541******1234',
+    '•••• 1234',
   )
   await expect(page.locator('[data-account-id=dinars]')).toContainText(
     syntheticAccounts[5]!.type,

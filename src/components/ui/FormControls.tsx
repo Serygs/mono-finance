@@ -87,6 +87,7 @@ interface MultiSelectProps {
   onChange(values: string[]): void
   options: readonly MultiSelectOption[]
   selectAllLabel?: string
+  compactTriggerLabel?: string
   triggerLabel?: string
   value: readonly string[]
 }
@@ -99,6 +100,7 @@ export function MultiSelect({
   options,
   selectAllLabel,
   triggerLabel,
+  compactTriggerLabel,
   value,
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false)
@@ -153,7 +155,22 @@ export function MultiSelect({
         ref={trigger}
         type="button"
       >
-        <span>{triggerLabel ?? (selectedLabels.join(', ') || ariaLabel)}</span>
+        <span>
+          <span
+            className={
+              compactTriggerLabel === undefined
+                ? undefined
+                : 'ui-selection-summary--full'
+            }
+          >
+            {triggerLabel ?? (selectedLabels.join(', ') || ariaLabel)}
+          </span>
+          {compactTriggerLabel === undefined ? null : (
+            <span className="ui-selection-summary--compact">
+              {compactTriggerLabel}
+            </span>
+          )}
+        </span>
         <span aria-hidden="true" className="ui-multi-select__indicator">
           <Icon name="down" />
         </span>

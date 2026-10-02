@@ -218,3 +218,10 @@
     text-align: left;
   }
 }
+.account-row__freshness {
+  display: block;
+  flex-basis: 100%;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 400;
+}

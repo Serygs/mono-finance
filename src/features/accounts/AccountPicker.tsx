@@ -1,3 +1,4 @@
+import { accountDisplayLabel } from './account-formatting'
 import type { ComponentProps } from 'react'
 import { FormField, MultiSelect } from '../../components/ui/FormControls'
 import { useLocalization } from '../localization/localization'
@@ -23,13 +24,25 @@ export function AccountPicker({
     <FormField className={className ?? ''} label={t('Accounts')}>
       <MultiSelect
         {...selection}
+        compactTriggerLabel={
+          selection.value.length === 1
+            ? t('1 account')
+            : t('{count} accounts', { count: selection.value.length })
+        }
         ariaLabel={t('Accounts')}
         options={accounts.map((account) => {
           const maskedPan = (
             account.cards.find((card) => card.isActive) ?? account.cards[0]
           )?.maskedPan
           return {
-            label: `${account.type} · ${account.currency.code} · ${maskedPan ? maskedPan.slice(-4) : account.id}`,
+            label: accountDisplayLabel(
+              {
+                type: account.type,
+                currencyCode: account.currency.code,
+                maskedPan,
+              },
+              t('Account'),
+            ),
             value: account.id,
           }
         })}

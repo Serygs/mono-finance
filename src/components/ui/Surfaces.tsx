@@ -72,6 +72,7 @@ export function KpiCard({
           ) : (
             <InfoTooltip description={description} label={label}>
               {label}
+              <Icon name="info" />
             </InfoTooltip>
           )}
         </h2>
