@@ -57,8 +57,8 @@ export function defaultWidgetLayout(
     {
       'recent-transactions': { x: 0, y: 0 },
       'income-expenses': { x: 0, y: 7 },
-      'spending-by-weekday': { x: 6, y: 7 },
-      'spending-by-category': { x: 0, y: 15 },
+      'spending-by-weekday': { x: 0, y: 15 },
+      'spending-by-category': { x: 6, y: 7 },
       'spending-trend': { x: 6, y: 15 },
     }
   const position = priority[item.id] ?? {

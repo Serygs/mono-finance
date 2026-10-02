@@ -1,6 +1,8 @@
+import { Icon } from '../../components/ui/Icon'
 import { Button } from '../../components/ui/Controls'
 import { Card, InfoTooltip } from '../../components/ui/Surfaces'
 import { displayExpenseCategories } from '../categories/category-analytics-data'
+import type { CustomCategory } from '../categories/categories-api'
 import { type TranslationKey } from '../localization/localization'
 import type { TransactionListItem } from '../transactions/transaction-types'
 import type { DashboardAnalytics } from './dashboard-data'
@@ -34,6 +36,7 @@ export function buildDashboardWidgets(
   loading: boolean,
   transactions: TransactionListItem[],
   locale: string,
+  customCategories: CustomCategory[],
 ) {
   const corrections = transactions
     .filter((item) => item.hasAdjustment)
@@ -65,9 +68,17 @@ export function buildDashboardWidgets(
       <>
         <CategoryRankingChart
           units={units}
-          values={(expanded ? categories.all : categories.initial).map(
-            (item) => ({ ...item, label: item.categoryName }),
-          )}
+          customCategories={customCategories}
+          totals={categories.all}
+          other={
+            expanded || categories.initial.length <= 5
+              ? undefined
+              : { ...categories.initial[5]!, label: t('Other categories') }
+          }
+          values={(expanded
+            ? categories.all
+            : categories.initial.slice(0, 5)
+          ).map((item) => ({ ...item, label: item.categoryName }))}
         />
         {categories.all.length > 5 ? (
           <Button
@@ -76,12 +87,15 @@ export function buildDashboardWidgets(
             type="button"
             variant="quiet"
           >
-            {t(expanded ? 'Show less' : 'Show all')}
+            {t(expanded ? 'Show less' : 'View all categories')}
           </Button>
         ) : null}
       </>,
       6,
-      7,
+      Math.max(
+        7,
+        categories.initial.length + 4 + (categories.all.length > 5 ? 2 : 0),
+      ),
     ),
     createDashboardWidget(
       t,
@@ -218,7 +232,7 @@ function createDashboardWidget(
             aria-label={t('Drag widget')}
             className="dashboard-widget__handle"
           >
-            ⋯
+            <Icon name="grip" />
           </span>
         }
         title={

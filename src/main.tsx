@@ -3,9 +3,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 
+import './styles/index.css'
+import './components/ui/ui.css'
 import './app/app-shell.css'
 import { AppRouter } from './app/AppRouter'
-import './components/ui/ui.css'
 import './features/accounts/accounts.css'
 import './features/auth/auth.css'
 import './features/categories/categories.css'
@@ -16,7 +17,6 @@ import { registerServiceWorker } from './features/offline/service-worker-registr
 import './features/settings/settings.css'
 import './features/system/system-status.css'
 import './features/transactions/transactions.css'
-import './styles/index.css'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15_000 } },

@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { GridLayout, useContainerWidth } from 'react-grid-layout'
 import { Link } from 'react-router'
-import { Select } from '../../components/ui/FormControls'
+import { Button } from '../../components/ui/Controls'
+import { Alert } from '../../components/ui/Feedback'
+import { Icon } from '../../components/ui/Icon'
 import { Card, InfoTooltip } from '../../components/ui/Surfaces'
 import type { AccountSummary } from '../accounts/account-types'
 import { displayExpenseCategories } from '../categories/category-analytics-data'
+import { useCategoriesQuery } from '../categories/category-queries'
 import { useLocalization } from '../localization/localization'
 import type { TransactionListItem } from '../transactions/transaction-types'
 import { TransactionDetailsSheet } from '../transactions/TransactionDetailsSheet'
@@ -27,6 +30,9 @@ export function DashboardLayout({
   onPreferences,
   preferences,
   recentLoading,
+  recentError,
+  onRetryRecent,
+  filtered,
   transactions,
 }: {
   accounts: AccountSummary[]
@@ -34,10 +40,14 @@ export function DashboardLayout({
   currency: string | null
   onPreferences(value: DashboardPreferences): void
   preferences: DashboardPreferences
+  recentError: boolean
+  onRetryRecent(): void
+  filtered: boolean
   recentLoading: boolean
   transactions: TransactionListItem[]
 }) {
   const { locale, t } = useLocalization()
+  const { data: customCategories = [] } = useCategoriesQuery()
   const { containerRef, mounted, width } = useContainerWidth()
   const [expanded, setExpanded] = useState(false)
   const selection = useTransactionSelection()
@@ -65,6 +75,7 @@ export function DashboardLayout({
     recentLoading,
     transactions,
     locale,
+    customCategories,
   )
   const visible = widgets.filter((item) =>
     preferences.enabledWidgetIds.includes(item.id),
@@ -84,26 +95,9 @@ export function DashboardLayout({
         <Card
           actions={
             <div className="recent-transactions-actions">
-              <label>
-                <span className="sr-only">{t('Show')}</span>
-                <Select
-                  aria-label={t('Show')}
-                  onChange={(event) =>
-                    onPreferences({
-                      ...preferences,
-                      recentTransactionsLimit: Number(event.target.value) as
-                        5 | 10 | 20,
-                    })
-                  }
-                  value={preferences.recentTransactionsLimit}
-                >
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </Select>
-              </label>
               <Link to="/transactions">
-                {t('View all transactions')} <span aria-hidden="true">→</span>
+                <span>{t('View all transactions')}</span>
+                <Icon name="chevron" />
               </Link>
             </div>
           }
@@ -118,13 +112,24 @@ export function DashboardLayout({
             </>
           }
         >
-          <RecentTransactionsWidget
-            onSelect={selection.setSelectedTransaction}
-            limit={preferences.recentTransactionsLimit}
-            loading={recentLoading}
-            transactions={transactions}
-            units={units}
-          />
+          {recentError ? (
+            <Alert tone="danger" title={t('Transactions could not be loaded')}>
+              <Button variant="secondary" onClick={onRetryRecent}>
+                {t('Retry')}
+              </Button>
+            </Alert>
+          ) : null}
+          {recentError && transactions.length === 0 ? null : (
+            <RecentTransactionsWidget
+              onSelect={selection.setSelectedTransaction}
+              limit={preferences.recentTransactionsLimit}
+              loading={recentLoading}
+              transactions={transactions}
+              units={units}
+              filtered={filtered}
+              customCategories={customCategories}
+            />
+          )}
         </Card>
       ) : null}
       <div className="dashboard-grid-shell" ref={containerRef}>

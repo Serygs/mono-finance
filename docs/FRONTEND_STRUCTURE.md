@@ -1,7 +1,8 @@
 # Frontend ownership
 
-Phase 1 preserves the current layouts, route paths, translations, API contracts,
-storage keys and financial semantics. UI redesign is a separate phase.
+Phase 1 established these module boundaries without changing presentation.
+Phase 2 redesigns Overview and its shared shell/control/chart foundation while
+retaining route paths, API contracts, storage keys and financial semantics.
 
 | Responsibility                          | Before                           | After                                                                                |
 | --------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
@@ -75,10 +76,41 @@ Run `npm run typecheck`, `npm run lint`, targeted frontend unit tests,
 The repository's localization check is `npm run i18n:check`.
 The layout regression captures synthetic fixtures at 390/1440 px in both themes,
 checks all five destinations in uk/en at 320, 375, 390, 430, 768, 1200 and 1440 px,
-and writes local screenshots under ignored `phase1.local/after/`.
+and writes local screenshots under ignored `phase2.local/screenshots/`.
 
-Baseline limitation: the existing desktop resize span has zero rendered size
-because the grid's handle stylesheet was not loaded. The regression test covers
-resize events and persisted dimensions through that span's event handler, plus
-actual pointer dragging. Adding a visible resize affordance is deferred to the
-visual phase so Phase 1 does not change the layout/art direction.
+Phase 2 supplies the grid's visible resize affordance in dashboard.css. The
+regression test exercises actual pointer resizing and dragging, persisted sizes
+and order, and verifies that these interactions do not fetch financial data.
+
+## Overview visual foundation (Phase 2)
+
+- `app/AppShell` owns the compact branded mobile header and SVG navigation;
+  mobile logout remains in More. Desktop retains its existing logout menu.
+- `components/ui/Icon` owns the local SVG family. `Popover` handles contained
+  help/detail panels, intentional dismissal and keyboard focus; mobile filter
+  and chart-detail sheets reuse the existing native modal lifecycle. The modal
+  lifecycle observes the visual viewport for software-keyboard clearance.
+- `components/ui/ChartPrimitives` owns neutral scales, point details and a mobile
+  data table. Overview widgets own series geometry and financial descriptions.
+  Mobile uses a full-width details action instead of seven undersized targets.
+- `dashboard-chart-presentation` owns exact integer ratios and chart date labels.
+  Monetary amounts still use the shared exact formatter; amount input parsers
+  and financial aggregations are unchanged. Zero marks stay zero; nonzero bars
+  have a two-pixel visibility floor, with exact amounts in their details.
+- Overview reuses the categories query/cache for saved icons and color choices.
+  Supported custom appearances take priority over category-name inference and
+  the merchant initial; unsupported tokens use the existing fallback. The
+  transaction API shape and source records remain unchanged.
+- `DashboardFilters`, `DashboardCustomization` and `DashboardLayout` compose the
+  compact filters, named actions, row-count preference, four KPIs, recent rows
+  and existing grid. Default category widget height accommodates available rows
+  and stays at least as tall as income/expenses, keeping weekday before trend
+  after grid packing. Saved widget dimensions and positions take precedence.
+- Global foreground/surface tokens, neutral primitives, shell styles and scoped
+  Overview styles retain distinct owners. Imports explicitly follow that order.
+  The old layered Overview overrides have been replaced by one coherent sheet.
+
+`overview-foundation.spec.ts` covers first-tap help, chart details, filter sheets,
+contrast/touch targets, category expansion, loading/error recovery and long
+synthetic names/amounts at 200% text scaling. State screenshots are written under
+ignored `phase2.local/states/`; no financial screenshots are committed.

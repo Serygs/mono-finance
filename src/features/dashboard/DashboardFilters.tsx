@@ -1,3 +1,5 @@
+import { Popover } from '../../components/ui/Popover'
+import { Icon } from '../../components/ui/Icon'
 import { FormField, Select } from '../../components/ui/FormControls'
 import type { AccountFilter } from '../accounts/account-filter-storage'
 import type { AccountSummary } from '../accounts/account-types'
@@ -34,13 +36,11 @@ export function DashboardFilters({
   mode,
   onCurrency,
   onFilter,
-  onFiltersOpen,
   onFrom,
   onMode,
   onPreset,
   onTo,
   preset,
-  filtersOpen,
   to,
 }: {
   accounts: AccountSummary[]
@@ -52,13 +52,11 @@ export function DashboardFilters({
   mode: 'base' | 'original'
   onCurrency(value: string | null): void
   onFilter(value: AccountFilter): void
-  onFiltersOpen(value: boolean): void
   onFrom(value: string): void
   onMode(value: 'base' | 'original'): void
   onPreset(value: DashboardDatePreset): void
   onTo(value: string): void
   preset: DashboardDatePreset
-  filtersOpen: boolean
   to: string
 }) {
   const { t } = useLocalization()
@@ -68,6 +66,11 @@ export function DashboardFilters({
       : filter.accountIds
   const chartCurrencies =
     analytics === undefined ? [] : availableCurrencies(analytics)
+  const activeFilterCount = [
+    mode === 'base' || currency !== null,
+    preset === 'custom',
+    filter.mode === 'selected',
+  ].filter(Boolean).length
   return (
     <section className="dashboard-toolbar" aria-label={t('Dashboard filters')}>
       <FormField label={t('Period')}>
@@ -102,97 +105,71 @@ export function DashboardFilters({
         }
         value={ids}
       />
-      <FormField label={t('Currency')}>
-        <Select
-          onChange={(event) => {
-            const value = event.target.value
-            if (value === 'base') {
-              onMode('base')
-              onCurrency(null)
-              return
-            }
-            onMode('original')
-            onCurrency(value === 'original-all' ? null : value)
-          }}
-          value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
-        >
-          <option value="original-all">{t('All original currencies')}</option>
-          {chartCurrencies.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-          <option value="base">
-            {baseCurrency} · {t('Base currency')}
-          </option>
-        </Select>
-      </FormField>
-      <div className={`dashboard-toolbar-menu${filtersOpen ? ' is-open' : ''}`}>
-        <button
-          aria-label={t('Filters')}
-          aria-expanded={filtersOpen}
-          className="dashboard-toolbar-menu__trigger"
-          onClick={() => onFiltersOpen(!filtersOpen)}
-          type="button"
-        >
-          <span aria-hidden="true">☷</span>
-          {t('Filters')}
-        </button>
-        <div className="dashboard-toolbar-menu__content">
-          <FormField
-            className="dashboard-mobile-currency"
-            label={t('Currency')}
-          >
-            <Select
-              onChange={(event) => {
-                const value = event.target.value
-                if (value === 'base') {
-                  onMode('base')
-                  onCurrency(null)
-                  return
-                }
-                onMode('original')
-                onCurrency(value === 'original-all' ? null : value)
-              }}
-              value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
-            >
-              <option value="original-all">
-                {t('All original currencies')}
-              </option>
-              {chartCurrencies.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+      <Popover
+        className="dashboard-advanced-filters"
+        mobileSheet
+        label={t('Filters')}
+        description={t('{count} active filters', { count: activeFilterCount })}
+        content={
+          <div className="dashboard-filter-options">
+            <FormField label={t('Currency')}>
+              <Select
+                onChange={(event) => {
+                  const value = event.target.value
+                  if (value === 'base') {
+                    onMode('base')
+                    onCurrency(null)
+                    return
+                  }
+                  onMode('original')
+                  onCurrency(value === 'original-all' ? null : value)
+                }}
+                value={mode === 'base' ? 'base' : (currency ?? 'original-all')}
+              >
+                <option value="original-all">
+                  {t('All original currencies')}
                 </option>
-              ))}
-              <option value="base">
-                {baseCurrency} · {t('Base currency')}
-              </option>
-            </Select>
-          </FormField>
-          {preset === 'custom' ? (
-            <div>
-              <FormField label={t('From')}>
-                <input
-                  onChange={(event) => onFrom(event.target.value)}
-                  type="date"
-                  value={from}
-                />
-              </FormField>
-              <FormField label={t('To')}>
-                <input
-                  onChange={(event) => onTo(event.target.value)}
-                  type="date"
-                  value={to}
-                />
-              </FormField>
-            </div>
-          ) : (
-            <p className="dashboard-filter-hint">
-              {t('Choose Custom range to set exact dates.')}
-            </p>
-          )}
-        </div>
-      </div>
+                {chartCurrencies.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+                <option value="base">
+                  {baseCurrency} · {t('Base currency')}
+                </option>
+              </Select>
+            </FormField>
+            {preset === 'custom' ? (
+              <div>
+                <FormField label={t('From')}>
+                  <input
+                    onChange={(event) => onFrom(event.target.value)}
+                    type="date"
+                    value={from}
+                  />
+                </FormField>
+                <FormField label={t('To')}>
+                  <input
+                    onChange={(event) => onTo(event.target.value)}
+                    type="date"
+                    value={to}
+                  />
+                </FormField>
+              </div>
+            ) : (
+              <p className="dashboard-filter-hint">
+                {t('Choose Custom range to set exact dates.')}
+              </p>
+            )}
+          </div>
+        }
+      >
+        <Icon name="filters" />
+        <span>{t('Filters')}</span>
+        {activeFilterCount > 0 ? (
+          <span className="dashboard-filter-count">{activeFilterCount}</span>
+        ) : null}
+      </Popover>
     </section>
   )
 }

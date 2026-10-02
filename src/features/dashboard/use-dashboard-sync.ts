@@ -25,6 +25,7 @@ export function useDashboardSync() {
       .catch(() => setError('Transaction sync status could not be loaded.'))
   }, [])
   async function syncAccounts() {
+    setError(null)
     setSyncingAccounts(true)
     try {
       client.setQueryData(accountQueryKeys.all, await synchronizeAccounts())
@@ -36,6 +37,7 @@ export function useDashboardSync() {
     }
   }
   async function syncTransactions() {
+    setError(null)
     setSyncingTransactions(true)
     try {
       await synchronizeTransactions()
@@ -50,6 +52,11 @@ export function useDashboardSync() {
       setSyncingTransactions(false)
     }
   }
+  const errorMessage: TranslationKey | null =
+    error ??
+    (accountsQuery.isError
+      ? 'Accounts could not be loaded. Try again later.'
+      : null)
   return {
     accounts: accountsQuery.data,
     syncingAccounts,
@@ -57,10 +64,6 @@ export function useDashboardSync() {
     syncStates,
     syncAccounts,
     syncTransactions,
-    error:
-      error ??
-      (accountsQuery.isError
-        ? 'Accounts could not be loaded. Try again later.'
-        : null),
+    error: errorMessage,
   }
 }

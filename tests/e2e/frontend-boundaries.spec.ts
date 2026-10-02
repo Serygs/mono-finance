@@ -66,17 +66,12 @@ test('desktop widget resize, reorder and visibility persist without refetching f
     .locator('.react-resizable-handle-se')
     .boundingBox()
   expect(resize).not.toBeNull()
-  // The existing UI has an unstyled zero-size resize span. Dispatch its
-  // mousedown to verify the grid's resize/persistence contract independently
-  // of that pre-existing affordance; pointer resizing needs a later UI phase.
-  await widget
-    .locator('.react-resizable-handle-se')
-    .dispatchEvent('mousedown', {
-      button: 0,
-      buttons: 1,
-      clientX: resize!.x,
-      clientY: resize!.y,
-    })
+  expect(resize!.width).toBeGreaterThan(20)
+  await page.mouse.move(
+    resize!.x + resize!.width / 2,
+    resize!.y + resize!.height / 2,
+  )
+  await page.mouse.down()
   await page.mouse.move(
     resize!.x + resize!.width / 2 - 90,
     resize!.y + resize!.height / 2 - 70,
@@ -92,6 +87,7 @@ test('desktop widget resize, reorder and visibility persist without refetching f
   await page.mouse.move(handle!.x + 5, handle!.y + 350, { steps: 8 })
   await page.mouse.up()
   await expect.poll(storedLayout).not.toBe(resized)
+  await page.getByRole('button', { name: 'Overview actions' }).click()
   await page.getByRole('button', { name: 'Customize dashboard' }).click()
   await page.getByLabel('Top merchants', { exact: true }).check()
   await page.getByRole('button', { name: 'Close', exact: true }).click()
@@ -140,8 +136,13 @@ test('overview and ledger use one correction workflow with focus return', async 
     .first()
     .click()
   const customize = page.getByRole('button', { name: 'Customize dashboard' })
+  await page.getByRole('button', { name: 'Overview actions' }).click()
   await customize.click()
   await page.keyboard.press('Escape')
-  await expect(page.locator('.dashboard-dialog-backdrop')).toHaveCount(0)
-  await expect(customize).toBeFocused()
+  await expect(
+    page.getByRole('dialog', { name: 'Customize dashboard' }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: 'Overview actions' }),
+  ).toBeFocused()
 })

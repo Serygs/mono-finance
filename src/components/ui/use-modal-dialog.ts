@@ -11,9 +11,26 @@ export function useModalDialog(open: boolean, onClose: () => void) {
         ? document.activeElement
         : null
     if (!dialog.open) dialog.showModal()
+    // The visual viewport shrinks when the software keyboard is open on iOS.
+    const viewport = window.visualViewport
+    function updateViewport() {
+      dialog?.style.setProperty(
+        '--overlay-viewport-height',
+        `${viewport?.height ?? window.innerHeight}px`,
+      )
+      dialog?.style.setProperty(
+        '--overlay-viewport-top',
+        `${viewport?.offsetTop ?? 0}px`,
+      )
+    }
+    updateViewport()
+    viewport?.addEventListener('resize', updateViewport)
+    viewport?.addEventListener('scroll', updateViewport)
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
+      viewport?.removeEventListener('resize', updateViewport)
+      viewport?.removeEventListener('scroll', updateViewport)
       document.body.style.overflow = previousOverflow
       if (dialog.open) dialog.close()
       if (opener?.isConnected) opener.focus({ preventScroll: true })

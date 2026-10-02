@@ -1,8 +1,15 @@
 import type { Page } from '@playwright/test'
+import type { TransactionListItem } from '../../../src/features/transactions/transaction-types'
 
 export async function installFinanceApiMock(
   page: Page,
-  { trendsOverride }: { trendsOverride?: typeof trends } = {},
+  {
+    trendsOverride,
+    transactionCategory,
+  }: {
+    trendsOverride?: typeof trends
+    transactionCategory?: TransactionListItem['category']
+  } = {},
 ): Promise<void> {
   const state = {
     adjusted: false,
@@ -15,7 +22,7 @@ export async function installFinanceApiMock(
   const transaction = () => ({
     account: { id: 'account-1', maskedPan: '537541******1234', type: 'black' },
     adjustmentNote: state.adjusted ? 'Shared dinner' : null,
-    category: {
+    category: transactionCategory ?? {
       id: state.category === 'Dining' ? 'category-dining' : 'mcc-5812',
       name: state.category,
       source: state.category === 'Dining' ? 'custom' : 'original',
@@ -207,7 +214,7 @@ const currencyConversion = {
   missingRateTransactionCounts: [],
   mode: 'original' as const,
 }
-const overview = {
+export const overview = {
   averageExpensePerDay: [{ amountMinor: 1_000, currencyCode: 'UAH' }],
   comparison: [],
   compensation: [
@@ -230,7 +237,7 @@ const overview = {
     },
   ],
 }
-const breakdowns = {
+export const breakdowns = {
   currencyConversion,
   expensesByAccount: [
     { accountId: 'account-1', amountMinor: 4_000, currencyCode: 'UAH' },
@@ -277,7 +284,7 @@ const breakdowns = {
     },
   ],
 }
-const trends = {
+export const trends = {
   currencyConversion,
   daily: Array.from({ length: 7 }, (_, index) => ({
     currencyCode: 'UAH',

@@ -17,7 +17,7 @@ export function DashboardKpis({
   return (
     <section className="dashboard-kpis" aria-label={t('Period summary')}>
       <DashboardMetric
-        accent="cyan"
+        accent="pink"
         description={t('Total spent help')}
         title={t('Total spent')}
         units={units}
@@ -25,10 +25,9 @@ export function DashboardKpis({
           amountMinor: item.expenseAmountMinor,
           currencyCode: item.currencyCode,
         }))}
-        icon="−"
       />
       <DashboardMetric
-        accent="blue"
+        accent="green"
         description={t('Total income help')}
         title={t('Total income')}
         units={units}
@@ -36,10 +35,9 @@ export function DashboardKpis({
           amountMinor: item.incomeAmountMinor,
           currencyCode: item.currencyCode,
         }))}
-        icon="↑"
       />
       <DashboardMetric
-        accent="green"
+        accent="blue"
         description={t('Net cash flow help')}
         title={t('Net cash flow')}
         units={units}
@@ -47,15 +45,13 @@ export function DashboardKpis({
           amountMinor: item.netAmountMinor,
           currencyCode: item.currencyCode,
         }))}
-        icon="↗"
       />
       <DashboardMetric
-        accent="pink"
+        accent="violet"
         description={t('Average spend / day help')}
         title={t('Average spend / day')}
         units={units}
         values={displayed.overview.averageExpensePerDay}
-        icon="÷"
       />
     </section>
   )
@@ -63,14 +59,12 @@ export function DashboardKpis({
 function DashboardMetric({
   accent,
   description,
-  icon,
   title,
   units,
   values,
 }: {
   accent: 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
   description: string
-  icon: React.ReactNode
   title: string
   units: Map<string, number>
   values: CurrencyAmount[]
@@ -80,7 +74,6 @@ function DashboardMetric({
     <KpiCard
       accent={accent}
       description={description}
-      icon={icon}
       label={title}
       value={
         values.length === 0 ? (

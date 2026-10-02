@@ -3,6 +3,7 @@ import { useModalDialog } from './use-modal-dialog'
 
 import { useLocalization } from '../../features/localization/localization'
 import { IconButton } from './Controls'
+import { Icon } from './Icon'
 
 interface OverlayProps {
   children: ReactNode
@@ -45,7 +46,7 @@ function OverlayFrame({
         <header className="ui-overlay__header">
           <h2 id={titleId}>{title}</h2>
           <IconButton label={t('Close')} onClick={onClose}>
-            ×
+            <Icon name="close" />
           </IconButton>
         </header>
         <div className="ui-overlay__content">{children}</div>

@@ -1,3 +1,4 @@
+import { Icon } from './Icon'
 import {
   useEffect,
   useId,
@@ -63,7 +64,7 @@ export function SearchField({ className, label, ...props }: SearchFieldProps) {
     <label className={['ui-search-field', className].filter(Boolean).join(' ')}>
       <span className="sr-only">{label}</span>
       <span aria-hidden="true" className="ui-search-field__icon">
-        ⌕
+        <Icon name="search" />
       </span>
       <input
         {...props}
@@ -135,13 +136,14 @@ export function MultiSelect({
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={ariaLabel}
+        aria-description={triggerLabel}
         className="ui-multi-select__trigger"
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
         <span>{triggerLabel ?? (selectedLabels.join(', ') || ariaLabel)}</span>
         <span aria-hidden="true" className="ui-multi-select__indicator">
-          ⌄
+          <Icon name="down" />
         </span>
       </button>
       {open ? (

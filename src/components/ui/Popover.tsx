@@ -1,21 +1,48 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { BottomSheet } from './Overlay'
+import { Icon } from './Icon'
 
 interface PopoverProps {
   children: ReactNode
   className?: string
   content: ReactNode
   label: string
+  description?: string
+  openOnFocusHover?: boolean
+  mobileSheet?: boolean
 }
 
-export function Popover({ children, className, content, label }: PopoverProps) {
+export function Popover({
+  children,
+  className,
+  content,
+  label,
+  description,
+  openOnFocusHover = false,
+  mobileSheet = false,
+}: PopoverProps) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<PopoverPosition | null>(null)
+  const [mobile, setMobile] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 767px)').matches,
+  )
+  const pinned = useRef(false)
+  const pointerFocus = useRef(false)
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)')
+    const update = () => setMobile(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
   const contentId = useId()
   const reference = useRef<HTMLSpanElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
 
   function close() {
+    pinned.current = false
     setOpen(false)
     setPosition(null)
   }
@@ -32,17 +59,45 @@ export function Popover({ children, className, content, label }: PopoverProps) {
     }
 
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') close()
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        close()
+        pointerFocus.current =
+          document.activeElement !== reference.current?.querySelector('button')
+        reference.current
+          ?.querySelector('button')
+          ?.focus({ preventScroll: true })
+      }
+    }
+
+    function closeOnFocusOutside(event: FocusEvent) {
+      const target = event.target as Node
+      if (
+        !reference.current?.contains(target) &&
+        !overlay.current?.contains(target)
+      )
+        close()
     }
 
     if (!open) return
     document.addEventListener('pointerdown', closeOnPointerDown)
     document.addEventListener('keydown', closeOnEscape)
+    document.addEventListener('focusin', closeOnFocusOutside)
     return () => {
       document.removeEventListener('pointerdown', closeOnPointerDown)
       document.removeEventListener('keydown', closeOnEscape)
+      document.removeEventListener('focusin', closeOnFocusOutside)
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open || openOnFocusHover || (mobileSheet && mobile)) return
+    overlay.current
+      ?.querySelector<HTMLElement>(
+        'button, select, input, a[href], [tabindex="0"]',
+      )
+      ?.focus({ preventScroll: true })
+  }, [open, openOnFocusHover, mobileSheet, mobile])
 
   useEffect(() => {
     if (!open) return
@@ -121,6 +176,17 @@ export function Popover({ children, className, content, label }: PopoverProps) {
       id={contentId}
       ref={overlay}
       role="dialog"
+      onClick={(event) => {
+        if (
+          (event.target as Element).closest('[data-popover-dismiss]') !== null
+        ) {
+          close()
+          pointerFocus.current = true
+          reference.current
+            ?.querySelector('button')
+            ?.focus({ preventScroll: true })
+        }
+      }}
       style={
         position === null
           ? { visibility: 'hidden' }
@@ -137,22 +203,43 @@ export function Popover({ children, className, content, label }: PopoverProps) {
       ref={reference}
     >
       <button
-        aria-controls={open ? contentId : undefined}
+        aria-controls={open && !(mobileSheet && mobile) ? contentId : undefined}
+        aria-describedby={open && openOnFocusHover ? contentId : undefined}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={label}
+        aria-description={description}
         className="ui-popover__trigger"
+        onPointerDown={() => {
+          pointerFocus.current = true
+        }}
+        onFocus={() => {
+          if (openOnFocusHover && !pointerFocus.current) setOpen(true)
+          pointerFocus.current = false
+        }}
+        onPointerEnter={(event) => {
+          if (openOnFocusHover && event.pointerType === 'mouse') setOpen(true)
+        }}
         onClick={() => {
+          pointerFocus.current = false
           setPosition(null)
-          setOpen((value) => !value)
+          if (openOnFocusHover && !pinned.current) {
+            pinned.current = true
+            setOpen(true)
+          } else if (open) close()
+          else setOpen(true)
         }}
         type="button"
       >
         {children}
       </button>
-      {overlayContent === null || typeof document === 'undefined'
-        ? null
-        : createPortal(overlayContent, document.body)}
+      {mobileSheet && mobile ? (
+        <BottomSheet open={open} onClose={close} title={label}>
+          {content}
+        </BottomSheet>
+      ) : overlayContent === null || typeof document === 'undefined' ? null : (
+        createPortal(overlayContent, document.body)
+      )}
     </span>
   )
 }
@@ -183,7 +270,7 @@ export function OverflowMenu({
       label={label}
     >
       <span aria-hidden="true" className="ui-overflow-menu__indicator">
-        •••
+        <Icon name="more" />
       </span>
       <span className="sr-only">{children}</span>
     </Popover>

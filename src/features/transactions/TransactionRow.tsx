@@ -1,12 +1,12 @@
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { formatMoney } from '../../lib/money-presentation'
+import { formatEpochDate } from '../../lib/date-presentation'
 import {
   useLocalization,
   type TranslationKey,
 } from '../localization/localization'
 import {
   accountLabel,
-  formatRecentTransactionDate,
   formatTransactionAmount,
   formatTransactionClock,
 } from './transaction-formatting'
@@ -111,12 +111,14 @@ export function RecentTransactionRow({
   transaction,
   minorUnit,
   onSelect,
+  visual,
 }: {
   transaction: TransactionListItem
   minorUnit: number
+  visual: { icon: string | null; colorToken: string | null }
   onSelect(transaction: TransactionListItem): void
 }) {
-  const { locale, t } = useLocalization()
+  const { locale } = useLocalization()
   return (
     <li>
       <button
@@ -126,24 +128,35 @@ export function RecentTransactionRow({
       >
         <span
           aria-hidden="true"
-          className={
+          className={`${
             transaction.effectiveAmountMinor >= 0
               ? 'recent-transaction-icon is-income'
               : 'recent-transaction-icon'
-          }
+          }${visual.colorToken === null ? '' : ` ui-visual--${visual.colorToken}`}`}
         >
-          {transaction.originalDescription.slice(0, 1)}
+          {visual.icon === null ? (
+            transaction.originalDescription.slice(0, 1)
+          ) : (
+            <CategoryIcon token={visual.icon} />
+          )}
         </span>
         <span className="recent-transaction-merchant">
           <strong>{transaction.originalDescription}</strong>
           <small>
-            {transaction.category.name ?? t('Uncategorized')} ·{' '}
+            <time>
+              {formatEpochDate(
+                transaction.originalTimestamp,
+                { day: 'numeric', month: 'short' },
+                locale,
+              )}
+            </time>
+            {' · '}
             {transaction.account.type}
+            {transaction.account.maskedPan === null
+              ? ''
+              : ` · ${transaction.account.maskedPan.slice(-4)}`}
           </small>
         </span>
-        <time>
-          {formatRecentTransactionDate(transaction.originalTimestamp, locale)}
-        </time>
         <b
           className={
             transaction.effectiveAmountMinor >= 0 ? 'is-income' : undefined
@@ -153,6 +166,7 @@ export function RecentTransactionRow({
             currencyCode: transaction.currencyCode,
             minorUnit,
             locale,
+            signDisplay: 'exceptZero',
           })}
         </b>
       </button>

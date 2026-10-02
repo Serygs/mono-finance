@@ -1,3 +1,18 @@
+import type { CustomCategory } from '../categories/categories-api'
+import { resolveCategoryAppearance } from '../categories/category-appearance'
+import type { TransactionListItem } from './transaction-types'
+
+export function resolveRecentTransactionVisual(
+  transaction: Pick<TransactionListItem, 'category'>,
+  categories: CustomCategory[],
+) {
+  const custom = resolveCategoryAppearance(
+    categories.find((category) => category.id === transaction.category.id),
+  )
+  const inferred = resolveTransactionCategoryVisual(transaction.category.name)
+  return { icon: custom.icon ?? inferred.icon, colorToken: custom.colorToken }
+}
+
 export function resolveTransactionCategoryVisual(category: string | null): {
   icon: string | null
   tone: string

@@ -23,3 +23,19 @@ export const CATEGORY_COLORS = [
   { label: 'Purple', token: 'purple' },
   { label: 'Slate', token: 'slate' },
 ] as const
+
+export function resolveCategoryAppearance(
+  appearance: { icon: string | null; colorToken: string | null } | undefined,
+) {
+  if (appearance === undefined) return { icon: null, colorToken: null }
+  return {
+    icon: CATEGORY_ICONS.some((item) => item.token === appearance.icon)
+      ? appearance.icon
+      : null,
+    colorToken: CATEGORY_COLORS.some(
+      (item) => item.token === appearance.colorToken,
+    )
+      ? appearance.colorToken
+      : null,
+  }
+}

@@ -71,6 +71,7 @@ test('an owner can complete the critical private-finance workflow', async ({
 
   await page.getByRole('button', { name: 'Close' }).click()
   await page.getByRole('link', { name: 'Overview' }).first().click()
+  await page.getByRole('button', { name: 'Overview actions' }).click()
   await page.getByRole('button', { name: 'Customize dashboard' }).click()
   await page.getByLabel('recent corrections').check()
   await page.getByLabel('recent compensations').check()
@@ -205,11 +206,15 @@ test('overview switches to a single-column mobile composition without viewport o
   ).toBeVisible()
   await expect(page.locator('.dashboard-kpis .ui-kpi')).toHaveCount(4)
   await expect(
-    page.locator('.weekday-vertical-chart > div > span:first-child'),
+    page.locator(
+      '.weekday-vertical-chart .ui-chart-mobile-mark .weekday-bars > span',
+    ),
   ).toHaveCount(7)
   expect(
     await page
-      .locator('.weekday-vertical-chart > div > span:first-child')
+      .locator(
+        '.weekday-vertical-chart .ui-chart-mobile-mark .weekday-bars > span',
+      )
       .evaluateAll(
         (bars) =>
           bars.filter((bar) => bar.getBoundingClientRect().height > 3).length,
@@ -231,7 +236,9 @@ test('overview switches to a single-column mobile composition without viewport o
       (field) => field.getBoundingClientRect(),
     ).filter((field) => field.width > 0 && field.height > 0),
     visibleFilterMenuTriggers: Array.from(
-      document.querySelectorAll('.dashboard-toolbar-menu__trigger'),
+      document.querySelectorAll(
+        '.dashboard-advanced-filters > .ui-popover__trigger',
+      ),
       (trigger) => trigger.getBoundingClientRect(),
     ).filter((trigger) => trigger.width > 0 && trigger.height > 0),
     primaryKpis: Array.from(
@@ -280,7 +287,7 @@ test('overview switches to a single-column mobile composition without viewport o
   expect(layout.filterFields).toHaveLength(2)
   expect(layout.visibleFilterMenuTriggers).toHaveLength(1)
   expect(layout.primaryKpis).toHaveLength(4)
-  expect(layout.syncActions).toHaveLength(2)
+  expect(layout.syncActions).toHaveLength(0)
   expect(layout.undersizedControls).toEqual([])
 
   for (const width of [320, 375, 390, 767]) {
@@ -417,6 +424,7 @@ test('mobile dashboard customization persists visible widgets without grid editi
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
 
+  await page.getByRole('button', { name: 'Overview actions' }).click()
   await page.getByRole('button', { name: 'Customize dashboard' }).click()
   const topMerchants = page
     .getByRole('dialog', { name: 'Customize dashboard' })
@@ -429,6 +437,7 @@ test('mobile dashboard customization persists visible widgets without grid editi
   await expect(page.locator('.dashboard-grid')).toHaveCount(0)
 
   await page.reload()
+  await page.getByRole('button', { name: 'Overview actions' }).click()
   await page.getByRole('button', { name: 'Customize dashboard' }).click()
   await expect(topMerchants).toBeChecked()
   await page.getByRole('button', { name: 'Restore default widgets' }).click()
@@ -460,7 +469,9 @@ test('income and expense bars retain one baseline across responsive widths', asy
       const plot = document.querySelector('.income-expense-plot')!
       const plotRect = plot.getBoundingClientRect()
       const groups = Array.from(plot.children, (group) => {
-        const bars = group.querySelector('.income-expense-bars')!
+        const bars = Array.from(
+          group.querySelectorAll('.income-expense-bars'),
+        ).find((element) => element.getBoundingClientRect().height > 0)!
         const label = group.querySelector('small')!
         return {
           barBottom: bars.getBoundingClientRect().bottom,

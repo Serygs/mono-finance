@@ -7,6 +7,9 @@ import { DashboardCustomization } from './DashboardCustomization'
 import { DashboardFilters } from './DashboardFilters'
 import { DashboardLayout } from './DashboardLayout'
 import { DashboardSyncSummary } from './DashboardSyncSummary'
+import { Popover } from '../../components/ui/Popover'
+import { BottomSheet } from '../../components/ui/Overlay'
+import { Icon } from '../../components/ui/Icon'
 import { useDashboardFilters } from './use-dashboard-filters'
 import { useDashboardPreferences } from './use-dashboard-preferences'
 import { useDashboardQueries } from './use-dashboard-queries'
@@ -42,14 +45,44 @@ export function DashboardPage() {
     error,
   } = useDashboardSync()
   const [customizing, setCustomizing] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const [syncOpen, setSyncOpen] = useState(false)
   return (
     <PageSurface className="dashboard-page">
       <PageHeader
-        description={<p>{t('Your money, in clear focus.')}</p>}
         id="dashboard-title"
         title={t('Finance overview')}
+        actions={
+          <Popover
+            label={t('Overview actions')}
+            className="dashboard-actions"
+            content={
+              <div className="dashboard-action-menu">
+                <Button
+                  data-popover-dismiss
+                  variant="quiet"
+                  onClick={() => {
+                    setCustomizing(true)
+                  }}
+                >
+                  {t('Customize dashboard')}
+                </Button>
+                <Button
+                  data-popover-dismiss
+                  variant="quiet"
+                  onClick={() => {
+                    setSyncOpen(true)
+                  }}
+                >
+                  <Icon name="sync" />
+                  {t('Sync status')}
+                </Button>
+              </div>
+            }
+          >
+            <Icon name="more" />
+            <span className="sr-only">{t('Overview actions')}</span>
+          </Popover>
+        }
       />
       <section className="dashboard-command-bar">
         <DashboardFilters
@@ -62,69 +95,17 @@ export function DashboardPage() {
           mode={mode}
           onCurrency={setCurrency}
           onFilter={setFilter}
-          onFiltersOpen={setFiltersOpen}
           onFrom={setFrom}
           onMode={setMode}
           onPreset={setPreset}
           onTo={setTo}
           preset={preset}
-          filtersOpen={filtersOpen}
           to={to}
         />
-        <div className="dashboard-toolbar-actions">
-          <div className="dashboard-sync-popover">
-            <Button
-              aria-expanded={syncOpen}
-              onClick={() => setSyncOpen(!syncOpen)}
-              size="small"
-              type="button"
-              variant="secondary"
-            >
-              <span aria-hidden="true">↻</span>
-              {t('Sync status')}
-            </Button>
-            {syncOpen ? (
-              <div className="dashboard-popover" role="dialog">
-                <div className="dashboard-sync-actions">
-                  <Button
-                    disabled={syncingAccounts}
-                    loading={syncingAccounts}
-                    onClick={() => void syncAccounts()}
-                    size="small"
-                    type="button"
-                    variant="secondary"
-                  >
-                    {t('Sync accounts')}
-                  </Button>
-                  <Button
-                    disabled={syncingTransactions}
-                    loading={syncingTransactions}
-                    onClick={() => void syncTransactions()}
-                    size="small"
-                    type="button"
-                  >
-                    {t('Refresh transactions')}
-                  </Button>
-                </div>
-                <DashboardSyncSummary states={syncStates} />
-              </div>
-            ) : null}
-          </div>
-          <Button
-            className="dashboard-customize-action"
-            onClick={() => setCustomizing(true)}
-            size="small"
-            type="button"
-            variant="secondary"
-          >
-            <span aria-hidden="true">⚙</span>
-            {t('Customize dashboard')}
-          </Button>
-        </div>
       </section>
       {error === null ? null : (
         <Alert tone="danger" title={t('Dashboard update failed')}>
-          {error}
+          {t(error)}
         </Alert>
       )}
       {range === null ? (
@@ -132,8 +113,15 @@ export function DashboardPage() {
           {t('Enter a valid start and end date to view analytics.')}
         </Alert>
       ) : null}
-      {analytics.isPending ? (
-        <Skeleton label={t('Loading dashboard…')} lines={6} />
+      {analytics.isPending && range !== null ? (
+        <div className="dashboard-loading">
+          <div className="dashboard-kpis">
+            {[0, 1, 2, 3].map((key) => (
+              <Skeleton key={key} label={t('Loading dashboard…')} lines={2} />
+            ))}
+          </div>
+          <Skeleton label={t('Loading transactions…')} lines={5} />
+        </div>
       ) : null}
       {analytics.isError ? (
         <Alert tone="danger" title={t('Analytics could not be loaded')}>
@@ -154,9 +142,45 @@ export function DashboardPage() {
           onPreferences={setPreferences}
           preferences={preferences}
           recentLoading={recent.isPending}
+          recentError={recent.isError}
+          onRetryRecent={() => void recent.refetch()}
+          filtered={
+            filter.mode === 'selected' ||
+            preset === 'custom' ||
+            currency !== null
+          }
           transactions={recent.data?.transactions ?? []}
         />
       )}
+      <BottomSheet
+        open={syncOpen}
+        onClose={() => setSyncOpen(false)}
+        title={t('Sync status')}
+      >
+        {error === null ? null : (
+          <Alert tone="danger" title={t('Dashboard update failed')}>
+            {t(error)}
+          </Alert>
+        )}
+        <div className="dashboard-sync-actions">
+          <Button
+            disabled={syncingAccounts}
+            loading={syncingAccounts}
+            onClick={() => void syncAccounts()}
+            variant="secondary"
+          >
+            {t('Sync accounts')}
+          </Button>
+          <Button
+            disabled={syncingTransactions}
+            loading={syncingTransactions}
+            onClick={() => void syncTransactions()}
+          >
+            {t('Refresh transactions')}
+          </Button>
+        </div>
+        <DashboardSyncSummary states={syncStates} />
+      </BottomSheet>
       {customizing ? (
         <DashboardCustomization
           onChange={setPreferences}

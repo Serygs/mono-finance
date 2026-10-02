@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Controls'
 import { LanguageSwitcher } from '../features/localization/LanguageSwitcher'
 import { useLocalization } from '../features/localization/localization'
 import { Popover } from '../components/ui/Popover'
+import { Icon, type IconName } from '../components/ui/Icon'
 
 export function AppShell() {
   const { logout } = useAuth()
@@ -15,32 +16,32 @@ export function AppShell() {
   const navigationItems = [
     {
       active: location.pathname === '/' && location.hash === '',
-      icon: '⌂',
+      icon: 'overview' as IconName,
       label: t('Overview'),
       to: '/',
     },
     {
       active: location.pathname === '/transactions',
-      icon: '≡',
+      icon: 'transactions' as IconName,
       label: t('Transactions'),
       to: '/transactions',
     },
     {
       active:
         location.pathname === '/settings' && location.hash === '#categories',
-      icon: '◔',
+      icon: 'categories' as IconName,
       label: t('Categories'),
       to: '/settings#categories',
     },
     {
       active: location.pathname === '/' && location.hash === '#accounts',
-      icon: '▱',
+      icon: 'accounts' as IconName,
       label: t('Accounts'),
       to: '/#accounts',
     },
     {
       active: location.pathname === '/settings' && location.hash === '',
-      icon: '•••',
+      icon: 'more' as IconName,
       label: t('More'),
       to: '/settings',
     },
@@ -57,18 +58,16 @@ export function AppShell() {
         {t('Skip to content')}
       </a>
       <header className="app-header">
-        <div className="brand-lockup">
+        <Link
+          className="brand-lockup brand"
+          to="/"
+          aria-label={t('Mono Finance overview')}
+        >
           <span className="brand-mark" aria-hidden="true">
             MF
           </span>
-          <Link
-            className="brand"
-            to="/"
-            aria-label={t('Mono Finance overview')}
-          >
-            Mono Finance
-          </Link>
-        </div>
+          <span>Mono Finance</span>
+        </Link>
         <nav
           aria-label={t('Primary navigation')}
           className="desktop-navigation"
@@ -89,7 +88,7 @@ export function AppShell() {
         <div className="app-header-actions">
           <LanguageSwitcher />
           <Popover
-            className="profile-menu"
+            className="profile-menu desktop-profile-menu"
             content={
               <Button
                 className="profile-menu__sign-out"
@@ -121,7 +120,7 @@ export function AppShell() {
             to={item.to}
           >
             <span aria-hidden="true" className="mobile-navigation__icon">
-              {item.icon}
+              <Icon name={item.icon} />
             </span>
             <span>{item.label}</span>
           </Link>

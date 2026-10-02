@@ -178,11 +178,11 @@ export function groupTimeSeriesIntoBuckets(
   points: readonly TimeSeriesPoint[],
   maximumBuckets = 7,
 ): TimeSeriesBucket[] {
-  if (points.length <= maximumBuckets)
-    return points.map((point) => ({ ...point, periodEnd: point.periodStart }))
   const sorted = [...points].sort(
     (left, right) => left.periodStart - right.periodStart,
   )
+  if (sorted.length <= maximumBuckets)
+    return sorted.map((point) => ({ ...point, periodEnd: point.periodStart }))
   const bucketSize = Math.ceil(sorted.length / maximumBuckets)
   const buckets: TimeSeriesBucket[] = []
   for (let index = 0; index < sorted.length; index += bucketSize) {

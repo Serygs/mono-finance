@@ -37,7 +37,7 @@ test('all five legacy destinations retain their layout in both themes and locale
           // Freeze animations so before/after screenshots describe layout only.
           if ((width === 390 || width === 1440) && locale === 'en') {
             await page.screenshot({
-              path: `phase1.local/${process.env['PHASE1_CAPTURE'] ?? 'after'}/${owner}-${width}-${theme}.png`,
+              path: `phase2.local/${process.env['PHASE2_CAPTURE'] ?? 'screenshots'}/${owner}-${width}-${theme}.png`,
               fullPage: true,
               animations: 'disabled',
             })

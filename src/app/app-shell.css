@@ -32,7 +32,7 @@
   width: min(calc(100% - 2rem), 75rem);
   max-width: calc(100% - 2rem);
   min-width: 0;
-  min-height: 4rem;
+  min-height: 3.5rem;
   margin: max(0.5rem, env(safe-area-inset-top)) auto 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
@@ -46,6 +46,7 @@
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  min-height: 44px;
 }
 
 .app-header-actions {
@@ -169,7 +170,6 @@
   .ui-select,
   .ui-multi-select__trigger,
   .ui-popover__trigger,
-  .ui-info-tooltip__trigger,
   .ui-field input,
   .ui-field textarea,
   .ui-chip,
@@ -187,7 +187,7 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    min-height: 4rem;
+    min-height: 3.5rem;
     margin-top: 0;
     border: 0;
     border-radius: 0;
@@ -209,7 +209,8 @@
     min-width: 0;
   }
 
-  .app-header .language-switcher {
+  .app-header .language-switcher,
+  .desktop-profile-menu {
     display: none;
   }
 
@@ -241,16 +242,17 @@
     min-height: 3.25rem;
     justify-content: center;
     gap: 0.15rem;
-    overflow-wrap: normal;
+    overflow-wrap: anywhere;
     padding: 0.25rem 0.125rem;
     text-align: center;
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 600;
     line-height: 1.1;
   }
 
   .mobile-navigation__icon {
-    font-size: 1.25rem;
+    display: flex;
+    justify-content: center;
     line-height: 1;
   }
 
@@ -259,7 +261,7 @@
     max-width: 100%;
     min-width: 0;
     padding: 1.25rem max(1rem, env(safe-area-inset-right))
-      calc(5.75rem + env(safe-area-inset-bottom))
+      calc(7rem + env(safe-area-inset-bottom))
       max(1rem, env(safe-area-inset-left));
   }
 }
