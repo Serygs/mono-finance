@@ -11,6 +11,7 @@ interface PopoverProps {
   description?: string
   openOnFocusHover?: boolean
   mobileSheet?: boolean
+  disabled?: boolean
 }
 
 export function Popover({
@@ -21,6 +22,7 @@ export function Popover({
   description,
   openOnFocusHover = false,
   mobileSheet = false,
+  disabled = false,
 }: PopoverProps) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<PopoverPosition | null>(null)
@@ -90,14 +92,16 @@ export function Popover({
     }
   }, [open])
 
+  const positioned = position !== null
   useEffect(() => {
-    if (!open || openOnFocusHover || (mobileSheet && mobile)) return
+    if (!open || !positioned || openOnFocusHover || (mobileSheet && mobile))
+      return
     overlay.current
       ?.querySelector<HTMLElement>(
         'button, select, input, a[href], [tabindex="0"]',
       )
       ?.focus({ preventScroll: true })
-  }, [open, openOnFocusHover, mobileSheet, mobile])
+  }, [open, positioned, openOnFocusHover, mobileSheet, mobile])
 
   useEffect(() => {
     if (!open) return
@@ -206,6 +210,7 @@ export function Popover({
         aria-controls={open && !(mobileSheet && mobile) ? contentId : undefined}
         aria-describedby={open && openOnFocusHover ? contentId : undefined}
         aria-expanded={open}
+        aria-disabled={disabled || undefined}
         aria-haspopup="dialog"
         aria-label={label}
         aria-description={description}
@@ -214,13 +219,16 @@ export function Popover({
           pointerFocus.current = true
         }}
         onFocus={() => {
-          if (openOnFocusHover && !pointerFocus.current) setOpen(true)
+          if (!disabled && openOnFocusHover && !pointerFocus.current)
+            setOpen(true)
           pointerFocus.current = false
         }}
         onPointerEnter={(event) => {
-          if (openOnFocusHover && event.pointerType === 'mouse') setOpen(true)
+          if (!disabled && openOnFocusHover && event.pointerType === 'mouse')
+            setOpen(true)
         }}
         onClick={() => {
+          if (disabled) return
           pointerFocus.current = false
           setPosition(null)
           if (openOnFocusHover && !pinned.current) {
@@ -235,7 +243,17 @@ export function Popover({
       </button>
       {mobileSheet && mobile ? (
         <BottomSheet open={open} onClose={close} title={label}>
-          {content}
+          <div
+            onClick={(event) => {
+              if (
+                (event.target as Element).closest('[data-popover-dismiss]') !==
+                null
+              )
+                close()
+            }}
+          >
+            {content}
+          </div>
         </BottomSheet>
       ) : overlayContent === null || typeof document === 'undefined' ? null : (
         createPortal(overlayContent, document.body)

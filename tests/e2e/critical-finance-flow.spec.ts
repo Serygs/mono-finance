@@ -122,10 +122,17 @@ test('language and category type mapping remain accessible', async ({
   ).toBeVisible()
 
   await page.getByRole('link', { name: 'Категорії' }).first().click()
-  const sourceSelect = page.getByLabel('Категорія для mcc-5812')
-  await expect(sourceSelect).toBeVisible()
-  await sourceSelect.selectOption('category-dining')
-  await expect(sourceSelect).toHaveValue('category-dining')
+  await page.getByRole('link', { name: 'Керування', exact: true }).click()
+  await page.getByRole('link', { name: /Призначайте категорії/ }).click()
+  const sourcePicker = page.getByRole('button', {
+    name: 'Призначена категорія для Food',
+  })
+  await sourcePicker.click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Dining', exact: true })
+    .click()
+  await expect(sourcePicker).toContainText('Dining')
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('lang', 'uk')
@@ -355,8 +362,10 @@ test('core finance screens fit a narrow mobile viewport', async ({ page }) => {
 
   await page.setViewportSize({ width: 540, height: 720 })
   await page.goto('/settings#categories')
+  await page.getByRole('link', { name: 'Manage', exact: true }).click()
+  await page.getByRole('link', { name: /Assign display categories/ }).click()
   const sourceTableWidth = await page
-    .locator('.category-source-table-wrap')
+    .locator('.category-source-list')
     .evaluate((element) => ({
       clientWidth: element.clientWidth,
       scrollWidth: element.scrollWidth,
@@ -374,10 +383,11 @@ test('custom category form stays compact until the owner opens it', async ({
   await page.getByRole('button', { name: 'Sign in' }).click()
 
   await page.getByRole('link', { name: 'Categories' }).first().click()
+  await page.getByRole('link', { name: 'Manage', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Add category' })).toHaveCount(
     0,
   )
-  await page.getByRole('button', { name: '+ Add category' }).click()
+  await page.getByRole('button', { name: 'Add category', exact: true }).click()
   await expect(
     page.getByRole('heading', { name: 'Add category' }),
   ).toBeVisible()
@@ -396,6 +406,7 @@ test('category delete menu escapes clipped surfaces on desktop and mobile', asyn
   await page.getByLabel('Password').fill('correct-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await page.getByRole('link', { name: 'Categories' }).first().click()
+  await page.getByRole('link', { name: 'Manage', exact: true }).click()
 
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 844 })

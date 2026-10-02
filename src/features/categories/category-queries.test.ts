@@ -25,7 +25,12 @@ describe('feature cache refresh policies', () => {
     [
       'source mappings',
       refreshCategorySourceMapping,
-      ['category-sources', 'transactions', 'dashboard-analytics'],
+      [
+        'category-sources',
+        'transactions',
+        'dashboard-analytics',
+        'dashboard-recent',
+      ],
     ],
     [
       'transaction corrections',
@@ -47,11 +52,22 @@ describe('feature cache refresh policies', () => {
       ]
       for (const key of keys)
         client.setQueryData([key, { filter: 'synthetic' }], [])
+      client.setQueryData(
+        ['dashboard-analytics', 'category-breakdowns', { filter: 'synthetic' }],
+        {},
+      )
       await refresh(client)
       for (const key of keys)
         expect(
           client.getQueryState([key, { filter: 'synthetic' }])?.isInvalidated,
         ).toBe(invalidated.some((value) => value === key))
+      expect(
+        client.getQueryState([
+          'dashboard-analytics',
+          'category-breakdowns',
+          { filter: 'synthetic' },
+        ])?.isInvalidated,
+      ).toBe(true)
       client.clear()
     },
   )

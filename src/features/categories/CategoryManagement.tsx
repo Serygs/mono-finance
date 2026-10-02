@@ -2,6 +2,7 @@ import { type useCategoriesQuery } from './category-queries'
 import { useCategoryManagement } from './use-category-management'
 
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
+import { Icon } from '../../components/ui/Icon'
 import { CompactList } from '../../components/ui/Collections'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -42,6 +43,8 @@ export function CategoryManagement({
     merge,
     visibleCategories,
     submit,
+    nameInvalid,
+    setNameInvalid,
   } = useCategoryManagement(categories)
   return (
     <>
@@ -56,17 +59,28 @@ export function CategoryManagement({
             }}
             type="button"
           >
-            + {t('Add category')}
+            <Icon name="add" /> {t('Add category')}
           </Button>
         ) : null}
       </header>
-      {isCreating || editing !== null ? (
+      <Dialog
+        className="category-editor"
+        open={isCreating || editing !== null}
+        title={t(editing === null ? 'Add category' : 'Edit category')}
+        onClose={() => {
+          if (!mutation.isPending) {
+            mutation.reset()
+            setNameInvalid(false)
+            setEditing(null)
+            setIsCreating(false)
+          }
+        }}
+      >
         <form
           className="category-form"
           key={editing?.id ?? 'new'}
           onSubmit={submit}
         >
-          <h3>{t(editing === null ? 'Add category' : 'Edit category')}</h3>
           <FormField label={t('Name')}>
             <input
               autoComplete="off"
@@ -74,8 +88,16 @@ export function CategoryManagement({
               maxLength={80}
               name="name"
               required
+              aria-invalid={nameInvalid || undefined}
+              aria-describedby={nameInvalid ? 'category-name-error' : undefined}
+              onChange={() => setNameInvalid(false)}
             />
           </FormField>
+          {nameInvalid ? (
+            <p id="category-name-error" role="alert">
+              {t('Enter a category name.')}
+            </p>
+          ) : null}
           <CategoryAppearanceFields
             colorToken={editing?.input.colorToken ?? EMPTY.colorToken}
             icon={editing?.input.icon ?? EMPTY.icon}
@@ -90,8 +112,10 @@ export function CategoryManagement({
                   : t('Save category')}
             </Button>
             <Button
+              disabled={mutation.isPending}
               onClick={() => {
                 mutation.reset()
+                setNameInvalid(false)
                 setEditing(null)
                 setIsCreating(false)
               }}
@@ -105,12 +129,32 @@ export function CategoryManagement({
             <Alert tone="danger">{t('Category could not be saved.')}</Alert>
           ) : null}
         </form>
+      </Dialog>
+      <SearchField
+        label={t('Search categories')}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder={t('Search categories…')}
+        value={query}
+      />
+      {mutation.isSuccess || removal.isSuccess || merge.isSuccess ? (
+        <p className="category-row-feedback" role="status">
+          {t('Changes saved.')}
+        </p>
       ) : null}
       {categories.isPending ? (
         <Skeleton label={t('Loading categories…')} lines={2} />
       ) : null}
       {categories.isError ? (
-        <Alert tone="danger">{t('Categories could not be loaded.')}</Alert>
+        <Alert tone="danger">
+          {t('Categories could not be loaded.')}{' '}
+          <Button
+            variant="secondary"
+            loading={categories.isFetching}
+            onClick={() => void categories.refetch()}
+          >
+            {t('Retry')}
+          </Button>
+        </Alert>
       ) : null}
       {categories.data?.length === 0 ? (
         <EmptyState title={t('No custom categories')}>
@@ -119,22 +163,15 @@ export function CategoryManagement({
       ) : null}
       {(categories.data?.length ?? 0) > 0 ? (
         <div className="categories-list-panel">
-          <div className="categories-list-panel__toolbar">
-            <h2>{t('Custom categories')}</h2>
-            <SearchField
-              label={t('Search categories')}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('Search categories…')}
-              value={query}
-            />
-          </div>
-          <div aria-hidden="true" className="categories-list-columns">
-            <span>{t('Category')}</span>
-            <span>{t('Type')}</span>
-            <span>{t('Actions')}</span>
-          </div>
           {visibleCategories.length === 0 ? (
-            <EmptyState title={t('No matching categories')}>
+            <EmptyState
+              title={t('No matching categories')}
+              action={
+                <Button variant="secondary" onClick={() => setQuery('')}>
+                  {t('Reset filters')}
+                </Button>
+              }
+            >
               <p>{t('Try a different search or filter.')}</p>
             </EmptyState>
           ) : (
@@ -144,17 +181,14 @@ export function CategoryManagement({
                   <div className="category-list-row__identity">
                     <span
                       aria-hidden="true"
-                      className={`category-list-row__icon category-list-row__icon--${category.colorToken ?? 'slate'}`}
+                      className={`category-visual ui-visual--${category.colorToken ?? 'slate'}`}
                     >
-                      <CategoryIcon token={category.icon} />
+                      <CategoryIcon token={category.icon ?? 'wallet'} />
                     </span>
                     <span className="category-list-row__name">
                       {category.name}
                     </span>
                   </div>
-                  <span className="category-list-row__type">
-                    {t('Custom category')}
-                  </span>
                   <CategoryRowActions
                     categoryCount={categories.data?.length ?? 0}
                     deletePending={removal.isPending}
@@ -164,6 +198,7 @@ export function CategoryManagement({
                     }}
                     onEdit={() => {
                       mutation.reset()
+                      setNameInvalid(false)
                       setIsCreating(false)
                       setEditing({
                         id: category.id,
@@ -204,7 +239,7 @@ export function CategoryManagement({
           )}
         </p>
         {removal.isError ? (
-          <Alert tone="danger" title={t('Category is still in use')}>
+          <Alert tone="danger" title={t('Category could not be deleted.')}>
             {t(
               'Reset or reassign its transaction overrides and imported type mappings first.',
             )}
@@ -326,6 +361,24 @@ function CategoryRowActions({
         content={
           <span className="category-action-menu">
             <Button
+              className="category-mobile-action"
+              data-popover-dismiss
+              onClick={onEdit}
+              variant="secondary"
+            >
+              {translate('Edit')}
+            </Button>
+            <Button
+              className="category-mobile-action"
+              data-popover-dismiss
+              onClick={onMerge}
+              disabled={categoryCount <= 1}
+              variant="secondary"
+            >
+              {translate('Merge')}
+            </Button>
+            <Button
+              data-popover-dismiss
               disabled={deletePending}
               onClick={onDelete}
               size="small"

@@ -156,3 +156,34 @@ offline display, touch targets, contrast and all required responsive widths in
 both locales/themes. Synthetic normal/detail/state screenshots live only under
 ignored `phase3.local/`. Software-keyboard clearance is tested with a reduced
 viewport; physical iOS PWA verification remains manual.
+
+## Categories (Phase 4)
+
+- `CategoriesPage` composes Analysis, Manage and the bank-types subview. The
+  `categoryView` query parameter keeps browser history and unrelated query/hash
+  state on `/settings#categories`. Mounted, hidden subviews retain filters/search;
+  each view restores its scroll position when revisited.
+- `CategoryAnalysis` reuses Overview's date/account filter semantics and persisted
+  account selection, the accounts query/cache and encrypted breakdown API wrapper.
+  It fetches the breakdown aggregate only, with an analytics-prefix query key so
+  existing financial invalidation also refreshes category analysis.
+- `category-ranking-data` groups currencies separately and uses bigint magnitudes,
+  sorting and totals. `CategoryRanking` owns the leading-five/Other presentation,
+  complete ranking, direction-specific insights, stable colors and custom visual
+  precedence. Money uses the exact shared formatter and wraps at group boundaries.
+- `CategoryManagement` and its mutation hook own compact rows, search, native
+  create/edit/merge/delete dialogs, validation and existing dependency protection.
+  Successful saves finish cache refresh before closing the editor.
+- `CategorySourceManagement` owns server-side search/status/page criteria and
+  full-width assignment rows. `CategoryPicker` reuses the shared mobile sheet and
+  desktop popover. `use-category-source-mapping` keeps pending/error/retry state
+  in TanStack's mutation cache across row remounts and serializes saves per source.
+  Successful assignments refresh sources, ledger, Overview and category analytics.
+- `categories.css` is the sole owner of these layouts and appearance fields;
+  shared controls, tokens and overlay lifecycle stay in `components/ui`. Mobile
+  segmented controls now meet the shared 44 px hit-area contract.
+
+`categories-foundation.spec.ts` uses a synthetic 82-type server dataset to cover
+history, exact totals, direction labels, CRUD/protection, pagination, zero-result
+recovery, row remounts/pending/errors, focus, contrast, touch targets and required
+widths in both locales/themes. Captures live only in ignored `phase4.local/`.

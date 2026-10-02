@@ -49,6 +49,7 @@
   --color-border: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-action: var(--accent);
+  --color-action-foreground: #fff;
   --color-action-hover: #155cbf;
   --color-action-soft: var(--accent-soft);
   --color-income: var(--positive);
@@ -118,6 +119,7 @@
   --chart-purple: #c18ced;
   --chart-coral: #ed9583;
   --color-action-hover: #9bc3ff;
+  --color-action-foreground: #172033;
   --color-glass: color-mix(in srgb, var(--surface-primary), transparent 8%);
   --shadow-card: 0 0.45rem 1.25rem rgb(0 0 0 / 16%);
   --shadow-overlay: 0 1rem 3rem rgb(0 0 0 / 42%);

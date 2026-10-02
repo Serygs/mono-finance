@@ -31,23 +31,24 @@ export function useCategoryManagement(
   } | null>(null)
   const [mergeTargetId, setMergeTargetId] = useState('')
   const [query, setQuery] = useState('')
+  const [nameInvalid, setNameInvalid] = useState(false)
 
   const mutation = useMutation({
     mutationFn: async (input: CategoryInput) =>
       editing === null
         ? createCategory(input)
         : updateCategory(editing.id, input),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await refreshCategoryData(client)
       setEditing(null)
       setIsCreating(false)
-      void refreshCategoryData(client)
     },
   })
   const removal = useMutation({
     mutationFn: deleteCategory,
-    onSuccess: () => {
+    onSuccess: async () => {
+      await refreshCategoryData(client)
       setPendingDelete(null)
-      void refreshCategoryData(client)
     },
   })
   const merge = useMutation({
@@ -55,10 +56,10 @@ export function useCategoryManagement(
       sourceCategoryId: string
       targetCategoryId: string
     }) => mergeCategories(input.sourceCategoryId, input.targetCategoryId),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await refreshCategoryData(client)
       setPendingMerge(null)
       setMergeTargetId('')
-      void refreshCategoryData(client)
     },
   })
 
@@ -72,9 +73,15 @@ export function useCategoryManagement(
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (mutation.isPending) return
     const form = new FormData(event.currentTarget)
+    const name = String(form.get('name')).trim()
+    if (name === '') {
+      setNameInvalid(true)
+      return
+    }
     mutation.mutate({
-      name: String(form.get('name')).trim(),
+      name,
       icon: optional(String(form.get('icon'))),
       colorToken: optional(String(form.get('colorToken'))),
     })
@@ -98,6 +105,8 @@ export function useCategoryManagement(
     merge,
     visibleCategories,
     submit,
+    nameInvalid,
+    setNameInvalid,
   }
 }
 
