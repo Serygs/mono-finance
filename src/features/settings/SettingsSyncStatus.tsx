@@ -1,100 +1,89 @@
 import { useQuery } from '@tanstack/react-query'
-
 import { StatusBadge } from '../../components/ui/Chips'
+import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { Icon } from '../../components/ui/Icon'
 import { Popover } from '../../components/ui/Popover'
-import { useLocalization, type Translate } from '../localization/localization'
+import { useOnlineState } from '../../lib/use-online-state'
+import { useLocalization } from '../localization/localization'
 import { getTransactionSyncStatus } from '../transactions/transaction-sync-api'
 import { transactionQueryKeys } from '../transactions/transaction-queries'
-import type { TransactionSyncState } from '../transactions/transaction-sync-types'
+import {
+  transactionSyncLabel,
+  transactionSyncTone,
+} from '../transactions/transaction-sync-presentation'
 import { SettingsRowContent } from './SettingsSections'
 
 export function SettingsSyncStatus() {
   const { locale, t } = useLocalization()
+  const online = useOnlineState()
   const status = useQuery({
     queryFn: getTransactionSyncStatus,
     queryKey: transactionQueryKeys.syncStatus,
-    staleTime: 30_000,
+    staleTime: 30000,
   })
-
   return (
     <Popover
       className="settings-row-popover"
+      label={t('Sync status')}
+      mobileSheet
       content={
-        status.isPending ? (
-          <Skeleton label={t('Loading transaction sync status…')} lines={2} />
-        ) : status.isError ? (
-          <Alert tone="danger">
-            {t('Transaction sync status could not be loaded.')}
-          </Alert>
-        ) : status.data?.length === 0 ? (
-          <EmptyState title={t('No accounts ready for sync')}>
-            <p>{t('Synchronize accounts before importing transactions.')}</p>
-          </EmptyState>
-        ) : (
-          <div className="settings-sync-details">
-            <p>
-              {t(
-                'Imported data stays in D1; refreshes run one safe account window at a time.',
-              )}
-            </p>
+        <div className="settings-sync-details">
+          <p>
+            {t(
+              'Transaction refreshes process one account window at a time. Older history may still be incomplete.',
+            )}
+          </p>
+          {status.isPending ? (
+            <Skeleton label={t('Loading transaction sync status…')} lines={2} />
+          ) : null}
+          {status.isError ? (
+            <Alert tone="danger">
+              {t('Transaction sync status could not be loaded.')}
+            </Alert>
+          ) : null}
+          {status.data?.length === 0 ? (
+            <EmptyState title={t('No accounts ready for sync')}>
+              <p>{t('Synchronize accounts before importing transactions.')}</p>
+            </EmptyState>
+          ) : null}
+          {status.data === undefined ? null : (
             <ul className="settings-sync-details__list">
-              {status.data?.map((state) => (
+              {status.data.map((state) => (
                 <li key={state.accountId}>
                   <span>
-                    {accountLabel(state, t)} · {state.currencyCode}
+                    {state.accountType} · {state.currencyCode}
                   </span>
                   <StatusBadge
-                    label={statusLabel(state, t, locale)}
-                    tone={statusTone(state)}
+                    label={transactionSyncLabel(state, t, locale)}
+                    tone={transactionSyncTone(state)}
                   />
                 </li>
               ))}
             </ul>
-          </div>
-        )
+          )}
+          <Button
+            variant="secondary"
+            loading={status.isFetching}
+            disabled={!online}
+            onClick={() => void status.refetch()}
+          >
+            {t(
+              status.isFetching
+                ? 'Refreshing status…'
+                : status.isError
+                  ? 'Retry'
+                  : 'Refresh status',
+            )}
+          </Button>
+        </div>
       }
-      label={t('Sync status')}
     >
       <SettingsRowContent
-        icon="↻"
-        subtitle={t('Review imported transaction sync status.')}
+        icon="sync"
         title={t('Sync status')}
-        trailing={
-          <span aria-hidden="true" className="settings-row__chevron">
-            ›
-          </span>
-        }
+        trailing={<Icon name="chevron" />}
       />
     </Popover>
   )
-}
-
-function accountLabel(state: TransactionSyncState, t: Translate): string {
-  return `${state.accountType.charAt(0).toUpperCase()}${state.accountType.slice(1)} ${t('account')}`
-}
-
-function statusLabel(
-  state: TransactionSyncState,
-  t: Translate,
-  locale: string,
-): string {
-  if (state.status === 'running') return t('Sync in progress')
-  if (state.status === 'failed') return t('Sync needs retry')
-  if (state.lastSuccessfulSyncAt === null) return t('Not synced yet')
-  return t('Last synced {date}', {
-    date: new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(state.lastSuccessfulSyncAt * 1_000),
-  })
-}
-
-function statusTone(
-  state: TransactionSyncState,
-): 'danger' | 'neutral' | 'success' {
-  if (state.status === 'failed') return 'danger'
-  if (state.status === 'running' || state.lastSuccessfulSyncAt === null)
-    return 'neutral'
-  return 'success'
 }

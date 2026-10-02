@@ -1,6 +1,7 @@
 import { Skeleton } from '../../components/ui/Feedback'
 import { useLocalization } from '../localization/localization'
 import type { TransactionSyncState } from '../transactions/transaction-sync-types'
+import { transactionSyncLabel } from '../transactions/transaction-sync-presentation'
 
 export function DashboardSyncSummary({
   states,
@@ -18,14 +19,7 @@ export function DashboardSyncSummary({
             {item.accountType} · {item.currencyCode}
           </span>
           <strong className={`sync-state sync-state-${item.status}`}>
-            {item.status === 'failed'
-              ? t('Sync needs retry')
-              : item.lastSuccessfulSyncAt === null
-                ? t('Not synced yet')
-                : new Intl.DateTimeFormat(locale, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(item.lastSuccessfulSyncAt * 1000)}
+            {transactionSyncLabel(item, t, locale)}
           </strong>
         </li>
       ))}

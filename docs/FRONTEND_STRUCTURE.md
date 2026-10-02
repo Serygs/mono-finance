@@ -211,3 +211,38 @@ logout behavior remain unchanged.
 remounts, empty/error/loading/offline states, separate currencies, large amounts,
 stable visuals, contrast, touch/keyboard, both themes/locales, required widths and
 200% text scaling. Screenshots live only under ignored `phase5.local/`.
+
+## More and final integration (Phase 6)
+
+`SettingsPage` composes Appearance, Analytics, Data and sync, About and Session
+groups. `SettingsSections` owns static/action row presentation using the local
+SVG family. Theme uses the existing segmented control and provider; language,
+currency and status use the shared desktop popover/mobile sheet.
+
+`CurrencyPreferences` preserves the existing preference/rate APIs, adds localized
+validation and feedback, and updates the preference cache from the successful
+response. Its owning refresh policy invalidates analytics after currency/rate
+changes without changing accounts or original ledger data. `SettingsSyncStatus`
+reuses the status API/query identity, retains cached rows after later errors and
+provides a status retry/refresh, without another synchronization implementation.
+
+`transactions/transaction-sync-presentation` owns truthful running/failed/date
+labels shared by Overview, transaction status and More. Overview's existing
+transaction refresh now uses the ledger's invalidation policy and updates the
+shared status cache. A status-read failure cannot suppress refresh of imported
+financial data. Sync endpoints, bounded window scope and rate gates are intact.
+
+`auth/use-logout` is presentation orchestration shared by More and the desktop
+menu: pending/error state, repeat guard and route transition. The existing auth
+provider/API and encrypted-cache cleanup remain unchanged.
+
+`settings.css` owns grouped layouts; neutral controls/overlay focus and app shell
+ownership remain unchanged. `settings-foundation.spec.ts` covers persisted theme
+and language, device theme changes, currency validation/mutations, status recovery,
+cross-page refresh, logout/cache cleanup, contrast, focus and responsive layouts.
+Synthetic screenshots live only under ignored `phase6.local/`.
+
+The shell's skip link focuses content without overwriting legacy page hashes;
+active tabs follow the route adapters' default-hash behavior. Final integration
+also updates the legacy language test for the shared picker and checks visible
+loading rather than skeletons inside intentionally hidden category subviews.

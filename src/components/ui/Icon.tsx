@@ -16,6 +16,12 @@ const paths = {
   grip: 'M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01',
   check: 'm5 12 4 4L19 6',
   add: 'M12 5v14M5 12h14',
+  theme: 'M12 3v18M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18',
+  language:
+    'M3 12h18M12 3a16 16 0 0 0 0 18 16 16 0 0 0 0-18M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18',
+  currency:
+    'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18M12 6v12M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8',
+  logout: 'M9 4H4v16h5M9 12h12m-4-4 4 4-4 4',
 } satisfies Record<string, string>
 
 export type IconName = keyof typeof paths

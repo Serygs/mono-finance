@@ -9,6 +9,10 @@ import {
   synchronizeTransactions,
 } from '../transactions/transaction-sync-api'
 import type { TransactionSyncState } from '../transactions/transaction-sync-types'
+import {
+  refreshTransactionLedger,
+  transactionQueryKeys,
+} from '../transactions/transaction-queries'
 
 export function useDashboardSync() {
   const client = useQueryClient()
@@ -41,11 +45,15 @@ export function useDashboardSync() {
     setSyncingTransactions(true)
     try {
       await synchronizeTransactions()
-      setSyncStates(await getTransactionSyncStatus())
-      await Promise.all([
-        client.invalidateQueries({ queryKey: dashboardQueryKeys.analytics }),
-        client.invalidateQueries({ queryKey: dashboardQueryKeys.recent }),
-      ])
+      await refreshTransactionLedger(client)
+      const nextStates = await getTransactionSyncStatus().catch(() => {
+        setError('Transaction sync status could not be loaded.')
+        return null
+      })
+      if (nextStates !== null) {
+        setSyncStates(nextStates)
+        client.setQueryData(transactionQueryKeys.syncStatus, nextStates)
+      }
     } catch {
       setError('Transaction sync is unavailable. Try again later.')
     } finally {

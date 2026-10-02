@@ -152,3 +152,35 @@ test('overview and ledger use one correction workflow with focus return', async 
     page.getByRole('button', { name: 'Overview actions' }),
   ).toBeFocused()
 })
+
+test('keyboard skip preserves legacy pages and default hashes retain the correct active tab', async ({
+  page,
+}) => {
+  for (const [url, owner, active] of [
+    ['/?source=synthetic#accounts', 'accounts', '/#accounts'],
+    [
+      '/settings?source=synthetic#categories',
+      'categories',
+      '/settings#categories',
+    ],
+    ['/?source=synthetic#unknown', 'dashboard', '/'],
+    ['/settings?source=synthetic#unknown', 'settings', '/settings'],
+  ]) {
+    await page.goto(url!)
+    await expect(page.locator(`.${owner}-page`)).toBeVisible()
+    await expect(
+      page.locator('.desktop-navigation [aria-current=page]'),
+    ).toHaveAttribute('href', active!)
+    const before = page.url()
+    await page
+      .getByRole('link', { name: 'Skip to content', exact: true })
+      .focus()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#main-content')).toBeFocused()
+    expect(page.url()).toBe(before)
+    await expect(page.locator(`.${owner}-page`)).toBeVisible()
+    await expect(
+      page.locator('.desktop-navigation [aria-current=page]'),
+    ).toHaveAttribute('href', active!)
+  }
+})

@@ -1,4 +1,19 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'Analytics',
+  'About',
+  'Session',
+  'Signing out…',
+  'Unable to sign out. Try again.',
+  'Refresh status',
+  'Refreshing status…',
+  'Last successful update {date}',
+  'Transaction refreshes process one account window at a time. Older history may still be incomplete.',
+  'Analytics currency only. Account and original transaction currencies stay unchanged.',
+  'Enter a three-letter currency code.',
+  'Currency settings updated.',
+  'Exchange rates updated.',
+  'Connect to the internet to update settings.',
+  'Currency settings could not be loaded.',
   'Active describes account availability, not when its balance was updated.',
   'Your accounts',
   'Syncing accounts…',
@@ -448,6 +463,25 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
   >
 
 export const UKRAINIAN_MESSAGES = {
+  Analytics: 'Аналітика',
+  About: 'Про застосунок',
+  Session: 'Сеанс',
+  'Signing out…': 'Вихід…',
+  'Unable to sign out. Try again.': 'Не вдалося вийти. Спробуйте ще раз.',
+  'Refresh status': 'Оновити статус',
+  'Refreshing status…': 'Оновлення статусу…',
+  'Last successful update {date}': 'Останнє успішне оновлення: {date}',
+  'Transaction refreshes process one account window at a time. Older history may still be incomplete.':
+    'За одне оновлення імпортується один проміжок транзакцій одного рахунку. Давніша історія може бути неповною.',
+  'Analytics currency only. Account and original transaction currencies stay unchanged.':
+    'Валюта лише для аналітики. Валюти рахунків і початкових транзакцій залишаються незмінними.',
+  'Enter a three-letter currency code.': 'Введіть код валюти з трьох літер.',
+  'Currency settings updated.': 'Налаштування валюти оновлено.',
+  'Exchange rates updated.': 'Курси валют оновлено.',
+  'Connect to the internet to update settings.':
+    'Підключіться до інтернету, щоб оновити налаштування.',
+  'Currency settings could not be loaded.':
+    'Не вдалося завантажити налаштування валюти.',
   'Active describes account availability, not when its balance was updated.':
     'Статус «Активний» означає доступність рахунку, а не час оновлення залишку.',
   'Your accounts': 'Ваші рахунки',

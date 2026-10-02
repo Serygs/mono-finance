@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react'
+import { Icon, type IconName } from '../../components/ui/Icon'
 
 interface SettingsGroupProps {
   children: ReactNode
@@ -17,7 +18,7 @@ export function SettingsGroup({ children, title }: SettingsGroupProps) {
 }
 
 interface SettingsRowContentProps {
-  icon: string
+  icon: IconName
   subtitle?: string
   title: string
   trailing?: ReactNode
@@ -32,7 +33,7 @@ export function SettingsRowContent({
   return (
     <>
       <span aria-hidden="true" className="settings-row__icon">
-        {icon}
+        <Icon name={icon} />
       </span>
       <span className="settings-row__copy">
         <strong>{title}</strong>

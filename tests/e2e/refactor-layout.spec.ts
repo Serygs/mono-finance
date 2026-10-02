@@ -33,7 +33,8 @@ test('all five legacy destinations retain their layout in both themes and locale
         ]) {
           await page.goto(url!)
           await expect(page.locator(`.${owner}-page`)).toBeVisible()
-          await expect(page.locator('.ui-skeleton')).toHaveCount(0)
+          // Hidden category subviews retain state; only visible loading affects layout.
+          await expect(page.locator('.ui-skeleton:visible')).toHaveCount(0)
           // Freeze animations so before/after screenshots describe layout only.
           if ((width === 390 || width === 1440) && locale === 'en') {
             await page.screenshot({

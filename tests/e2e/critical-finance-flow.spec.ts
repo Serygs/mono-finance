@@ -142,9 +142,16 @@ test('language and category type mapping remain accessible', async ({
   await page.getByRole('link', { name: 'Ще' }).first().click()
   await expect(page.getByRole('heading', { name: 'Ще' })).toBeVisible()
   await page
-    .locator('.settings-page--grouped')
-    .getByLabel('\u041c\u043e\u0432\u0430')
-    .selectOption('en')
+    .locator('.settings-page')
+    .getByRole('button', { name: '\u041c\u043e\u0432\u0430', exact: true })
+    .click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', {
+      name: '\u0410\u043d\u0433\u043b\u0456\u0439\u0441\u044c\u043a\u0430',
+      exact: true,
+    })
+    .click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   await expect(page.getByRole('heading', { name: 'More' })).toBeVisible()
 
