@@ -1,4 +1,6 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
+import { Popover } from './Popover'
+import { Icon } from './Icon'
 
 type Accent = 'cyan' | 'blue' | 'green' | 'violet' | 'pink'
 
@@ -26,49 +28,21 @@ export function Card({ actions, children, className, title }: CardProps) {
 export function InfoTooltip({
   description,
   label,
+  children,
 }: {
   description: string
   label: string
+  children?: ReactNode
 }) {
-  const [open, setOpen] = useState(false)
-  const reference = useRef<HTMLSpanElement>(null)
-  const descriptionId = useId()
-
-  useEffect(() => {
-    function closeOnOutsidePointer(event: PointerEvent) {
-      if (!reference.current?.contains(event.target as Node)) setOpen(false)
-    }
-    if (open) document.addEventListener('pointerdown', closeOnOutsidePointer)
-    return () =>
-      document.removeEventListener('pointerdown', closeOnOutsidePointer)
-  }, [open])
-
   return (
-    <span className="ui-info-tooltip" ref={reference}>
-      <button
-        aria-describedby={open ? descriptionId : undefined}
-        aria-expanded={open}
-        aria-label={label}
-        className="ui-info-tooltip__trigger"
-        onBlur={() => setOpen(false)}
-        onClick={() => setOpen((value) => !value)}
-        onFocus={() => setOpen(true)}
-        onMouseEnter={() => setOpen(true)}
-        type="button"
-      >
-        i
-      </button>
-      {open ? (
-        <span
-          className="ui-info-tooltip__content"
-          id={descriptionId}
-          onMouseLeave={() => setOpen(false)}
-          role="tooltip"
-        >
-          {description}
-        </span>
-      ) : null}
-    </span>
+    <Popover
+      className={children === undefined ? 'ui-info-tooltip' : 'ui-label-help'}
+      openOnFocusHover
+      label={label}
+      content={<p className="ui-help-description">{description}</p>}
+    >
+      {children ?? <Icon name="info" />}
+    </Popover>
   )
 }
 
@@ -93,9 +67,12 @@ export function KpiCard({
     <section className={`ui-kpi ui-kpi--${accent}`}>
       <header className="ui-kpi__header">
         <h2>
-          {label}
-          {description === undefined ? null : (
-            <InfoTooltip description={description} label={label} />
+          {description === undefined ? (
+            label
+          ) : (
+            <InfoTooltip description={description} label={label}>
+              {label}
+            </InfoTooltip>
           )}
         </h2>
         {icon === undefined ? null : (

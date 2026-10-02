@@ -3,6 +3,9 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { getOfflineStatus, subscribeOfflineStatus } from './offline-api'
 import { type Translate, useLocalization } from '../localization/localization'
+import { useOnlineState } from '../../lib/use-online-state'
+import { dashboardQueryKeys } from '../dashboard/dashboard-query-keys'
+import { transactionQueryKeys } from '../transactions/transaction-queries'
 
 export function OfflineStatus() {
   const queryClient = useQueryClient()
@@ -19,9 +22,11 @@ export function OfflineStatus() {
     const reconnected = online && !wasOnline.current
     wasOnline.current = online
     if (!reconnected) return
-    void queryClient.invalidateQueries({ queryKey: ['dashboard-analytics'] })
-    void queryClient.invalidateQueries({ queryKey: ['dashboard-recent'] })
-    void queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    void queryClient.invalidateQueries({
+      queryKey: dashboardQueryKeys.analytics,
+    })
+    void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.recent })
+    void queryClient.invalidateQueries({ queryKey: transactionQueryKeys.all })
   }, [online, queryClient])
 
   if (online && status.source !== 'offline-cache') return null
@@ -34,22 +39,6 @@ export function OfflineStatus() {
             date: formatCachedAt(status.cachedAt, locale, t),
           })}
     </p>
-  )
-}
-
-function useOnlineState(): boolean {
-  const subscribe = (listener: () => void) => {
-    window.addEventListener('online', listener)
-    window.addEventListener('offline', listener)
-    return () => {
-      window.removeEventListener('online', listener)
-      window.removeEventListener('offline', listener)
-    }
-  }
-  return useSyncExternalStore(
-    subscribe,
-    () => navigator.onLine,
-    () => true,
   )
 }
 

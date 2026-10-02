@@ -26,7 +26,7 @@ export async function synchronizeTransactionsHandler(
   service: TransactionSyncService,
 ) {
   try {
-    const sync = await service.synchronizeLatestForAll(
+    const sync = await service.synchronizeNext(
       context.get('authenticatedUser').id,
     )
     return noStore(context.json(success({ sync })))

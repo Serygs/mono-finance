@@ -1,51 +1,35 @@
+import { formatEpochDate } from '../../lib/date-presentation'
+import { formatMoney } from '../../lib/money-presentation'
 import type { TransactionListItem } from './transaction-types'
+import { ENGLISH_MESSAGES, UKRAINIAN_MESSAGES } from '../localization/messages'
 
 export function formatTransactionAmount(
   transaction: TransactionListItem,
   locale?: string,
 ): string {
-  return formatMoneyAmount(
+  return formatMinorAmount(
     transaction.effectiveAmountMinor,
-    transaction.currencyCode,
-    transaction.currencyMinorUnit,
+    transaction,
     locale,
   )
-}
-
-export function formatMoneyAmount(
-  amountMinor: number,
-  currencyCode: string,
-  currencyMinorUnit: number,
-  locale?: string,
-  includePositiveSign = false,
-): string {
-  return new Intl.NumberFormat(locale, {
-    currency: currencyCode,
-    currencyDisplay: 'code',
-    maximumFractionDigits: currencyMinorUnit,
-    minimumFractionDigits: currencyMinorUnit,
-    signDisplay: includePositiveSign ? 'always' : 'auto',
-    style: 'currency',
-  }).format(amountMinor / 10 ** currencyMinorUnit)
 }
 
 export function formatTransactionTime(
   epochSeconds: number,
   locale?: string,
 ): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(epochSeconds * 1_000)
+  return formatEpochDate(
+    epochSeconds,
+    {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    },
+    locale,
+  )
 }
 
-export function formatTransactionDate(
-  epochSeconds: number,
-  locale?: string,
-): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
-    epochSeconds * 1_000,
-  )
+export function formatTransactionDate(epochSeconds: number): string {
+  return formatEpochDate(epochSeconds, { dateStyle: 'full' })
 }
 
 export function formatTransactionDateGroup(
@@ -99,7 +83,7 @@ export function groupTransactionsByDate<
 export function accountLabel(transaction: TransactionListItem): string {
   const type = `${transaction.account.type.charAt(0).toUpperCase()}${transaction.account.type.slice(1)}`
   return transaction.account.maskedPan === null
-    ? `${type} account`
+    ? `${type} · ${transaction.currencyCode} · ${transaction.account.id}`
     : `${type} •••• ${transaction.account.maskedPan.slice(-4)}`
 }
 
@@ -128,4 +112,60 @@ export function parseAmountInputToMinor(
   const amount = Number(whole) * scale + Number(fraction.padEnd(minorUnit, '0'))
   if (!Number.isSafeInteger(amount)) return null
   return match[1] === '-' ? -amount : amount
+}
+
+export function formatDateGroupAmount(
+  transactions: TransactionListItem[],
+  locale?: string,
+): string {
+  const [firstTransaction] = transactions
+  if (
+    firstTransaction === undefined ||
+    transactions.some(
+      (transaction) =>
+        transaction.currencyCode !== firstTransaction.currencyCode ||
+        transaction.currencyMinorUnit !== firstTransaction.currencyMinorUnit,
+    )
+  ) {
+    return ''
+  }
+  const amountMinor = transactions.reduce(
+    (sum, transaction) => sum + BigInt(transaction.effectiveAmountMinor),
+    0n,
+  )
+  return formatMinorAmount(amountMinor, firstTransaction, locale)
+}
+
+export function formatTransactionClock(
+  epochSeconds: number,
+  locale?: string,
+): string {
+  return formatEpochDate(epochSeconds, { timeStyle: 'short' }, locale)
+}
+
+export function formatMinorAmount(
+  amountMinor: number | bigint,
+  transaction: TransactionListItem,
+  locale?: string,
+): string {
+  return formatMoney(amountMinor, {
+    currencyCode: transaction.currencyCode,
+    minorUnit: transaction.currencyMinorUnit,
+    ...(locale === undefined ? {} : { locale }),
+    signDisplay: 'exceptZero',
+    unknownMinorUnitsLabel: (locale === 'uk'
+      ? UKRAINIAN_MESSAGES
+      : ENGLISH_MESSAGES)['minor units'],
+  }).replace(/^-/, '\u2212')
+}
+
+export function formatRecentTransactionDate(
+  timestamp: number,
+  locale: string,
+): string {
+  return formatEpochDate(
+    timestamp,
+    { day: 'numeric', hour: '2-digit', minute: '2-digit', month: 'short' },
+    locale,
+  )
 }

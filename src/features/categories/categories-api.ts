@@ -8,9 +8,7 @@ export interface CustomCategory {
 }
 export interface EffectiveCategory {
   category: {
-    colorToken: string | null
     id: string | null
-    icon: string | null
     name: string | null
     source: 'custom' | 'mapped' | 'original' | null
   }

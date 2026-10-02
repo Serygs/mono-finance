@@ -1,27 +1,37 @@
-const ISO_ALPHA_CODE = /^[A-Z]{3}$/
+import { formatMoney } from '../../lib/money-presentation'
 
 export function formatAccountBalance(
   amountMinor: bigint | number,
   minorUnit: number,
   currencyCode: string,
+  locale = 'en-US',
+  unknownMinorUnitsLabel = 'minor units',
 ): string {
-  const amount = BigInt(amountMinor)
-  const absolute = amount < 0n ? -amount : amount
-  const sign = amount < 0n ? '−' : ''
-
-  if (!ISO_ALPHA_CODE.test(currencyCode)) {
-    return `${sign}${formatInteger(absolute)} minor units · ISO ${currencyCode}`
-  }
-
-  const factor = 10n ** BigInt(minorUnit)
-  const integer = absolute / factor
-  const fraction = (absolute % factor).toString().padStart(minorUnit, '0')
-  const decimal = minorUnit === 0 ? '' : `.${fraction}`
-  return `${sign}${formatInteger(integer)}${decimal} ${currencyCode}`
+  return formatMoney(amountMinor, {
+    minorUnit,
+    currencyCode,
+    locale,
+    unknownMinorUnitsLabel,
+  })
 }
 
-function formatInteger(value: bigint): string {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-  }).format(value)
+export function currencyDisplayName(
+  code: string,
+  apiName: string,
+  locale: string,
+) {
+  if (!/^[A-Z]{3}$/.test(code)) return code
+  return (
+    new Intl.DisplayNames(locale, { type: 'currency', fallback: 'none' }).of(
+      code,
+    ) ?? apiName
+  )
+}
+
+export function accountVisualIdentity(id: string, type: string) {
+  if (type === 'black' || type === 'white') return type
+  let hash = 0
+  for (const character of id)
+    hash = Math.imul(hash, 31) + character.charCodeAt(0)
+  return ['blue', 'violet', 'green'][(hash >>> 0) % 3]!
 }

@@ -236,7 +236,7 @@ Known limitation: a browser restarted while offline cannot reopen financial data
 
 Mono Finance uses an original Apple-inspired visual system without copying Apple assets. Financial legibility takes priority over decoration.
 
-- Role tokens are defined in `src/styles/index.css`; reusable primitive styles are in `src/styles/design-system.css`; screen composition is in `src/styles/screen-layouts.css`.
+- Role tokens, reset and base typography are defined in `src/styles/index.css`; shared primitive styles live in `src/components/ui/ui.css`; shell/navigation styles live in `src/app/app-shell.css`; feature styles are adjacent to their owners. See [frontend ownership](docs/FRONTEND_STRUCTURE.md) for the structure and compatibility boundaries.
 - Use reusable components from `src/components/ui/` before adding feature-specific primitives.
 - Keep content surfaces mostly opaque; reserve restrained blur for shell chrome and modal backdrops.
 - Use tabular numerals and show immutable original values secondarily when an effective value differs.
@@ -286,7 +286,7 @@ npx playwright install chromium
 
 Coverage floors are 65% statements, 60% branches, 62% functions, and 67% lines. Do not reduce them to accept a regression.
 
-Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
+Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Service workers are blocked in this suite so shell caching cannot interfere with navigation or Vite development assets. Layout matrices run as separate theme/locale cases to keep each test within its time budget. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
 
 ## CI/CD and production deployment
 
@@ -345,13 +345,6 @@ owner through `/api/auth/setup`. Do not copy production rows, IDs, tokens, or
 configuration from another instance.
 
 ## Privacy
-
-### Custom merchant and category icons
-
-Owner-uploaded icons live in the deployment's dedicated D1 visual-assets table,
-never in immutable transaction rows. They are private, validated/sanitized, and
-not source-controlled. See [self-hosting](docs/SELF_HOSTING.md) for limits and
-priority.
 
 Financial data remains in the operator's D1 database and Cloudflare account.
 The repository contains no production transactions or credentials. Operators

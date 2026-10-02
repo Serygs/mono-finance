@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  latestTransactionSyncWindow,
-  nextTransactionSyncWindow,
-} from './transaction-sync-window'
+import { nextTransactionSyncWindow } from './transaction-sync-window'
 
 describe('nextTransactionSyncWindow', () => {
   it('creates the first historical window within Monobank limits', () => {
@@ -48,41 +45,5 @@ describe('nextTransactionSyncWindow', () => {
         nowEpochSeconds: 10_000_000,
       }),
     ).toEqual({ fromEpochSeconds: 7_318_000, toEpochSeconds: 10_000_000 })
-  })
-})
-
-describe('latestTransactionSyncWindow', () => {
-  it('imports the newest provider-supported window for a newly synchronized account', () => {
-    expect(
-      latestTransactionSyncWindow({
-        backfillCursorAt: null,
-        historicalStartAt: 1_000,
-        lastSyncedTransactionAt: null,
-        nowEpochSeconds: 3_683_000,
-      }),
-    ).toEqual({ fromEpochSeconds: 1_001_000, toEpochSeconds: 3_683_000 })
-  })
-
-  it('uses the overlap window even while historical backfill is incomplete', () => {
-    expect(
-      latestTransactionSyncWindow({
-        backfillCursorAt: 2_000,
-        historicalStartAt: 1_000,
-        lastSyncedTransactionAt: 3_000_000,
-        nowEpochSeconds: 3_100_000,
-      }),
-    ).toEqual({ fromEpochSeconds: 2_913_600, toEpochSeconds: 3_100_000 })
-  })
-
-  it('uses a successful empty refresh as the next incremental watermark', () => {
-    expect(
-      latestTransactionSyncWindow({
-        backfillCursorAt: null,
-        historicalStartAt: 1_000,
-        lastSuccessfulSyncAt: 3_000_000,
-        lastSyncedTransactionAt: null,
-        nowEpochSeconds: 3_100_000,
-      }),
-    ).toEqual({ fromEpochSeconds: 2_913_600, toEpochSeconds: 3_100_000 })
   })
 })

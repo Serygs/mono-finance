@@ -22,7 +22,7 @@ describe('transaction synchronization routes', () => {
     expect(service.listedFor).toBe('owner-1')
   })
 
-  it('starts a latest transaction pass for every active account of the owner', async () => {
+  it('starts one resumable transaction sync for the owner', async () => {
     const service = new FakeTransactionSyncService()
     const response = await authenticatedRequest(
       service,
@@ -131,10 +131,11 @@ class FakeTransactionSyncService {
     },
   ]
   readonly result = {
-    accountIds: ['account-1'],
+    accountId: 'account-1',
     importedCount: 1,
     skippedDuplicateCount: 0,
     status: 'synchronized' as const,
+    window: { fromEpochSeconds: 1_000, toEpochSeconds: 2_000 },
   }
 
   async listStatus(userId: string) {
@@ -142,7 +143,7 @@ class FakeTransactionSyncService {
     return this.states
   }
 
-  async synchronizeLatestForAll(userId: string) {
+  async synchronizeNext(userId: string) {
     this.synchronizedFor = userId
     if (this.error !== null) {
       throw this.error

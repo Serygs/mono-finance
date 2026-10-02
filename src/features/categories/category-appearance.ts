@@ -1,21 +1,15 @@
-import type { CategoryIconToken } from '../../components/ui/CategoryIcon'
-
 export const CATEGORY_ICONS = [
   { label: 'Wallet', token: 'wallet' },
   { label: 'Groceries', token: 'groceries' },
   { label: 'Dining', token: 'dining' },
-  { label: 'Fuel', token: 'fuel' },
   { label: 'Home', token: 'home' },
   { label: 'Transport', token: 'transport' },
   { label: 'Health', token: 'health' },
   { label: 'Shopping', token: 'shopping' },
   { label: 'Entertainment', token: 'entertainment' },
-  { label: 'Subscriptions', token: 'subscriptions' },
   { label: 'Travel', token: 'travel' },
   { label: 'Education', token: 'education' },
   { label: 'Bills', token: 'bills' },
-  { label: 'Transfers', token: 'transfer' },
-  { label: 'Utilities', token: 'utilities' },
   { label: 'Savings', token: 'savings' },
 ] as const
 
@@ -30,10 +24,18 @@ export const CATEGORY_COLORS = [
   { label: 'Slate', token: 'slate' },
 ] as const
 
-export type CategoryColorToken = (typeof CATEGORY_COLORS)[number]['token']
-
-export function isCategoryIconToken(
-  token: string | null | undefined,
-): token is CategoryIconToken {
-  return CATEGORY_ICONS.some((option) => option.token === token)
+export function resolveCategoryAppearance(
+  appearance: { icon: string | null; colorToken: string | null } | undefined,
+) {
+  if (appearance === undefined) return { icon: null, colorToken: null }
+  return {
+    icon: CATEGORY_ICONS.some((item) => item.token === appearance.icon)
+      ? appearance.icon
+      : null,
+    colorToken: CATEGORY_COLORS.some(
+      (item) => item.token === appearance.colorToken,
+    )
+      ? appearance.colorToken
+      : null,
+  }
 }

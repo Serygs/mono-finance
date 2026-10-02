@@ -1,3 +1,4 @@
 # Wrangler's remote D1 migration parser mishandles CRLF trigger bodies on
 # Windows. Keep every tracked migration byte-identical across platforms.
 migrations/*.sql text eol=lf
+* text=auto eol=lf

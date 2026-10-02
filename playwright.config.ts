@@ -6,6 +6,9 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    // This suite mocks APIs and loads Vite modules directly; PWA shell caching
+    // must not intercept navigation or reuse development assets between loads.
+    serviceWorkers: 'block',
     trace: 'retain-on-failure',
   },
   webServer: {

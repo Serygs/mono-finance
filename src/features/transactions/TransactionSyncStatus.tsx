@@ -1,7 +1,8 @@
 import type { TransactionSyncState } from './transaction-sync-types'
+import { transactionSyncLabel } from './transaction-sync-presentation'
 import { EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { Card } from '../../components/ui/Surfaces'
-import { type Translate, useLocalization } from '../localization/localization'
+import { useLocalization } from '../localization/localization'
 
 interface TransactionSyncStatusProps {
   states: TransactionSyncState[] | null
@@ -29,10 +30,11 @@ export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
           {states.map((state) => (
             <li key={state.accountId}>
               <span>
-                {accountLabel(state, t)} · {state.currencyCode}
+                {`${state.accountType.charAt(0).toUpperCase()}${state.accountType.slice(1)} ${t('account')}`}{' '}
+                · {state.currencyCode}
               </span>
               <strong className={`sync-state sync-state-${state.status}`}>
-                {statusLabel(state, t, locale)}
+                {transactionSyncLabel(state, t, locale)}
               </strong>
             </li>
           ))}
@@ -40,24 +42,4 @@ export function TransactionSyncStatus({ states }: TransactionSyncStatusProps) {
       )}
     </Card>
   )
-}
-
-function accountLabel(state: TransactionSyncState, t: Translate): string {
-  return `${state.accountType.charAt(0).toUpperCase()}${state.accountType.slice(1)} ${t('account')}`
-}
-
-function statusLabel(
-  state: TransactionSyncState,
-  t: Translate,
-  locale: string,
-): string {
-  if (state.status === 'running') return t('Sync in progress')
-  if (state.status === 'failed') return t('Sync needs retry')
-  if (state.lastSuccessfulSyncAt === null) return t('Not synced yet')
-  return t('Last synced {date}', {
-    date: new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(state.lastSuccessfulSyncAt * 1_000),
-  })
 }

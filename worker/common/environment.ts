@@ -16,5 +16,3 @@ export interface AuthEnvironment extends AppEnvironment {
 
 /** Monobank credentials remain available only to Worker integration code. */
 export type MonobankEnvironment = AuthEnvironment & Pick<Env, 'MONOBANK_TOKEN'>
-
-export type VisualEnvironment = MonobankEnvironment

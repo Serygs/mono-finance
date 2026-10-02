@@ -9,20 +9,7 @@ import {
 import { readCookie, SESSION_COOKIE_NAME } from './auth/cookies'
 import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
-import type {
-  AuthEnvironment,
-  MonobankEnvironment,
-  VisualEnvironment,
-} from './common/environment'
-import {
-  deleteCategoryVisualHandler,
-  deleteMerchantVisualHandler,
-  getVisualAssetHandler,
-  listVisualsHandler,
-  setCategoryVisualHandler,
-  setMerchantVisualHandler,
-  uploadVisualHandler,
-} from './routes/visuals'
+import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
 import { logError, requestId, safeErrorLogFields } from './common/observability'
 import { applyApiSecurityHeaders } from './common/security-headers'
 import type { AccountService } from './services/account-service'
@@ -134,7 +121,7 @@ export function createApp(
   ) => ExchangeRateService = createExchangeRateService,
 ) {
   const app = new Hono<{
-    Bindings: VisualEnvironment
+    Bindings: MonobankEnvironment
     Variables: { authenticatedUser: AuthenticatedUser }
   }>()
 
@@ -201,13 +188,6 @@ export function createApp(
   app.get('/api/accounts', (context) =>
     listAccountsHandler(context, accountServiceFactory(context.env)),
   )
-  app.get('/api/visuals', listVisualsHandler)
-  app.post('/api/visual-assets', uploadVisualHandler)
-  app.get('/api/visual-assets/:assetId', getVisualAssetHandler)
-  app.put('/api/merchant-visuals/:merchantKey', setMerchantVisualHandler)
-  app.delete('/api/merchant-visuals/:merchantKey', deleteMerchantVisualHandler)
-  app.put('/api/categories/:categoryKey/visual', setCategoryVisualHandler)
-  app.delete('/api/categories/:categoryKey/visual', deleteCategoryVisualHandler)
   app.get('/api/transactions', (context) =>
     listTransactionsHandler(
       context,

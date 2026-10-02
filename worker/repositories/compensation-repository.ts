@@ -5,7 +5,6 @@ import type {
 } from '../services/compensation-service'
 
 interface TransactionRow {
-  allocated_amount_minor?: number
   direction: 'expense' | 'income'
   id: string
   original_amount_minor: number
@@ -68,7 +67,7 @@ export class D1CompensationRepository implements CompensationRepository {
   ): Promise<CompensationTransaction[]> {
     const rows = await this.database
       .prepare(
-        `SELECT transactions.id, transactions.direction, transactions.original_amount_minor, transactions.original_currency_code, transactions.original_description, transactions.original_timestamp, COALESCE(SUM(compensation_links.compensated_amount_minor), 0) AS allocated_amount_minor FROM transactions LEFT JOIN compensation_links ON compensation_links.compensation_transaction_id = transactions.id AND compensation_links.user_id = transactions.user_id WHERE transactions.user_id = ? AND transactions.direction = 'income' AND transactions.original_currency_code = ? GROUP BY transactions.id, transactions.direction, transactions.original_amount_minor, transactions.original_currency_code, transactions.original_description, transactions.original_timestamp HAVING transactions.original_amount_minor > COALESCE(SUM(compensation_links.compensated_amount_minor), 0) ORDER BY transactions.original_timestamp DESC, transactions.id DESC`,
+        `SELECT id, direction, original_amount_minor, original_currency_code, original_description, original_timestamp FROM transactions WHERE user_id = ? AND direction = 'income' AND original_currency_code = ? AND NOT EXISTS (SELECT 1 FROM compensation_links WHERE compensation_links.compensation_transaction_id = transactions.id) ORDER BY original_timestamp DESC, id DESC LIMIT 100`,
       )
       .bind(userId, currencyCode)
       .all<TransactionRow>()
@@ -135,7 +134,6 @@ export class D1CompensationRepository implements CompensationRepository {
 }
 function transaction(row: TransactionRow): CompensationTransaction {
   return {
-    allocatedAmountMinor: row.allocated_amount_minor ?? 0,
     direction: row.direction,
     id: row.id,
     originalAmountMinor: row.original_amount_minor,

@@ -23,13 +23,7 @@ describe('CategoryService', () => {
     await expect(
       service.setTransactionOverride('owner-1', 'transaction-1', 'category-1'),
     ).resolves.toEqual({
-      category: {
-        colorToken: 'mint',
-        icon: 'leaf',
-        id: 'category-1',
-        name: 'Shared meals',
-        source: 'custom',
-      },
+      category: { id: 'category-1', name: 'Shared meals', source: 'custom' },
       originalCategory: { id: '5812', name: 'Restaurants' },
     })
     expect(repository.transaction.originalCategoryName).toBe('Restaurants')
@@ -43,13 +37,7 @@ describe('CategoryService', () => {
     await expect(
       service.resetTransactionOverride('owner-1', 'transaction-1'),
     ).resolves.toEqual({
-      category: {
-        colorToken: null,
-        icon: null,
-        id: '5812',
-        name: 'Restaurants',
-        source: 'original',
-      },
+      category: { id: '5812', name: 'Restaurants', source: 'original' },
       originalCategory: { id: '5812', name: 'Restaurants' },
     })
   })

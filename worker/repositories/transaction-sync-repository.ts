@@ -16,7 +16,6 @@ interface SyncCandidateRow {
   backfill_start_at: number | null
   currency_code: string
   last_synced_transaction_at: number | null
-  last_successful_sync_at: number | null
   monobank_account_id: string
   user_id: string
 }
@@ -77,7 +76,6 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
         backfillStartAt: candidate.backfill_start_at ?? historicalStartAt,
         currencyCode: candidate.currency_code,
         lastSyncedTransactionAt: candidate.last_synced_transaction_at,
-        lastSuccessfulSyncAt: candidate.last_successful_sync_at,
         monobankAccountId: candidate.monobank_account_id,
         userId: candidate.user_id,
       }
@@ -132,31 +130,6 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
       importedCount,
       skippedDuplicateCount: input.transactions.length - importedCount,
     }
-  }
-
-  async completeLatestWindow(input: {
-    accountId: string
-    lastSyncedTransactionAt: number | null
-    nowEpochSeconds: number
-  }): Promise<void> {
-    await this.database
-      .prepare(
-        `UPDATE sync_state
-         SET status = 'idle',
-             last_synced_transaction_at = ?,
-             last_successful_sync_at = ?,
-             last_error_code = NULL,
-             lease_expires_at = NULL,
-             updated_at = ?
-         WHERE account_id = ?`,
-      )
-      .bind(
-        input.lastSyncedTransactionAt,
-        input.nowEpochSeconds,
-        input.nowEpochSeconds,
-        input.accountId,
-      )
-      .run()
   }
 
   async completeWindow(input: {
@@ -255,7 +228,7 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
         `SELECT accounts.id AS account_id, accounts.user_id, accounts.type AS account_type,
            accounts.monobank_account_id, accounts.currency_code,
            sync_state.backfill_start_at, sync_state.backfill_cursor_at,
-           sync_state.last_synced_transaction_at, sync_state.last_successful_sync_at
+           sync_state.last_synced_transaction_at
          FROM sync_state
          INNER JOIN accounts ON accounts.id = sync_state.account_id
          WHERE accounts.is_active = 1
@@ -265,81 +238,6 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
          LIMIT 1`,
       )
       .bind(userId, userId, nowEpochSeconds)
-      .first<SyncCandidateRow>()
-  }
-
-  async claimNextLatest(
-    userId: string,
-    nowEpochSeconds: number,
-    historicalStartAt: number,
-    excludedAccountIds: readonly string[],
-  ): Promise<ClaimedTransactionSyncAccount | null> {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const candidate = await this.nextLatestCandidate(
-        userId,
-        nowEpochSeconds,
-        excludedAccountIds,
-      )
-      if (candidate === null) {
-        return null
-      }
-      const claimed = await this.database
-        .prepare(
-          `UPDATE sync_state
-           SET status = 'running', last_attempt_at = ?,
-               backfill_start_at = COALESCE(backfill_start_at, ?),
-               lease_expires_at = ?, updated_at = ?
-           WHERE account_id = ?
-             AND (lease_expires_at IS NULL OR lease_expires_at <= ?)`,
-        )
-        .bind(
-          nowEpochSeconds,
-          historicalStartAt,
-          nowEpochSeconds + SYNC_LEASE_SECONDS,
-          nowEpochSeconds,
-          candidate.account_id,
-          nowEpochSeconds,
-        )
-        .run()
-      if (claimed.meta.changes !== 1) continue
-      return {
-        accountId: candidate.account_id,
-        accountType: candidate.account_type,
-        backfillCursorAt: candidate.backfill_cursor_at,
-        backfillStartAt: candidate.backfill_start_at ?? historicalStartAt,
-        currencyCode: candidate.currency_code,
-        lastSyncedTransactionAt: candidate.last_synced_transaction_at,
-        lastSuccessfulSyncAt: candidate.last_successful_sync_at,
-        monobankAccountId: candidate.monobank_account_id,
-        userId: candidate.user_id,
-      }
-    }
-    return null
-  }
-
-  private async nextLatestCandidate(
-    userId: string,
-    nowEpochSeconds: number,
-    excludedAccountIds: readonly string[],
-  ): Promise<SyncCandidateRow | null> {
-    const exclusions =
-      excludedAccountIds.length === 0
-        ? ''
-        : ` AND accounts.id NOT IN (${excludedAccountIds.map(() => '?').join(', ')})`
-    const statement = this.database.prepare(
-      `SELECT accounts.id AS account_id, accounts.user_id, accounts.type AS account_type,
-         accounts.monobank_account_id, accounts.currency_code,
-         sync_state.backfill_start_at, sync_state.backfill_cursor_at,
-         sync_state.last_synced_transaction_at, sync_state.last_successful_sync_at
-       FROM sync_state
-       INNER JOIN accounts ON accounts.id = sync_state.account_id
-       WHERE accounts.is_active = 1 AND accounts.user_id = ?
-         AND (sync_state.lease_expires_at IS NULL OR sync_state.lease_expires_at <= ?)${exclusions}
-       ORDER BY COALESCE(sync_state.last_successful_sync_at, 0), accounts.created_at, accounts.id
-       LIMIT 1`,
-    )
-    return statement
-      .bind(userId, nowEpochSeconds, ...excludedAccountIds)
       .first<SyncCandidateRow>()
   }
 }

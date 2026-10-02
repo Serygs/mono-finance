@@ -1,3 +1,9 @@
+import {
+  dateInputToLocalEpoch,
+  formatEpochDate,
+  localEpoch,
+} from '../../lib/date-presentation'
+import { formatMoney } from '../../lib/money-presentation'
 import type {
   AnalyticsBreakdowns,
   AnalyticsOverview,
@@ -28,44 +34,11 @@ export interface DashboardAnalytics {
   trends: AnalyticsTrends
 }
 
-export type ExpenseCategory = AnalyticsBreakdowns['expensesByCategory'][number]
 export type TimeSeriesBucket = TimeSeriesPoint & { periodEnd: number }
 
 export interface GroupedIncomeExpenseValue {
   expenseMagnitude: number
   incomeMagnitude: number
-}
-
-export function displayExpenseCategories(
-  values: readonly ExpenseCategory[],
-  otherCategoryName: string,
-): { all: ExpenseCategory[]; initial: ExpenseCategory[] } {
-  const all = [...values].sort(
-    (left, right) => right.amountMinor - left.amountMinor,
-  )
-  const topCategories = all.slice(0, 5)
-  const remainingCategories = all.slice(5)
-
-  if (remainingCategories.length === 0) {
-    return { all, initial: topCategories }
-  }
-  const firstRemainingCategory = remainingCategories[0]
-  if (firstRemainingCategory === undefined) {
-    return { all, initial: topCategories }
-  }
-
-  return {
-    all,
-    initial: topCategories.concat({
-      amountMinor: remainingCategories.reduce(
-        (total, category) => total + category.amountMinor,
-        0,
-      ),
-      categoryId: null,
-      categoryName: otherCategoryName,
-      currencyCode: firstRemainingCategory.currencyCode,
-    }),
-  }
 }
 
 export function resolveDashboardRange(
@@ -77,8 +50,8 @@ export function resolveDashboardRange(
   const todayEnd =
     localEpoch(now.getFullYear(), now.getMonth(), now.getDate() + 1) - 1
   if (preset === 'custom') {
-    const dateFrom = dateInputToEpoch(customFrom)
-    const dateToStart = dateInputToEpoch(customTo)
+    const dateFrom = dateInputToLocalEpoch(customFrom)
+    const dateToStart = dateInputToLocalEpoch(customTo)
     if (dateFrom === null || dateToStart === null) return null
     return { dateFrom, dateTo: dateToStart + 86_399 }
   }
@@ -205,11 +178,11 @@ export function groupTimeSeriesIntoBuckets(
   points: readonly TimeSeriesPoint[],
   maximumBuckets = 7,
 ): TimeSeriesBucket[] {
-  if (points.length <= maximumBuckets)
-    return points.map((point) => ({ ...point, periodEnd: point.periodStart }))
   const sorted = [...points].sort(
     (left, right) => left.periodStart - right.periodStart,
   )
+  if (sorted.length <= maximumBuckets)
+    return sorted.map((point) => ({ ...point, periodEnd: point.periodStart }))
   const bucketSize = Math.ceil(sorted.length / maximumBuckets)
   const buckets: TimeSeriesBucket[] = []
   for (let index = 0; index < sorted.length; index += bucketSize) {
@@ -291,18 +264,16 @@ export function chartAccentIndex(stableKey: string): number {
 }
 
 export function formatCurrencyAmount(
-  amountMinor: number,
+  amountMinor: number | bigint,
   currencyCode: string,
   minorUnit = 2,
   locale?: string,
 ): string {
-  return new Intl.NumberFormat(locale, {
-    currency: currencyCode,
-    currencyDisplay: 'code',
-    maximumFractionDigits: minorUnit,
-    minimumFractionDigits: minorUnit,
-    style: 'currency',
-  }).format(amountMinor / 10 ** minorUnit)
+  return formatMoney(amountMinor, {
+    currencyCode,
+    minorUnit,
+    ...(locale === undefined ? {} : { locale }),
+  })
 }
 
 export function formatPeriod(
@@ -310,11 +281,15 @@ export function formatPeriod(
   granularity: 'day' | 'month',
   locale?: string,
 ): string {
-  return new Intl.DateTimeFormat(locale, {
-    day: granularity === 'day' ? 'numeric' : undefined,
-    month: granularity === 'day' ? 'short' : 'short',
-    year: granularity === 'day' ? undefined : 'numeric',
-  }).format(timestamp * 1_000)
+  return formatEpochDate(
+    timestamp,
+    {
+      day: granularity === 'day' ? 'numeric' : undefined,
+      month: 'short',
+      year: granularity === 'day' ? undefined : 'numeric',
+    },
+    locale,
+  )
 }
 
 function byCurrency<T extends { currencyCode: string }>(
@@ -322,14 +297,4 @@ function byCurrency<T extends { currencyCode: string }>(
   currencyCode: string,
 ): T[] {
   return (items ?? []).filter((item) => item.currencyCode === currencyCode)
-}
-
-function dateInputToEpoch(value: string): number | null {
-  if (!value) return null
-  const date = new Date(`${value}T00:00:00`)
-  return Number.isNaN(date.getTime()) ? null : date.getTime() / 1_000
-}
-
-function localEpoch(year: number, month: number, day: number): number {
-  return new Date(year, month, day).getTime() / 1_000
 }

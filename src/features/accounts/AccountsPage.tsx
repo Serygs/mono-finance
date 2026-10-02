@@ -1,66 +1,86 @@
 import { useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-
+import { useAccountsQuery } from './account-queries'
 import { StatusBadge } from '../../components/ui/Chips'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
+import { Icon } from '../../components/ui/Icon'
+import { MoneyText } from '../../components/ui/MoneyText'
 import { PageHeader, PageSurface } from '../../components/ui/Page'
-import { Card, InfoTooltip } from '../../components/ui/Surfaces'
+import { InfoTooltip } from '../../components/ui/Surfaces'
+import { useOnlineState } from '../../lib/use-online-state'
 import { useLocalization } from '../localization/localization'
-import { formatAccountBalance } from './account-formatting'
-import { getAccounts, synchronizeAccounts } from './accounts-api'
-import { synchronizeTransactions } from '../transactions/transaction-sync-api'
+import {
+  accountVisualIdentity,
+  currencyDisplayName,
+  formatAccountBalance,
+} from './account-formatting'
 import { summarizeCurrencyBalances } from './account-summary'
 import type { AccountSummary } from './account-types'
+import { useAccountSync } from './use-account-sync'
 
 export function AccountsPage() {
-  const { t } = useLocalization()
-  const client = useQueryClient()
-  const accounts = useQuery({
-    queryFn: getAccounts,
-    queryKey: ['accounts'],
-  })
-  const synchronize = useMutation({
-    mutationFn: async () => {
-      const nextAccounts = await synchronizeAccounts()
-      await synchronizeTransactions()
-      return nextAccounts
-    },
-    onSuccess: async (nextAccounts) => {
-      client.setQueryData(['accounts'], nextAccounts)
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['accounts'] }),
-        client.invalidateQueries({ queryKey: ['transactions'] }),
-        client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-        client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
-        client.invalidateQueries({ queryKey: ['transaction-sync-status'] }),
-      ])
-    },
-  })
+  const { locale, t } = useLocalization()
+  const accounts = useAccountsQuery()
+  const synchronize = useAccountSync()
+  const online = useOnlineState()
   const balances = useMemo(
     () => summarizeCurrencyBalances(accounts.data ?? []),
     [accounts.data],
   )
+  const knownAccounts = accounts.data !== undefined
+  const syncButton = (
+    <Button
+      loading={synchronize.isPending}
+      disabled={!online}
+      onClick={synchronize.sync}
+      type="button"
+      variant="secondary"
+    >
+      <Icon name="sync" />
+      {t(synchronize.isPending ? 'Syncing accounts…' : 'Sync accounts')}
+    </Button>
+  )
 
   return (
-    <PageSurface className="accounts-page accounts-page--summary">
+    <PageSurface className="accounts-page">
       <PageHeader
-        actions={
-          <Button
-            loading={synchronize.isPending}
-            onClick={() => synchronize.mutate()}
-            type="button"
-          >
-            {t('Sync accounts')}
-          </Button>
-        }
-        description={
-          <p>{t('Your synchronized balances, by account and currency.')}</p>
-        }
+        actions={syncButton}
         id="accounts-title"
         title={t('Accounts')}
       />
-      {accounts.isPending ? (
+      {!online ? (
+        <p className="accounts-sync-status" role="status">
+          {t(
+            'Connect to the internet to sync accounts. Previously loaded balances remain visible.',
+          )}
+        </p>
+      ) : null}
+      {synchronize.isPending ? (
+        <p className="accounts-sync-status" role="status">
+          {t(
+            'Updating account balances. This does not import transaction history.',
+          )}
+        </p>
+      ) : null}
+      {synchronize.isSuccess && !synchronize.isPending ? (
+        <p className="accounts-sync-status" role="status">
+          {t('Account balances updated. Transaction history sync is separate.')}
+        </p>
+      ) : null}
+      {synchronize.isError ? (
+        <Alert tone="danger" title={t('Accounts could not be synchronized')}>
+          <p>{t('Accounts could not be synchronized. Try again later.')}</p>
+          <Button
+            variant="secondary"
+            disabled={!online}
+            onClick={synchronize.sync}
+            type="button"
+          >
+            {t('Retry')}
+          </Button>
+        </Alert>
+      ) : null}
+      {accounts.isPending && !knownAccounts ? (
         <Skeleton label={t('Loading accounts…')} lines={5} />
       ) : null}
       {accounts.isError ? (
@@ -69,32 +89,17 @@ export function AccountsPage() {
           title={t('Accounts could not be loaded. Try again later.')}
         >
           <Button
+            variant="secondary"
+            disabled={!online || accounts.isFetching}
             onClick={() => void accounts.refetch()}
-            size="small"
             type="button"
           >
             {t('Retry')}
           </Button>
         </Alert>
       ) : null}
-      {synchronize.isError ? (
-        <Alert tone="danger" title={t('Accounts could not be synchronized')}>
-          {t('Accounts could not be synchronized. Try again later.')}
-        </Alert>
-      ) : null}
-      {accounts.data !== undefined && accounts.data.length === 0 ? (
-        <EmptyState
-          action={
-            <Button
-              loading={synchronize.isPending}
-              onClick={() => synchronize.mutate()}
-              type="button"
-            >
-              {t('Sync accounts')}
-            </Button>
-          }
-          title={t('No synchronized accounts')}
-        >
+      {accounts.data?.length === 0 ? (
+        <EmptyState title={t('No synchronized accounts')}>
           <p>
             {t('Use Sync accounts to import the latest Monobank accounts.')}
           </p>
@@ -106,64 +111,65 @@ export function AccountsPage() {
             aria-labelledby="account-balance-summary-title"
             className="accounts-balance-summary"
           >
-            <header className="accounts-balance-summary__heading">
-              <div>
-                <h2 id="account-balance-summary-title">
-                  {t('Account balances')}
-                  <InfoTooltip
-                    description={t(
-                      'Balances are shown in their original currencies.',
-                    )}
-                    label={t('Account balances')}
-                  />
-                </h2>
-                <p>{t('Balances are shown in their original currencies.')}</p>
-              </div>
-              <span>
-                {t('{count} accounts', { count: accounts.data.length })}
-              </span>
-            </header>
+            <h2 id="account-balance-summary-title">
+              {t('Account balances')}
+              <InfoTooltip
+                label={t('Account balances')}
+                description={t(
+                  'Balances are shown in their original currencies.',
+                )}
+              />
+            </h2>
             <ul className="accounts-currency-summary">
               {balances.map((balance) => (
                 <li key={balance.code}>
-                  <span
-                    aria-hidden="true"
-                    className="accounts-currency-summary__icon"
-                  >
-                    {balance.code.slice(0, 1)}
-                  </span>
-                  <span className="accounts-currency-summary__copy">
-                    <span>{balance.displayName}</span>
-                    <small>
-                      {t('{count} accounts', { count: balance.accountCount })}
-                    </small>
+                  <span>
+                    {currencyDisplayName(
+                      balance.code,
+                      balance.displayName,
+                      locale,
+                    )}
                   </span>
                   <strong>
-                    {formatAccountBalance(
-                      balance.balanceMinor,
-                      balance.minorUnit,
-                      balance.code,
-                    )}
+                    <MoneyText
+                      locale={locale}
+                      value={formatAccountBalance(
+                        balance.balanceMinor,
+                        balance.minorUnit,
+                        balance.code,
+                        locale,
+                        t('minor units'),
+                      )}
+                    />
                   </strong>
                 </li>
               ))}
             </ul>
           </section>
-          <Card
-            actions={
-              <span className="accounts-list-card__count">
+          <section
+            aria-labelledby="accounts-list-title"
+            className="accounts-list-section"
+          >
+            <header>
+              <h2 id="accounts-list-title">
+                {t('Your accounts')}
+                <InfoTooltip
+                  label={t('Active')}
+                  description={t(
+                    'Active describes account availability, not when its balance was updated.',
+                  )}
+                />
+              </h2>
+              <span>
                 {t('{count} accounts', { count: accounts.data.length })}
               </span>
-            }
-            className="accounts-list-card"
-            title={t('Accounts')}
-          >
-            <ul className="accounts-list" aria-label={t('Accounts')}>
+            </header>
+            <ul className="accounts-list" aria-label={t('Your accounts')}>
               {accounts.data.map((account) => (
                 <AccountRow account={account} key={account.id} />
               ))}
             </ul>
-          </Card>
+          </section>
         </>
       )}
     </PageSurface>
@@ -171,46 +177,49 @@ export function AccountsPage() {
 }
 
 function AccountRow({ account }: { account: AccountSummary }) {
-  const { t } = useLocalization()
-  const primaryCard = account.cards.find((card) => card.isActive)
-  const balance = formatAccountBalance(
-    account.balanceMinor,
-    account.currency.minorUnit,
-    account.currency.code,
-  )
-
+  const { locale, t } = useLocalization()
+  const card = account.cards.find((card) => card.isActive) ?? account.cards[0]
+  // Type is the only account name in the current safe API contract.
+  const name =
+    account.type === ''
+      ? t('Account')
+      : ['black', 'white', 'platinum', 'iron', 'yellow'].includes(account.type)
+        ? `${account.type[0]!.toUpperCase()}${account.type.slice(1)}`
+        : account.type
   return (
-    <li className="account-row">
-      <span aria-hidden="true" className="account-row__icon">
-        mono
+    <li className="account-row" data-account-id={account.id}>
+      <span
+        aria-hidden="true"
+        className={`account-row__visual account-row__visual--${accountVisualIdentity(account.id, account.type)}`}
+      >
+        <Icon name="accounts" />
       </span>
       <div className="account-row__identity">
-        <strong>{displayAccountType(account.type)}</strong>
+        <strong>{name}</strong>
+      </div>
+      <div className="account-row__metadata">
         <span>
-          {account.currency.displayName} · {t('Account')}
+          {card?.maskedPan
+            ? `${t('Card')} ${card.maskedPan}`
+            : `${t('Account ID')} ${account.id}`}
         </span>
-        {primaryCard === undefined ? null : (
-          <small>
-            {t('Card')} •••• {primaryCard.maskedPan.slice(-4)}
-          </small>
-        )}
-      </div>
-      <div className="account-row__balance">
-        <strong>{balance}</strong>
-        <span>{account.currency.code}</span>
-      </div>
-      <div className="account-row__status">
         <StatusBadge
           label={t(account.isActive ? 'Active' : 'Unavailable')}
           tone={account.isActive ? 'success' : 'neutral'}
         />
       </div>
+      <strong className="account-row__balance">
+        <MoneyText
+          locale={locale}
+          value={formatAccountBalance(
+            account.balanceMinor,
+            account.currency.minorUnit,
+            account.currency.code,
+            locale,
+            t('minor units'),
+          )}
+        />
+      </strong>
     </li>
   )
-}
-
-function displayAccountType(type: string): string {
-  return type.length === 0
-    ? type
-    : `${type.charAt(0).toUpperCase()}${type.slice(1)}`
 }

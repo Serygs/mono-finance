@@ -1,35 +1,35 @@
-export const CATEGORY_DONUT_LIMIT = 10
+import type { AnalyticsBreakdowns } from '../dashboard/analytics-api'
 
-export function aggregateCategoryDistribution<
-  T extends { amountMinor: number },
->(values: readonly T[], createOther: (amountMinor: number) => T): T[] {
-  const sorted = [...values].sort(
+type ExpenseCategory = AnalyticsBreakdowns['expensesByCategory'][number]
+
+export function displayExpenseCategories(
+  values: readonly ExpenseCategory[],
+  otherCategoryName: string,
+): { all: ExpenseCategory[]; initial: ExpenseCategory[] } {
+  const all = [...values].sort(
     (left, right) => right.amountMinor - left.amountMinor,
   )
-  if (sorted.length <= CATEGORY_DONUT_LIMIT) return sorted
+  const topCategories = all.slice(0, 5)
+  const remainingCategories = all.slice(5)
 
-  const otherAmountMinor = sorted
-    .slice(CATEGORY_DONUT_LIMIT)
-    .reduce((total, item) => total + item.amountMinor, 0)
-  return sorted
-    .slice(0, CATEGORY_DONUT_LIMIT)
-    .concat(createOther(otherAmountMinor))
-}
+  if (remainingCategories.length === 0) {
+    return { all, initial: topCategories }
+  }
+  const firstRemainingCategory = remainingCategories[0]
+  if (firstRemainingCategory === undefined) {
+    return { all, initial: topCategories }
+  }
 
-export function categoryPercentage(amountMinor: number, totalMinor: number) {
-  return totalMinor === 0 ? 0 : Math.round((amountMinor / totalMinor) * 100)
-}
-
-export function getActiveExpenseCategoryCount(
-  values: readonly {
-    amountMinor: number
-    categoryId: string | null
-    categoryName: string
-  }[],
-) {
-  return new Set(
-    values
-      .filter((item) => item.amountMinor !== 0)
-      .map((item) => `${item.categoryId ?? 'source'}:${item.categoryName}`),
-  ).size
+  return {
+    all,
+    initial: topCategories.concat({
+      amountMinor: remainingCategories.reduce(
+        (total, category) => total + category.amountMinor,
+        0,
+      ),
+      categoryId: null,
+      categoryName: otherCategoryName,
+      currencyCode: firstRemainingCategory.currencyCode,
+    }),
+  }
 }

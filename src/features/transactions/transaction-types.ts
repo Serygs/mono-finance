@@ -18,9 +18,7 @@ export interface TransactionListItem {
     type: string
   }
   category: {
-    colorToken: string | null
     id: string | null
-    icon: string | null
     name: string | null
     source: 'custom' | 'mapped' | 'original' | null
   }
@@ -76,7 +74,6 @@ export interface CompensationSuggestion {
   availableAmountMinor: number
   confidenceScore: number
   description: string
-  originalAmountMinor: number
   originalTimestamp: number
   transactionId: string
 }

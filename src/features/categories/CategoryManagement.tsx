@@ -1,6 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type useCategoriesQuery } from './category-queries'
+import { useCategoryManagement } from './use-category-management'
 
+import { CategoryIcon } from '../../components/ui/CategoryIcon'
+import { Icon } from '../../components/ui/Icon'
 import { CompactList } from '../../components/ui/Collections'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
@@ -12,111 +14,40 @@ import {
 import { Dialog } from '../../components/ui/Overlay'
 import { OverflowMenu } from '../../components/ui/Popover'
 import { useLocalization } from '../localization/localization'
-import { getVisualMappings } from '../visuals/visuals-api'
-import { CategoryVisual } from '../visuals/visual-resolver'
-import {
-  createCategory,
-  deleteCategory,
-  getCategories,
-  mergeCategories,
-  type CategoryInput,
-  updateCategory,
-} from './categories-api'
+import { type CategoryInput } from './categories-api'
 import { CategoryAppearanceFields } from './CategoryAppearanceFields'
-import { CategorySourceManagement } from './CategorySourceManagement'
 
 const EMPTY: CategoryInput = { colorToken: null, icon: null, name: '' }
 
-export function CategoryManagement() {
+export function CategoryManagement({
+  categories,
+}: {
+  categories: ReturnType<typeof useCategoriesQuery>
+}) {
   const { t } = useLocalization()
-  const client = useQueryClient()
-  const categories = useQuery({
-    queryFn: getCategories,
-    queryKey: ['categories'],
-  })
-  const visuals = useQuery({
-    queryFn: getVisualMappings,
-    queryKey: ['visuals'],
-  })
-  const [editing, setEditing] = useState<{
-    id: string
-    input: CategoryInput
-  } | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [pendingDelete, setPendingDelete] = useState<{
-    id: string
-    name: string
-  } | null>(null)
-  const [pendingMerge, setPendingMerge] = useState<{
-    id: string
-    name: string
-  } | null>(null)
-  const [mergeTargetId, setMergeTargetId] = useState('')
-  const [query, setQuery] = useState('')
-
-  const mutation = useMutation({
-    mutationFn: async (input: CategoryInput) =>
-      editing === null
-        ? createCategory(input)
-        : updateCategory(editing.id, input),
-    onSuccess: () => {
-      setEditing(null)
-      setIsCreating(false)
-      void refreshCategoryData()
-    },
-  })
-  const removal = useMutation({
-    mutationFn: deleteCategory,
-    onSuccess: () => {
-      setPendingDelete(null)
-      void refreshCategoryData()
-    },
-  })
-  const merge = useMutation({
-    mutationFn: (input: {
-      sourceCategoryId: string
-      targetCategoryId: string
-    }) => mergeCategories(input.sourceCategoryId, input.targetCategoryId),
-    onSuccess: () => {
-      setPendingMerge(null)
-      setMergeTargetId('')
-      void refreshCategoryData()
-    },
-  })
-
-  const visibleCategories = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase()
-    if (normalizedQuery === '') return categories.data ?? []
-    return (categories.data ?? []).filter((category) =>
-      category.name.toLocaleLowerCase().includes(normalizedQuery),
-    )
-  }, [categories.data, query])
-
-  function refreshCategoryData(): Promise<unknown[]> {
-    return Promise.all([
-      client.invalidateQueries({ queryKey: ['categories'] }),
-      client.invalidateQueries({ queryKey: ['category-sources'] }),
-      client.invalidateQueries({ queryKey: ['transactions'] }),
-      client.invalidateQueries({ queryKey: ['dashboard-analytics'] }),
-      client.invalidateQueries({ queryKey: ['dashboard-recent'] }),
-    ])
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    mutation.mutate({
-      name: String(form.get('name')).trim(),
-      icon: optional(String(form.get('icon'))),
-      colorToken: optional(String(form.get('colorToken'))),
-    })
-  }
-
+  const {
+    editing,
+    setEditing,
+    isCreating,
+    setIsCreating,
+    pendingDelete,
+    setPendingDelete,
+    pendingMerge,
+    setPendingMerge,
+    mergeTargetId,
+    setMergeTargetId,
+    query,
+    setQuery,
+    mutation,
+    removal,
+    merge,
+    visibleCategories,
+    submit,
+    nameInvalid,
+    setNameInvalid,
+  } = useCategoryManagement(categories)
   return (
-    <section
-      aria-labelledby="categories-title"
-      className="category-management categories-management"
-    >
+    <>
       <header className="categories-section-heading">
         <h2>{t('Custom categories')}</h2>
         {!isCreating && editing === null ? (
@@ -128,17 +59,28 @@ export function CategoryManagement() {
             }}
             type="button"
           >
-            + {t('Add category')}
+            <Icon name="add" /> {t('Add category')}
           </Button>
         ) : null}
       </header>
-      {isCreating || editing !== null ? (
+      <Dialog
+        className="category-editor"
+        open={isCreating || editing !== null}
+        title={t(editing === null ? 'Add category' : 'Edit category')}
+        onClose={() => {
+          if (!mutation.isPending) {
+            mutation.reset()
+            setNameInvalid(false)
+            setEditing(null)
+            setIsCreating(false)
+          }
+        }}
+      >
         <form
           className="category-form"
           key={editing?.id ?? 'new'}
           onSubmit={submit}
         >
-          <h3>{t(editing === null ? 'Add category' : 'Edit category')}</h3>
           <FormField label={t('Name')}>
             <input
               autoComplete="off"
@@ -146,14 +88,22 @@ export function CategoryManagement() {
               maxLength={80}
               name="name"
               required
+              aria-invalid={nameInvalid || undefined}
+              aria-describedby={nameInvalid ? 'category-name-error' : undefined}
+              onChange={() => setNameInvalid(false)}
             />
           </FormField>
+          {nameInvalid ? (
+            <p id="category-name-error" role="alert">
+              {t('Enter a category name.')}
+            </p>
+          ) : null}
           <CategoryAppearanceFields
             colorToken={editing?.input.colorToken ?? EMPTY.colorToken}
             icon={editing?.input.icon ?? EMPTY.icon}
             translate={t}
           />
-          <div className="transaction-correction-actions">
+          <div className="ui-form-actions">
             <Button loading={mutation.isPending} type="submit">
               {mutation.isPending
                 ? t('Saving…')
@@ -162,8 +112,10 @@ export function CategoryManagement() {
                   : t('Save category')}
             </Button>
             <Button
+              disabled={mutation.isPending}
               onClick={() => {
                 mutation.reset()
+                setNameInvalid(false)
                 setEditing(null)
                 setIsCreating(false)
               }}
@@ -177,12 +129,32 @@ export function CategoryManagement() {
             <Alert tone="danger">{t('Category could not be saved.')}</Alert>
           ) : null}
         </form>
+      </Dialog>
+      <SearchField
+        label={t('Search categories')}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder={t('Search categories…')}
+        value={query}
+      />
+      {mutation.isSuccess || removal.isSuccess || merge.isSuccess ? (
+        <p className="category-row-feedback" role="status">
+          {t('Changes saved.')}
+        </p>
       ) : null}
       {categories.isPending ? (
         <Skeleton label={t('Loading categories…')} lines={2} />
       ) : null}
       {categories.isError ? (
-        <Alert tone="danger">{t('Categories could not be loaded.')}</Alert>
+        <Alert tone="danger">
+          {t('Categories could not be loaded.')}{' '}
+          <Button
+            variant="secondary"
+            loading={categories.isFetching}
+            onClick={() => void categories.refetch()}
+          >
+            {t('Retry')}
+          </Button>
+        </Alert>
       ) : null}
       {categories.data?.length === 0 ? (
         <EmptyState title={t('No custom categories')}>
@@ -191,22 +163,15 @@ export function CategoryManagement() {
       ) : null}
       {(categories.data?.length ?? 0) > 0 ? (
         <div className="categories-list-panel">
-          <div className="categories-list-panel__toolbar">
-            <h2>{t('Custom categories')}</h2>
-            <SearchField
-              label={t('Search categories')}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('Search categories…')}
-              value={query}
-            />
-          </div>
-          <div aria-hidden="true" className="categories-list-columns">
-            <span>{t('Category')}</span>
-            <span>{t('Type')}</span>
-            <span>{t('Actions')}</span>
-          </div>
           {visibleCategories.length === 0 ? (
-            <EmptyState title={t('No matching categories')}>
+            <EmptyState
+              title={t('No matching categories')}
+              action={
+                <Button variant="secondary" onClick={() => setQuery('')}>
+                  {t('Reset filters')}
+                </Button>
+              }
+            >
               <p>{t('Try a different search or filter.')}</p>
             </EmptyState>
           ) : (
@@ -214,18 +179,16 @@ export function CategoryManagement() {
               {visibleCategories.map((category) => (
                 <li key={category.id}>
                   <div className="category-list-row__identity">
-                    <CategoryVisual
-                      category={category}
-                      className="category-list-row__icon"
-                      mappings={visuals.data}
-                    />
+                    <span
+                      aria-hidden="true"
+                      className={`category-visual ui-visual--${category.colorToken ?? 'slate'}`}
+                    >
+                      <CategoryIcon token={category.icon ?? 'wallet'} />
+                    </span>
                     <span className="category-list-row__name">
                       {category.name}
                     </span>
                   </div>
-                  <span className="category-list-row__type">
-                    {t('Custom category')}
-                  </span>
                   <CategoryRowActions
                     categoryCount={categories.data?.length ?? 0}
                     deletePending={removal.isPending}
@@ -235,6 +198,7 @@ export function CategoryManagement() {
                     }}
                     onEdit={() => {
                       mutation.reset()
+                      setNameInvalid(false)
                       setIsCreating(false)
                       setEditing({
                         id: category.id,
@@ -258,7 +222,6 @@ export function CategoryManagement() {
           )}
         </div>
       ) : null}
-      <CategorySourceManagement categories={categories.data ?? []} />
       <Dialog
         onClose={() => {
           if (!removal.isPending) {
@@ -276,13 +239,13 @@ export function CategoryManagement() {
           )}
         </p>
         {removal.isError ? (
-          <Alert tone="danger" title={t('Category is still in use')}>
+          <Alert tone="danger" title={t('Category could not be deleted.')}>
             {t(
               'Reset or reassign its transaction overrides and imported type mappings first.',
             )}
           </Alert>
         ) : null}
-        <div className="transaction-correction-actions">
+        <div className="ui-form-actions">
           <Button
             disabled={removal.isPending}
             onClick={() => setPendingDelete(null)}
@@ -331,7 +294,7 @@ export function CategoryManagement() {
         {merge.isError ? (
           <Alert tone="danger">{t('Categories could not be merged.')}</Alert>
         ) : null}
-        <div className="transaction-correction-actions">
+        <div className="ui-form-actions">
           <Button
             disabled={merge.isPending}
             onClick={() => setPendingMerge(null)}
@@ -356,12 +319,8 @@ export function CategoryManagement() {
           </Button>
         </div>
       </Dialog>
-    </section>
+    </>
   )
-}
-
-function optional(value: string): string | null {
-  return value.trim() || null
 }
 
 interface CategoryRowActionsProps {
@@ -402,6 +361,24 @@ function CategoryRowActions({
         content={
           <span className="category-action-menu">
             <Button
+              className="category-mobile-action"
+              data-popover-dismiss
+              onClick={onEdit}
+              variant="secondary"
+            >
+              {translate('Edit')}
+            </Button>
+            <Button
+              className="category-mobile-action"
+              data-popover-dismiss
+              onClick={onMerge}
+              disabled={categoryCount <= 1}
+              variant="secondary"
+            >
+              {translate('Merge')}
+            </Button>
+            <Button
+              data-popover-dismiss
               disabled={deletePending}
               onClick={onDelete}
               size="small"

@@ -1,45 +1,20 @@
-import { useState, type FormEvent } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '../../components/ui/Controls'
-import { Alert, Skeleton } from '../../components/ui/Feedback'
-import { FormField, Select } from '../../components/ui/FormControls'
-import {
-  getCategories,
-  resetTransactionCategory,
-  saveTransactionCategory,
-} from '../categories/categories-api'
-
-import {
-  accountLabel,
-  formatMoneyAmount,
-  formatTransactionAmount,
-  formatTransactionDate,
-  formatTransactionTime,
-  parseAmountInputToMinor,
-} from './transaction-formatting'
-import {
-  excludeTransaction,
-  getCompensationDetails,
-  linkCompensation,
-  resetTransactionAdjustment,
-  restoreTransaction,
-  saveTransactionAdjustment,
-  unlinkCompensation,
-} from './transactions-api'
+import { useEffect, useRef } from 'react'
+import { useLocalization } from '../localization/localization'
 import type {
-  CompensationSuggestion,
   TransactionCorrection,
   TransactionListItem,
 } from './transaction-types'
-import { useLocalization } from '../localization/localization'
-import { IconPickerDialog } from '../visuals/IconPickerDialog'
-import { merchantKey } from '../visuals/visual-resolver'
+import { TransactionCompensationSection } from './TransactionCompensationSection'
 import {
-  removeMerchantVisual,
-  saveMerchantVisual,
-} from '../visuals/visuals-api'
+  TransactionAdjustmentSection,
+  TransactionCategorySection,
+  TransactionExclusionSection,
+  TransactionSummary,
+} from './TransactionDetailSections'
+import { useTransactionDetails } from './use-transaction-details'
 
-interface TransactionDetailsProps {
+export interface TransactionDetailsProps {
   onTransactionUpdated(
     correction: Pick<TransactionCorrection, 'id'> &
       Partial<TransactionCorrection>,
@@ -48,6 +23,7 @@ interface TransactionDetailsProps {
       category?: TransactionListItem['category']
       originalCategory?: TransactionListItem['originalCategory']
       exclusionReason?: string | null
+      hasCompensation?: boolean
     },
   ): void
   transaction: TransactionListItem | null
@@ -73,600 +49,90 @@ function TransactionDetailsContent({
 }: Omit<TransactionDetailsProps, 'transaction'> & {
   transaction: TransactionListItem
 }) {
-  const { locale, t } = useLocalization()
-  const queryClient = useQueryClient()
-  const [adjustmentAmount, setAdjustmentAmount] = useState(() =>
-    toEditableAmount(
-      transaction.effectiveAmountMinor,
-      transaction.currencyMinorUnit,
-    ),
-  )
-  const [adjustmentNote, setAdjustmentNote] = useState(
-    transaction.adjustmentNote ?? '',
-  )
-  const [exclusionReason, setExclusionReason] = useState(
-    transaction.exclusionReason ?? '',
-  )
-  const [validationMessage, setValidationMessage] = useState<string | null>(
-    null,
-  )
-  const [categoryId, setCategoryId] = useState(
-    transaction.category.source === 'custom'
-      ? (transaction.category.id ?? '')
-      : '',
-  )
-  const categoriesQuery = useQuery({
-    queryFn: getCategories,
-    queryKey: ['categories'],
-  })
-  const compensationQuery = useQuery({
-    enabled: transaction.originalAmountMinor < 0,
-    queryFn: () => getCompensationDetails(transaction.id),
-    queryKey: ['compensations', transaction.id],
-  })
-  const [compensationTransactionId, setCompensationTransactionId] = useState('')
-  const [compensationAmount, setCompensationAmount] = useState('')
-  const [iconPickerOpen, setIconPickerOpen] = useState(false)
-
-  const refreshTransactions = () =>
-    void queryClient.invalidateQueries({ queryKey: ['transactions'] })
-  const adjustmentMutation = useMutation({
-    mutationFn: (input: {
-      adjustedAmountMinor: number
-      note: string | null
-    }) => {
-      if (transaction === null) throw new Error('No transaction is selected.')
-      return saveTransactionAdjustment(transaction.id, input)
-    },
-    onSuccess: (correction, input) => {
-      onTransactionUpdated(correction, { adjustmentNote: input.note })
-      refreshTransactions()
-    },
-  })
-  const resetMutation = useMutation({
-    mutationFn: () => {
-      if (transaction === null) throw new Error('No transaction is selected.')
-      return resetTransactionAdjustment(transaction.id)
-    },
-    onSuccess: (correction) => {
-      onTransactionUpdated(correction, { adjustmentNote: null })
-      refreshTransactions()
-    },
-  })
-  const exclusionMutation = useMutation({
-    mutationFn: (reason: string | null) => {
-      if (transaction === null) throw new Error('No transaction is selected.')
-      return excludeTransaction(transaction.id, reason)
-    },
-    onSuccess: (correction, reason) => {
-      onTransactionUpdated(correction, { exclusionReason: reason })
-      refreshTransactions()
-    },
-  })
-  const restoreMutation = useMutation({
-    mutationFn: () => {
-      if (transaction === null) throw new Error('No transaction is selected.')
-      return restoreTransaction(transaction.id)
-    },
-    onSuccess: (correction) => {
-      onTransactionUpdated(correction, { exclusionReason: null })
-      refreshTransactions()
-    },
-  })
-  const categoryMutation = useMutation({
-    mutationFn: (id: string) => saveTransactionCategory(transaction.id, id),
-    onSuccess: (result) => {
-      onTransactionUpdated(
-        { id: transaction.id },
-        {
-          category: result.category,
-          originalCategory: result.originalCategory,
-        },
-      )
-      refreshTransactions()
-    },
-  })
-  const resetCategoryMutation = useMutation({
-    mutationFn: () => resetTransactionCategory(transaction.id),
-    onSuccess: (result) => {
-      setCategoryId('')
-      onTransactionUpdated(
-        { id: transaction.id },
-        {
-          category: result.category,
-          originalCategory: result.originalCategory,
-        },
-      )
-      refreshTransactions()
-    },
-  })
-  const compensationMutation = useMutation({
-    mutationFn: (input: {
-      compensationTransactionId: string
-      compensatedAmountMinor: number
-    }) => linkCompensation(transaction.id, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ['compensations', transaction.id],
-      })
-      refreshTransactions()
-    },
-  })
-  const unlinkCompensationMutation = useMutation({
-    mutationFn: (linkId: string) => unlinkCompensation(transaction.id, linkId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ['compensations', transaction.id],
-      })
-      refreshTransactions()
-    },
-  })
-  const merchantVisualMutation = useMutation({
-    mutationFn: (assetId: string | null) =>
-      assetId === null
-        ? removeMerchantVisual(merchantKey(transaction.originalDescription))
-        : saveMerchantVisual(
-            merchantKey(transaction.originalDescription),
-            transaction.originalDescription,
-            assetId,
-          ),
-    onSuccess: () => {
-      setIconPickerOpen(false)
-      void queryClient.invalidateQueries({ queryKey: ['visuals'] })
-    },
-  })
-
-  const isSaving =
-    adjustmentMutation.isPending ||
-    resetMutation.isPending ||
-    exclusionMutation.isPending ||
-    restoreMutation.isPending ||
-    categoryMutation.isPending ||
-    resetCategoryMutation.isPending
-  const mutationError =
-    adjustmentMutation.error ??
-    resetMutation.error ??
-    exclusionMutation.error ??
-    restoreMutation.error ??
-    categoryMutation.error ??
-    resetCategoryMutation.error
-
-  function submitAdjustment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const adjustedAmountMinor = parseAmountInputToMinor(
-      adjustmentAmount,
-      transaction.currencyMinorUnit,
+  const { t } = useLocalization()
+  const details = useTransactionDetails({ transaction, onTransactionUpdated })
+  const actionButtons = useRef<HTMLDivElement>(null)
+  const editorContainer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (details.editor !== null)
+      editorContainer.current
+        ?.querySelector<HTMLElement>('input, select, textarea, button')
+        ?.focus()
+  }, [details.editor])
+  function cancelEditing() {
+    const previousEditor = details.editor
+    details.cancelEditing()
+    requestAnimationFrame(() =>
+      actionButtons.current
+        ?.querySelector<HTMLButtonElement>(`[data-editor="${previousEditor}"]`)
+        ?.focus({ preventScroll: true }),
     )
-    if (adjustedAmountMinor === null) {
-      setValidationMessage(
-        t('Enter an amount with at most {count} decimal places.', {
-          count: transaction.currencyMinorUnit,
-        }),
-      )
-      return
-    }
-    if (
-      (transaction.effectiveAmountMinor < 0 && adjustedAmountMinor > 0) ||
-      (transaction.effectiveAmountMinor > 0 && adjustedAmountMinor < 0)
-    ) {
-      setValidationMessage(
-        t('The adjusted amount must keep the transaction direction.'),
-      )
-      return
-    }
-    setValidationMessage(null)
-    adjustmentMutation.mutate({
-      adjustedAmountMinor,
-      note: adjustmentNote.trim() || null,
-    })
   }
-
+  const editing = { ...details, cancelEditing }
   return (
     <div className="transaction-details">
-      <section className="transaction-details-summary">
-        <div className="transaction-details-summary__primary">
-          <h2 title={transaction.originalDescription}>
-            {transaction.originalDescription}
-          </h2>
-          <p>{formatTransactionTime(transaction.originalTimestamp, locale)}</p>
-          <strong className="transaction-details-amount">
-            {formatTransactionAmount(transaction, locale)}
-          </strong>
+      <TransactionSummary transaction={transaction} />
+      {details.editor === null ? (
+        <div className="transaction-detail-actions" ref={actionButtons}>
+          <h3>{t('Manage transaction')}</h3>
+          <Button
+            data-editor="category"
+            variant="secondary"
+            onClick={() => details.beginEditing('category')}
+          >
+            {t('Analytics category')}
+          </Button>
+          <Button
+            data-editor="adjustment"
+            variant="secondary"
+            onClick={() => details.beginEditing('adjustment')}
+          >
+            {t('Analytics adjustment')}
+          </Button>
+          {transaction.originalAmountMinor < 0 ? (
+            <Button
+              data-editor="compensation"
+              variant="secondary"
+              onClick={() => details.beginEditing('compensation')}
+            >
+              {t('Compensations')}
+            </Button>
+          ) : null}
+          <Button
+            data-editor="exclusion"
+            variant="secondary"
+            onClick={() => details.beginEditing('exclusion')}
+          >
+            {t('Analytics exclusion')}
+          </Button>
         </div>
-        {transaction.hasAdjustment ? (
-          <span className="transaction-original-amount">
-            {t('Original')}:{' '}
-            {formatMoneyAmount(
-              transaction.originalAmountMinor,
-              transaction.currencyCode,
-              transaction.currencyMinorUnit,
-              locale,
-            )}
-          </span>
+      ) : null}
+      <div className="transaction-editor" ref={editorContainer}>
+        {details.editor === 'category' ? (
+          <TransactionCategorySection
+            transaction={transaction}
+            details={editing}
+          />
         ) : null}
-        <dl className="transaction-details-list">
-          <div>
-            <dt>{t('Account')}</dt>
-            <dd>{accountLabel(transaction)}</dd>
-          </div>
-          <div>
-            <dt>{t('Category')}</dt>
-            <dd>
-              {transaction.category.name ?? t('Uncategorized')}
-              {(transaction.category.source === 'custom' ||
-                transaction.category.source === 'mapped') &&
-              transaction.originalCategory.name !== null ? (
-                <span className="transaction-original-amount">
-                  {t('Original')}: {transaction.originalCategory.name}
-                </span>
-              ) : null}
-            </dd>
-          </div>
-        </dl>
-      </section>
-      <section
-        className="transaction-details-section transaction-correction-form"
-        aria-labelledby="merchant-appearance-title"
-      >
-        <div className="transaction-details-section__header">
-          <h3 id="merchant-appearance-title">{t('Merchant appearance')}</h3>
-          <p>
-            {t(
-              'This icon will be used for all transactions from this merchant.',
-            )}
-          </p>
-        </div>
-        <div className="transaction-correction-actions">
-          <Button
-            onClick={() => setIconPickerOpen(true)}
-            size="small"
-            type="button"
-          >
-            {t('Change icon')}
-          </Button>
-          <Button
-            disabled={merchantVisualMutation.isPending}
-            onClick={() => merchantVisualMutation.mutate(null)}
-            size="small"
-            type="button"
-            variant="secondary"
-          >
-            {t('Remove custom icon')}
-          </Button>
-        </div>
-      </section>
-      <IconPickerDialog
-        assetType="merchant-icon"
-        onClose={() => setIconPickerOpen(false)}
-        onSelect={(assetId) => merchantVisualMutation.mutateAsync(assetId)}
-        open={iconPickerOpen}
-      />
-      <section
-        className="transaction-details-section transaction-correction-form"
-        aria-labelledby="category-title"
-      >
-        <div className="transaction-details-section__header">
-          <h3 id="category-title">{t('Analytics category')}</h3>
-          <p>
-            {t(
-              'Changes analytics classification only. The imported MCC category stays preserved.',
-            )}
-          </p>
-        </div>
-        <FormField label={t('Custom category')}>
-          <Select
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-            disabled={isSaving || categoriesQuery.isPending}
-          >
-            <option value="">{t('Select a custom category')}</option>
-            {(categoriesQuery.data ?? []).map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <div className="transaction-correction-actions">
-          <Button
-            disabled={isSaving || categoryId === ''}
-            loading={categoryMutation.isPending}
-            onClick={() => categoryMutation.mutate(categoryId)}
-            size="small"
-            type="button"
-          >
-            {t(categoryMutation.isPending ? 'Saving…' : 'Save category')}
-          </Button>
-          {transaction.category.source === 'custom' ? (
-            <Button
-              disabled={isSaving}
-              onClick={() => resetCategoryMutation.mutate()}
-              size="small"
-              type="button"
-              variant="secondary"
-            >
-              {t('Reset to original')}
-            </Button>
-          ) : null}
-        </div>
-      </section>
-      {transaction.originalAmountMinor < 0 ? (
-        <section
-          className="transaction-details-section transaction-correction-form"
-          aria-labelledby="compensation-title"
-        >
-          <div className="transaction-details-section__header">
-            <h3 id="compensation-title">{t('Compensations')}</h3>
-            <p>
-              {t(
-                'Link confirmed incoming transfers. Bank transactions remain unchanged.',
-              )}
-            </p>
-          </div>
-          {compensationQuery.data ? (
-            <>
-              <dl className="compensation-summary">
-                <div>
-                  <dt>{t('Original expense')}</dt>
-                  <dd>
-                    {formatMinor(
-                      compensationQuery.data.summary.originalExpenseAmountMinor,
-                      transaction,
-                      locale,
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('Compensated')}</dt>
-                  <dd>
-                    {formatMinor(
-                      compensationQuery.data.summary.compensatedAmountMinor,
-                      transaction,
-                      locale,
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('Personal expense remaining')}</dt>
-                  <dd>
-                    {formatMinor(
-                      compensationQuery.data.summary
-                        .remainingPersonalExpenseMinor,
-                      transaction,
-                      locale,
-                    )}
-                  </dd>
-                </div>
-              </dl>
-              {compensationQuery.data.links.map((link) => (
-                <div className="compensation-link" key={link.id}>
-                  <span>
-                    {link.description} ·{' '}
-                    {formatMinor(
-                      link.compensatedAmountMinor,
-                      transaction,
-                      locale,
-                      true,
-                    )}
-                  </span>
-                  <Button
-                    disabled={unlinkCompensationMutation.isPending}
-                    onClick={() => unlinkCompensationMutation.mutate(link.id)}
-                    size="small"
-                    type="button"
-                    variant="quiet"
-                  >
-                    {t('Unlink')}
-                  </Button>
-                </div>
-              ))}
-              <div className="transaction-compensation-controls">
-                <FormField label={t('Suggested incoming transaction')}>
-                  <Select
-                    value={compensationTransactionId}
-                    onChange={(event) => {
-                      const candidate =
-                        compensationQuery.data?.suggestions.find(
-                          (item) => item.transactionId === event.target.value,
-                        )
-                      setCompensationTransactionId(event.target.value)
-                      setCompensationAmount(
-                        candidate
-                          ? toEditableAmount(
-                              Math.min(
-                                candidate.availableAmountMinor,
-                                -compensationQuery.data.summary
-                                  .remainingPersonalExpenseMinor,
-                              ),
-                              transaction.currencyMinorUnit,
-                            )
-                          : '',
-                      )
-                    }}
-                  >
-                    <option value="">{t('Choose a suggestion')}</option>
-                    {compensationQuery.data.suggestions.map((candidate) => (
-                      <option
-                        key={candidate.transactionId}
-                        value={candidate.transactionId}
-                      >
-                        {formatCompensationSuggestion(
-                          candidate,
-                          transaction,
-                          locale,
-                        )}
-                      </option>
-                    ))}
-                  </Select>
-                </FormField>
-                <div className="transaction-compensation-controls__action">
-                  <FormField
-                    label={`${t('Compensated amount')} (${transaction.currencyCode})`}
-                  >
-                    <input
-                      autoComplete="off"
-                      inputMode="decimal"
-                      name="compensated-amount"
-                      value={compensationAmount}
-                      onChange={(event) =>
-                        setCompensationAmount(event.target.value)
-                      }
-                    />
-                  </FormField>
-                  <Button
-                    disabled={
-                      compensationTransactionId === '' ||
-                      compensationMutation.isPending
-                    }
-                    onClick={() => {
-                      const amount = parseAmountInputToMinor(
-                        compensationAmount,
-                        transaction.currencyMinorUnit,
-                      )
-                      if (amount === null || amount <= 0) {
-                        setValidationMessage(
-                          t('Enter a valid positive compensation amount.'),
-                        )
-                        return
-                      }
-                      setValidationMessage(null)
-                      compensationMutation.mutate({
-                        compensationTransactionId,
-                        compensatedAmountMinor: amount,
-                      })
-                    }}
-                    loading={compensationMutation.isPending}
-                    type="button"
-                  >
-                    {compensationMutation.isPending
-                      ? t('Linking…')
-                      : t('Link compensation')}
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : null}
-          {compensationQuery.isPending ? (
-            <Skeleton label={t('Loading compensation details…')} lines={2} />
-          ) : null}
-          {compensationQuery.isError ||
-          compensationMutation.isError ||
-          unlinkCompensationMutation.isError ? (
-            <Alert tone="danger">
-              {t('Compensation could not be saved. Try again later.')}
-            </Alert>
-          ) : null}
-        </section>
-      ) : null}
-      <form
-        className="transaction-details-section transaction-correction-form"
-        onSubmit={submitAdjustment}
-      >
-        <div className="transaction-details-section__header">
-          <h3>{t('Analytics adjustment')}</h3>
-          <p>
-            {t(
-              'Changes only the effective amount. Imported bank data stays unchanged.',
-            )}
-          </p>
-        </div>
-        <FormField
-          label={`${t('Effective amount')} (${transaction.currencyCode})`}
-        >
-          <input
-            autoComplete="off"
-            inputMode="decimal"
-            name="effective-amount"
-            onChange={(event) => setAdjustmentAmount(event.target.value)}
-            required
-            type="text"
-            value={adjustmentAmount}
+        {details.editor === 'compensation' ? (
+          <TransactionCompensationSection
+            transaction={transaction}
+            details={editing}
           />
-        </FormField>
-        <FormField label={t('Note')} hint={t('Optional')}>
-          <textarea
-            autoComplete="off"
-            maxLength={1_000}
-            name="adjustment-note"
-            onChange={(event) => setAdjustmentNote(event.target.value)}
-            value={adjustmentNote}
+        ) : null}
+        {details.editor === 'adjustment' ? (
+          <TransactionAdjustmentSection
+            transaction={transaction}
+            details={editing}
           />
-        </FormField>
-        <div className="transaction-correction-actions">
-          <Button loading={adjustmentMutation.isPending} type="submit">
-            {t(adjustmentMutation.isPending ? 'Saving…' : 'Save adjustment')}
-          </Button>
-          {transaction.hasAdjustment ? (
-            <Button
-              disabled={isSaving}
-              onClick={() => resetMutation.mutate()}
-              type="button"
-              variant="secondary"
-            >
-              {t('Reset adjustment')}
-            </Button>
-          ) : null}
-        </div>
-      </form>
-      <section
-        className="transaction-details-section transaction-exclusion"
-        aria-labelledby="exclusion-title"
-      >
-        <div className="transaction-details-section__header">
-          <h3 id="exclusion-title">{t('Analytics exclusion')}</h3>
-          <p>
-            {t(
-              'Excluded transactions stay in the ledger but are omitted from normal analytics.',
-            )}
-          </p>
-        </div>
-        {transaction.isExcluded ? (
-          <Button
-            disabled={isSaving}
-            loading={restoreMutation.isPending}
-            onClick={() => restoreMutation.mutate()}
-            type="button"
-            variant="secondary"
-          >
-            {t(
-              restoreMutation.isPending ? 'Restoring…' : 'Restore to analytics',
-            )}
-          </Button>
-        ) : (
-          <>
-            <FormField label={t('Reason')} hint={t('Optional')}>
-              <textarea
-                autoComplete="off"
-                maxLength={1_000}
-                name="exclusion-reason"
-                onChange={(event) => setExclusionReason(event.target.value)}
-                value={exclusionReason}
-              />
-            </FormField>
-            <Button
-              disabled={isSaving}
-              loading={exclusionMutation.isPending}
-              onClick={() =>
-                exclusionMutation.mutate(exclusionReason.trim() || null)
-              }
-              type="button"
-              variant="danger"
-            >
-              {exclusionMutation.isPending
-                ? t('Excluding…')
-                : t('Exclude from analytics')}
-            </Button>
-          </>
-        )}
-      </section>
-      {validationMessage !== null ? (
-        <Alert tone="danger">{validationMessage}</Alert>
-      ) : null}
-      {mutationError !== null ? (
-        <Alert tone="danger">
-          {t('Transaction correction could not be saved. Try again later.')}
-        </Alert>
-      ) : null}
+        ) : null}
+        {details.editor === 'exclusion' ? (
+          <TransactionExclusionSection
+            transaction={transaction}
+            details={editing}
+          />
+        ) : null}
+      </div>
       {transaction.hasAdjustment ? (
         <p className="transaction-detail-note">
           {t('Adjusted. Original imported data remains unchanged.')}
@@ -684,40 +150,4 @@ function TransactionDetailsContent({
       ) : null}
     </div>
   )
-}
-
-function formatMinor(
-  amountMinor: number,
-  transaction: TransactionListItem,
-  locale?: string,
-  includePositiveSign = false,
-): string {
-  return formatMoneyAmount(
-    amountMinor,
-    transaction.currencyCode,
-    transaction.currencyMinorUnit,
-    locale,
-    includePositiveSign,
-  )
-}
-
-function formatCompensationSuggestion(
-  candidate: CompensationSuggestion,
-  transaction: TransactionListItem,
-  locale: string,
-): string {
-  return [
-    candidate.description,
-    formatMinor(candidate.availableAmountMinor, transaction, locale, true),
-    formatTransactionDate(candidate.originalTimestamp, locale),
-  ].join(' \u00b7 ')
-}
-
-function toEditableAmount(amountMinor: number, minorUnit: number): string {
-  const sign = amountMinor < 0 ? '-' : ''
-  const absolute = Math.abs(amountMinor)
-    .toString()
-    .padStart(minorUnit + 1, '0')
-  if (minorUnit === 0) return `${sign}${absolute}`
-  return `${sign}${absolute.slice(0, -minorUnit)}.${absolute.slice(-minorUnit)}`
 }

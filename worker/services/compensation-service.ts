@@ -1,7 +1,6 @@
 export type CompensationDirection = 'expense' | 'income'
 
 export interface CompensationTransaction {
-  allocatedAmountMinor: number
   direction: CompensationDirection
   id: string
   originalAmountMinor: number
@@ -185,49 +184,33 @@ export class CompensationService {
       links.map((link) => link.compensationTransactionId),
     )
     const remaining = summary(expense, links).remainingPersonalExpenseMinor * -1
-    if (remaining <= 0) return []
     const usable = candidates.filter(
       (candidate) =>
         !linkedIds.has(candidate.id) &&
         candidate.id !== expense.id &&
         candidate.originalAmountMinor > 0,
     )
-    const usableWithAvailability = usable
-      .map((candidate) => ({
-        candidate,
-        availableAmountMinor:
-          candidate.originalAmountMinor - candidate.allocatedAmountMinor,
-      }))
-      .filter(({ availableAmountMinor }) => availableAmountMinor > 0)
     const exactSumExists = hasExactSum(
-      usableWithAvailability.map(
-        ({ availableAmountMinor }) => availableAmountMinor,
-      ),
+      usable.map((candidate) => candidate.originalAmountMinor),
       remaining,
     )
-    return usableWithAvailability
-      .map(({ availableAmountMinor, candidate }) => ({
-        availableAmountMinor,
-        confidenceScore: score(
-          expense,
-          candidate,
-          availableAmountMinor,
-          remaining,
-          exactSumExists,
-        ),
+    return usable
+      .map((candidate) => ({
+        availableAmountMinor: candidate.originalAmountMinor,
+        confidenceScore: score(expense, candidate, remaining, exactSumExists),
         description: candidate.originalDescription,
         originalAmountMinor: candidate.originalAmountMinor,
         originalTimestamp: candidate.originalTimestamp,
         transactionId: candidate.id,
       }))
+      .filter((candidate) => candidate.confidenceScore >= 35)
       .sort(
         (left, right) =>
-          Number(left.availableAmountMinor > remaining) -
-            Number(right.availableAmountMinor > remaining) ||
           right.confidenceScore - left.confidenceScore ||
           right.originalTimestamp - left.originalTimestamp ||
           left.transactionId.localeCompare(right.transactionId),
       )
+      .slice(0, 12)
   }
   private async requiredTransaction(userId: string, id: string) {
     const transaction = await this.repository.findOwnedTransaction(id, userId)
@@ -263,7 +246,6 @@ function summary(
 function score(
   expense: CompensationTransaction,
   income: CompensationTransaction,
-  availableAmountMinor: number,
   remaining: number,
   exactSumExists: boolean,
 ): number {
@@ -275,7 +257,7 @@ function score(
             30 *
               (1 -
                 Math.min(
-                  Math.abs(remaining - availableAmountMinor) / remaining,
+                  Math.abs(remaining - income.originalAmountMinor) / remaining,
                   1,
                 )),
           ),
@@ -305,7 +287,7 @@ function score(
       amountScore +
       timeScore +
       descriptionScore +
-      (exactSumExists && availableAmountMinor <= remaining ? 10 : 0),
+      (exactSumExists && income.originalAmountMinor <= remaining ? 10 : 0),
   )
 }
 function hasExactSum(amounts: number[], target: number): boolean {
