@@ -1,7 +1,16 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { BottomSheet } from './Overlay'
 import { Icon } from './Icon'
+
+const HOVER_CLOSE_DELAY_MILLISECONDS = 150
 
 interface PopoverProps {
   children: ReactNode
@@ -33,6 +42,15 @@ export function Popover({
   )
   const pinned = useRef(false)
   const pointerFocus = useRef(false)
+  const hovered = useRef(false)
+  const keyboardFocused = useRef(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current)
+    },
+    [],
+  )
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)')
     const update = () => setMobile(media.matches)
@@ -43,10 +61,43 @@ export function Popover({
   const reference = useRef<HTMLSpanElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
 
-  function close() {
+  const cancelScheduledClose = useCallback(() => {
+    if (closeTimer.current === null) return
+    clearTimeout(closeTimer.current)
+    closeTimer.current = null
+  }, [])
+
+  const close = useCallback(() => {
+    cancelScheduledClose()
     pinned.current = false
     setOpen(false)
     setPosition(null)
+  }, [cancelScheduledClose])
+
+  function scheduleTransientClose() {
+    if (!openOnFocusHover) return
+    cancelScheduledClose()
+    // Allow the pointer to cross the gap between the trigger and its portal.
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null
+      if (
+        !pinned.current &&
+        !hovered.current &&
+        !keyboardFocused.current &&
+        !overlay.current?.contains(document.activeElement)
+      )
+        close()
+    }, HOVER_CLOSE_DELAY_MILLISECONDS)
+  }
+
+  function enterHover() {
+    hovered.current = true
+    cancelScheduledClose()
+  }
+
+  function leaveHover() {
+    hovered.current = false
+    scheduleTransientClose()
   }
 
   useEffect(() => {
@@ -90,7 +141,7 @@ export function Popover({
       document.removeEventListener('keydown', closeOnEscape)
       document.removeEventListener('focusin', closeOnFocusOutside)
     }
-  }, [open])
+  }, [open, close])
 
   const positioned = position !== null
   useEffect(() => {
@@ -180,6 +231,13 @@ export function Popover({
       id={contentId}
       ref={overlay}
       role="dialog"
+      onPointerEnter={(event) => {
+        if (openOnFocusHover && event.pointerType === 'mouse') enterHover()
+      }}
+      onPointerLeave={(event) => {
+        if (openOnFocusHover && event.pointerType === 'mouse') leaveHover()
+      }}
+      onBlur={scheduleTransientClose}
       onClick={(event) => {
         if (
           (event.target as Element).closest('[data-popover-dismiss]') !== null
@@ -219,16 +277,29 @@ export function Popover({
           pointerFocus.current = true
         }}
         onFocus={() => {
-          if (!disabled && openOnFocusHover && !pointerFocus.current)
+          if (!disabled && openOnFocusHover && !pointerFocus.current) {
+            keyboardFocused.current = true
+            cancelScheduledClose()
             setOpen(true)
+          }
           pointerFocus.current = false
         }}
+        onBlur={() => {
+          keyboardFocused.current = false
+          scheduleTransientClose()
+        }}
         onPointerEnter={(event) => {
-          if (!disabled && openOnFocusHover && event.pointerType === 'mouse')
+          if (!disabled && openOnFocusHover && event.pointerType === 'mouse') {
+            enterHover()
             setOpen(true)
+          }
+        }}
+        onPointerLeave={(event) => {
+          if (openOnFocusHover && event.pointerType === 'mouse') leaveHover()
         }}
         onClick={() => {
           if (disabled) return
+          cancelScheduledClose()
           pointerFocus.current = false
           setPosition(null)
           if (openOnFocusHover && !pinned.current) {
