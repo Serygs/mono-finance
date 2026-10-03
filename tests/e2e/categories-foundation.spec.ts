@@ -96,7 +96,34 @@ test('ranking keeps exact per-currency totals, custom visuals and income-specifi
   await page.getByRole('button', { name: 'Income', exact: true }).click()
   await expect(page.getByText('Largest income category')).toHaveCount(0)
   await expect(page.getByText('Largest expense category')).toHaveCount(0)
-  await expect(page.locator('.category-ranking')).toContainText('100%')
+  const incomeRanking = page
+    .getByRole('region', { name: 'UAH', exact: true })
+    .filter({
+      has: page.getByRole('button', { name: 'Total income', exact: true }),
+    })
+  await expect(incomeRanking).toBeVisible()
+  await expect(page.locator('.category-ranking')).toHaveCount(1)
+  await expect(
+    incomeRanking.locator('.category-ranking-list > li'),
+  ).toHaveCount(1)
+  await expect(
+    incomeRanking.getByRole('link', {
+      name: 'View transactions for Salary',
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(
+    incomeRanking.locator('.category-analysis-summary strong'),
+  ).toHaveText(
+    formatMoney(1_800_000n, {
+      currencyCode: 'UAH',
+      minorUnit: 2,
+      locale: 'en',
+    }),
+  )
+  await expect(
+    incomeRanking.locator('.category-ranking-copy small'),
+  ).toHaveText('100%')
   await page.route('**/api/analytics/breakdowns?*', (route) =>
     route.fulfill({
       json: {
@@ -334,10 +361,11 @@ for (const locale of ['en', 'uk']) {
         },
         { locale, theme },
       )
-      for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
-        await page.setViewportSize({ width, height: 932 })
-        for (const view of ['analysis', 'manage', 'bank-types']) {
-          await page.goto(`/settings?categoryView=${view}#categories`)
+      for (const view of ['analysis', 'manage', 'bank-types']) {
+        await page.setViewportSize({ width: 320, height: 932 })
+        await page.goto(`/settings?categoryView=${view}#categories`)
+        for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
+          await page.setViewportSize({ width, height: 932 })
           await expect(page.locator('.categories-page')).toBeVisible()
           await expect(
             page
@@ -350,13 +378,17 @@ for (const locale of ['en', 'uk']) {
               )
               .first(),
           ).toBeVisible()
-          const overflow = await page.evaluate(() => ({
-            client: document.documentElement.clientWidth,
-            scroll: document.documentElement.scrollWidth,
-          }))
-          expect(overflow.scroll, `${locale} ${theme} ${width} ${view}`).toBe(
-            overflow.client,
-          )
+          await expect
+            .poll(
+              () =>
+                page.evaluate(
+                  () =>
+                    document.documentElement.scrollWidth ===
+                    document.documentElement.clientWidth,
+                ),
+              { message: `${locale} ${theme} ${width} ${view}` },
+            )
+            .toBe(true)
           if (locale === 'en' && [390, 1440].includes(width))
             await page.screenshot({
               path: `phase4.local/screenshots/${view}-${width}-${theme}.png`,

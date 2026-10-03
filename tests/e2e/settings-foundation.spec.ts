@@ -396,30 +396,35 @@ test('More fits every breakpoint in both themes/locales, at enlarged text and in
   test.setTimeout(90000)
   await fixture(page)
   for (const locale of ['en', 'uk'])
-    for (const theme of ['light', 'dark'])
+    for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width: 320, height: 900 })
+      await page.evaluate(
+        ({ locale, theme }) => {
+          localStorage.setItem('mono-finance-locale-v1', locale)
+          localStorage.setItem('mono-finance-theme-v1', theme)
+        },
+        { locale, theme },
+      )
+      await page.reload()
       for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
         await page.setViewportSize({ width, height: 900 })
-        await page.evaluate(
-          ({ locale, theme }) => {
-            localStorage.setItem('mono-finance-locale-v1', locale)
-            localStorage.setItem('mono-finance-theme-v1', theme)
-          },
-          { locale, theme },
-        )
-        await page.reload()
         await expect(page.locator('.settings-layout')).toBeVisible()
-        expect(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-          `${width} ${locale} ${theme}`,
-        ).toBe(true)
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                () => document.documentElement.scrollWidth <= innerWidth,
+              ),
+            { message: `${width} ${locale} ${theme}` },
+          )
+          .toBe(true)
         if (locale === 'en' && [390, 1440].includes(width))
           await page.screenshot({
             path: `phase6.local/screenshots/more-${width}-${theme}.png`,
             fullPage: true,
           })
       }
+    }
   for (const locale of ['en', 'uk'])
     for (const theme of ['light', 'dark']) {
       await page.setViewportSize({ width: 320, height: 844 })
