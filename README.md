@@ -115,7 +115,9 @@ npm run db:migrate:local
 npm run dev
 ```
 
-The application is available at `http://localhost:5173`. Local D1 state is stored in `.wrangler/state`; use the provided migration commands so Wrangler and Vite access the same database.
+The application is available at `http://localhost:5173`. Local D1 state is stored in `.wrangler/state`; use the provided migration commands so Wrangler and Vite access the same database. `npm run dev` applies pending local D1 migrations before starting Vite and stops if a migration fails. It never migrates the remote database.
+
+Worker logs classify D1 failures using `databaseReason` (for example, `missing_column` or `missing_table`) and include `databaseBinding`, `diagnosticHint`, and `requestId`, without logging SQL, bound values, or raw database messages. A `session_unavailable` event with `expected: true` means the session check returned 401 because its cookie was missing or its session was invalid/expired; failed login attempts remain `authentication_failure` events.
 
 ## First owner setup
 

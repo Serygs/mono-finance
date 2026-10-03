@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from '../app'
 import {
@@ -192,6 +192,43 @@ describe('authentication API', () => {
       },
     })
   })
+
+  it.each([
+    [undefined, 'missing_session_cookie'],
+    ['mono_finance_session=invalid-token', 'invalid_or_expired_session'],
+  ])(
+    'logs an expected session check without exposing its cookie',
+    async (cookie, reason) => {
+      const fixture = createFixture()
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+      try {
+        const response = await fixture.app.request(
+          '/api/auth/session',
+          {
+            headers: {
+              'X-Request-Id': 'session_check_123',
+              ...(cookie === undefined ? {} : { Cookie: cookie }),
+            },
+          },
+          fixture.environment,
+        )
+        expect(response.status).toBe(401)
+        expect(JSON.parse(log.mock.calls[0]![0] as string)).toEqual({
+          event: 'session_unavailable',
+          code: 'unauthenticated',
+          expected: true,
+          method: 'GET',
+          path: '/api/auth/session',
+          reason,
+          requestId: 'session_check_123',
+          status: 401,
+        })
+        expect(log.mock.calls.flat().join('')).not.toContain('invalid-token')
+      } finally {
+        log.mockRestore()
+      }
+    },
+  )
 
   it('revokes the session and clears its browser cookie on logout', async () => {
     const fixture = createFixture()

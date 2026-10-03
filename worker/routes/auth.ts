@@ -15,7 +15,7 @@ import {
 import { assertSameOrigin, clientIdentifier } from '../auth/request-security'
 import { failure, success } from '../common/api-response'
 import type { MonobankEnvironment } from '../common/environment'
-import { logEvent, recordMetric } from '../common/observability'
+import { logEvent, recordMetric, requestId } from '../common/observability'
 
 type AuthContext = Context<{
   Bindings: MonobankEnvironment
@@ -105,16 +105,24 @@ export async function currentSessionHandler(
 
 function authenticationFailure(context: AuthContext, error: unknown) {
   if (error instanceof AuthenticationError) {
-    logEvent('authentication_failure', {
+    const path = new URL(context.req.url).pathname
+    const expected =
+      path === '/api/auth/session' && error.code === 'unauthenticated'
+    const event = expected ? 'session_unavailable' : 'authentication_failure'
+    logEvent(event, {
       code: error.code,
-      path: new URL(context.req.url).pathname,
+      path,
+      method: context.req.method,
+      requestId: requestId(context.req.raw),
+      expected,
+      reason: expected
+        ? readSessionToken(context.req.raw) === undefined
+          ? 'missing_session_cookie'
+          : 'invalid_or_expired_session'
+        : error.code,
       status: error.status,
     })
-    recordMetric(
-      context.env?.OBSERVABILITY,
-      'authentication_failure',
-      error.code,
-    )
+    recordMetric(context.env?.OBSERVABILITY, event, error.code)
     if (error.status === 429) {
       context.header('Retry-After', '900')
     }

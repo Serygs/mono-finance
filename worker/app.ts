@@ -11,6 +11,7 @@ import { assertSameOrigin } from './auth/request-security'
 import { failure } from './common/api-response'
 import type { AuthEnvironment, MonobankEnvironment } from './common/environment'
 import { logError, requestId, safeErrorLogFields } from './common/observability'
+import { d1ErrorLogFields } from './common/d1-errors'
 import { applyApiSecurityHeaders } from './common/security-headers'
 import type { AccountService } from './services/account-service'
 import { createAccountService } from './services/account-service-factory'
@@ -320,12 +321,12 @@ export function createApp(
 
   app.onError((error, context) => {
     const path = new URL(context.req.url).pathname
-    const isD1Failure = isD1Error(error)
-    logError(isD1Failure ? 'd1_query_failed' : 'api_request_failed', {
+    const databaseFields = d1ErrorLogFields(error)
+    logError(databaseFields ? 'd1_query_failed' : 'api_request_failed', {
       method: context.req.method,
       path,
       requestId: requestId(context.req.raw),
-      ...safeErrorLogFields(error, { includeMessage: !isD1Failure }),
+      ...(databaseFields ?? safeErrorLogFields(error)),
     })
     const response = context.json(
       failure('internal_error', 'An unexpected error occurred.'),
@@ -336,15 +337,6 @@ export function createApp(
   })
 
   return app
-}
-
-function isD1Error(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-  const code = (error as Error & { code?: unknown }).code
-  return (
-    (typeof code === 'string' && code.startsWith('SQLITE_')) ||
-    error.message.startsWith('D1_ERROR:')
-  )
 }
 
 export const app = createApp()
