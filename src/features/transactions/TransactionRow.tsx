@@ -32,6 +32,8 @@ export function TransactionRow({
   const { locale, t } = useLocalization()
   const visual = resolveRecentTransactionVisual(transaction, categories)
   const amount = formatTransactionAmount(transaction, locale)
+  const categoryLabel = transactionCategoryLabel(transaction.category, t)
+  const fullCategoryLabel = transaction.category.name ?? t('Uncategorized')
   return (
     <button
       aria-pressed={selected}
@@ -57,12 +59,14 @@ export function TransactionRow({
       </span>
       <span className="transactions-ledger-row__metadata">
         <span className="transactions-ledger-row__category">
-          <span aria-hidden="true">
-            {transactionCategoryLabel(transaction.category, t)}
-          </span>
-          <span className="sr-only">
-            {transaction.category.name ?? t('Uncategorized')}
-          </span>
+          {categoryLabel === fullCategoryLabel ? (
+            categoryLabel
+          ) : (
+            <>
+              <span aria-hidden="true">{categoryLabel}</span>
+              <span className="sr-only">{fullCategoryLabel}</span>
+            </>
+          )}
         </span>
         <span className="transactions-ledger-row__account">
           {accountLabel(transaction, t('Account'))}
