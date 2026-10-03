@@ -34,7 +34,7 @@ describe('transaction sync presentation', () => {
     ).toBe('Not synced yet')
     const english = transactionSyncLabel(state, t, 'en')
     const ukrainian = transactionSyncLabel(state, t, 'uk')
-    expect(english).toContain('Last successful update')
+    expect(english).toContain('Transaction sync succeeded')
     expect(english).toContain('2025')
     expect(ukrainian).toContain('2025')
     expect(ukrainian).not.toBe(english)

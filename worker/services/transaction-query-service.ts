@@ -37,6 +37,7 @@ export interface TransactionListResult {
 
 export interface TransactionListInput {
   accountIds: string[]
+  categoryIdentity?: { kind: 'id'; id: string } | { kind: 'uncategorized' }
   category: string | null
   cursor: string | null
   currency: string | null

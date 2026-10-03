@@ -2,6 +2,7 @@ export type TransactionDirection = 'income' | 'expense'
 
 export interface TransactionListFilters {
   accountIds: string[]
+  categoryIdentity?: import('./transaction-drill-down').CategoryIdentity
   category: string | null
   currency: string | null
   dateFrom: number | null

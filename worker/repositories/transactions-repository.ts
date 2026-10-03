@@ -75,6 +75,17 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
       )
       bindings.push(input.category)
     }
+    if (input.categoryIdentity !== undefined) {
+      const identity =
+        'COALESCE(categories.id, mapped_categories.id, transactions.original_category_code)'
+      conditions.push(
+        input.categoryIdentity.kind === 'id'
+          ? `${identity} = ?`
+          : `${identity} IS NULL`,
+      )
+      if (input.categoryIdentity.kind === 'id')
+        bindings.push(input.categoryIdentity.id)
+    }
     if (input.excluded !== null) {
       conditions.push('COALESCE(transaction_exclusions.is_excluded, 0) = ?')
       bindings.push(input.excluded ? 1 : 0)

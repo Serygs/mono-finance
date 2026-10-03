@@ -68,6 +68,57 @@ describe('transaction list route', () => {
     expect(service.received).toBeNull()
   })
 
+  it.each([
+    'categoryId=5411&categoryId=5812',
+    'categoryId=5411&uncategorized=true',
+    'category=Food&categoryId=5411',
+    'uncategorized=maybe',
+  ])(
+    'rejects conflicting or invalid identity criteria: %s',
+    async (criteria) => {
+      const service = new FakeTransactionQueryService()
+      const app = createApp(
+        () => authenticatedService,
+        () => ({}) as AccountService,
+        () => ({}) as TransactionSyncService,
+        () => service as unknown as TransactionQueryService,
+      )
+      const response = await app.request(
+        `/api/transactions?${criteria}`,
+        { headers: { Cookie: 'mono_finance_session=test-session' } },
+        environment,
+      )
+      expect(response.status).toBe(400)
+      expect(service.received).toBeNull()
+    },
+  )
+
+  it.each([
+    { query: 'categoryId=5411', identity: { kind: 'id', id: '5411' } },
+    { query: 'uncategorized=true', identity: { kind: 'uncategorized' } },
+  ])(
+    'passes exact category identity to the owner query: $query',
+    async ({ query, identity }) => {
+      const service = new FakeTransactionQueryService()
+      const app = createApp(
+        () => authenticatedService,
+        () => ({}) as AccountService,
+        () => ({}) as TransactionSyncService,
+        () => service as unknown as TransactionQueryService,
+      )
+      const response = await app.request(
+        `/api/transactions?${query}`,
+        { headers: { Cookie: 'mono_finance_session=test-session' } },
+        environment,
+      )
+      expect(response.status).toBe(200)
+      expect(service.received).toMatchObject({
+        categoryIdentity: identity,
+        userId: 'owner-1',
+      })
+    },
+  )
+
   it('rejects a malformed cursor without querying data', async () => {
     const service = new FakeTransactionQueryService()
     const app = createApp(

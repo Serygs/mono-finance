@@ -9,7 +9,7 @@ export function transactionSyncLabel(
   if (state.status === 'running') return t('Sync in progress')
   if (state.status === 'failed') return t('Sync needs retry')
   if (state.lastSuccessfulSyncAt === null) return t('Not synced yet')
-  return t('Last successful update {date}', {
+  return t('Transaction sync succeeded {date}', {
     date: new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',

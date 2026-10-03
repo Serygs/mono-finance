@@ -1,4 +1,53 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  '1 account',
+  'Period: {from} – {to}',
+  'Verified transaction import time unknown',
+  'Transaction sync succeeded {date}',
+  'Offline',
+  'Online',
+  'View transactions for {category}',
+  'View transactions for {metric} · {currency}',
+  'View transactions',
+  'View transactions: {metric}',
+  'Converted totals cannot be explained by the original-currency ledger.',
+  'Daily average uses {days} days and is rounded to minor units.',
+  'Converted amounts help',
+  'Original amounts help',
+  'Effective amounts help',
+  'Accounts with the same type and currency may look identical when card numbers are unavailable.',
+  'Imported successfully {date}',
+  'Verified import windows',
+  'History coverage unknown',
+  'Selected period has unverified gaps',
+  'Selected period has verified import coverage',
+  'Transaction import time unknown',
+  'Balance updated {date}',
+  'Balance update time unknown',
+  'Coverage records successful statement windows, not the first or last transaction. Unverified gaps remain unknown.',
+  'Transaction import time does not describe balance freshness.',
+  'Data freshness',
+  'Exact period: {from} – {to}',
+  'Converted report · effective amounts',
+  'Original currencies · effective amounts',
+  'Include all transactions',
+  'Exclusion policy',
+  'Only excluded transactions',
+  'Without excluded transactions',
+  'Currency: {currency}',
+  'Category: {category}',
+  'Remove filter: {filter}',
+  'Reset additional filters',
+  'Additional filters',
+  'Category tracks show shares of the full currency total.',
+  'All transactions',
+  'Utilities',
+  'Pharmacies',
+  'Taxi',
+  'Fuel',
+  'Fast food',
+  'Restaurants',
+  'Food stores',
+  'Card number unavailable',
   'Analytics',
   'About',
   'Session',
@@ -456,13 +505,91 @@ export const ENGLISH_MESSAGE_KEYS = [
 
 export type TranslationKey = (typeof ENGLISH_MESSAGE_KEYS)[number]
 
-export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> =
-  Object.fromEntries(ENGLISH_MESSAGE_KEYS.map((key) => [key, key])) as Record<
-    TranslationKey,
-    string
-  >
+export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
+  ...(Object.fromEntries(
+    ENGLISH_MESSAGE_KEYS.map((key) => [key, key]),
+  ) as Record<TranslationKey, string>),
+  'Total spent help':
+    'Sum of expense transaction magnitudes for the selected period and accounts.',
+  'Total income help':
+    'Sum of incoming transactions for the selected period and accounts.',
+  'Net cash flow help':
+    'Income minus expenses. Positive net cash flow is not a measure of savings.',
+  'Average spend / day help':
+    'Total expense magnitude divided by the number of days in the selected period.',
+  'Effective amounts help':
+    'Adjusted amounts are used when present, otherwise original amounts. Excluded transactions are omitted. Compensation links do not reduce these totals; personal expense is a separate calculation. Direction is assigned at import. Refunds count as incoming amounts; internal transfers and credit movements are not classified separately.',
+  'Original amounts help':
+    'Each currency is shown separately, without conversion.',
+  'Converted amounts help':
+    'The report uses stored historical rates. When a rate is missing, original currencies remain separate.',
+}
 
 export const UKRAINIAN_MESSAGES = {
+  '1 account': '1 рахунок',
+  'Period: {from} – {to}': 'Період: {from} – {to}',
+  'Verified transaction import time unknown':
+    'Підтверджений час імпорту транзакцій невідомий',
+  'Transaction sync succeeded {date}':
+    'Синхронізація транзакцій успішна {date}',
+  Offline: 'Офлайн',
+  Online: 'Онлайн',
+  'View transactions for {category}':
+    'Переглянути операції категорії {category}',
+  'View transactions for {metric} · {currency}':
+    'Переглянути операції: {metric} · {currency}',
+  'View transactions': 'Переглянути операції',
+  'View transactions: {metric}': 'Переглянути операції: {metric}',
+  'Converted totals cannot be explained by the original-currency ledger.':
+    'Список в оригінальних валютах не пояснює точно конвертовану суму.',
+  'Daily average uses {days} days and is rounded to minor units.':
+    'Середня витрата ділиться на {days} днів і округлюється до найменших одиниць валюти.',
+  'Converted amounts help':
+    'Звіт використовує збережені історичні курси. За відсутності курсу оригінальні валюти залишаються окремо.',
+  'Original amounts help': 'Кожна валюта показується окремо без конвертації.',
+  'Effective amounts help':
+    'Використовуються скориговані суми, якщо вони є, інакше оригінальні. Виключені операції не враховуються. Зв’язки компенсацій не зменшують ці суми; особисті витрати розраховуються окремо. Напрям визначено під час імпорту. Повернення входять до надходжень; власні перекази й кредитні рухи не класифіковано окремо.',
+  'Accounts with the same type and currency may look identical when card numbers are unavailable.':
+    'Рахунки одного типу й валюти можуть виглядати однаково, якщо номери карток недоступні.',
+  'Imported successfully {date}': 'Успішно імпортовано {date}',
+  'Verified import windows': 'Підтверджені вікна імпорту',
+  'History coverage unknown': 'Покриття історії невідоме',
+  'Selected period has unverified gaps':
+    'У вибраному періоді є неперевірені проміжки',
+  'Selected period has verified import coverage':
+    'Імпорт вибраного періоду підтверджено',
+  'Transaction import time unknown': 'Час імпорту транзакцій невідомий',
+  'Balance updated {date}': 'Баланс оновлено {date}',
+  'Balance update time unknown': 'Час оновлення балансу невідомий',
+  'Coverage records successful statement windows, not the first or last transaction. Unverified gaps remain unknown.':
+    'Покриття підтверджують успішно оброблені вікна виписки, а не перша чи остання операція. Неперевірені проміжки залишаються невідомими.',
+  'Transaction import time does not describe balance freshness.':
+    'Час імпорту транзакцій не визначає актуальність балансу.',
+  'Data freshness': 'Актуальність даних',
+  'Exact period: {from} – {to}': 'Точний період: {from} – {to}',
+  'Converted report · effective amounts': 'Конвертований звіт · ефективні суми',
+  'Original currencies · effective amounts':
+    'Оригінальні валюти · ефективні суми',
+  'Include all transactions': 'Усі операції',
+  'Exclusion policy': 'Виключені операції',
+  'Only excluded transactions': 'Лише виключені операції',
+  'Without excluded transactions': 'Без виключених операцій',
+  'Currency: {currency}': 'Валюта: {currency}',
+  'Category: {category}': 'Категорія: {category}',
+  'Remove filter: {filter}': 'Прибрати фільтр: {filter}',
+  'Reset additional filters': 'Скинути додаткові фільтри',
+  'Additional filters': 'Додаткові фільтри',
+  'Category tracks show shares of the full currency total.':
+    'Смужки показують частку від повної суми відповідної валюти.',
+  'All transactions': 'Усі транзакції',
+  Utilities: 'Комунальні послуги',
+  Pharmacies: 'Аптеки',
+  Taxi: 'Таксі',
+  Fuel: 'Пальне',
+  'Fast food': 'Фастфуд',
+  Restaurants: 'Ресторани',
+  'Food stores': 'Продовольчі магазини',
+  'Card number unavailable': 'Номер картки недоступний',
   Analytics: 'Аналітика',
   About: 'Про застосунок',
   Session: 'Сеанс',
@@ -593,7 +720,7 @@ export const UKRAINIAN_MESSAGES = {
   'Monthly trend help': 'Витрати за місяцями у вибраному періоді.',
   More: 'Ще',
   'Net cash flow help':
-    'Доходи мінус витрати. Від’ємне значення означає, що витрати перевищили доходи.',
+    'Надходження мінус витрати. Позитивний чистий грошовий потік не є показником заощаджень.',
   'No expenses in this period.': 'У цьому періоді немає витрат.',
   'Recent compensations help':
     'Останні зв’язки компенсацій серед транзакцій вибраного періоду.',

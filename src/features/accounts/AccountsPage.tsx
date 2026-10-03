@@ -1,3 +1,4 @@
+import { accountName, compactCardNumber } from './account-formatting'
 import { useMemo } from 'react'
 import { useAccountsQuery } from './account-queries'
 import { StatusBadge } from '../../components/ui/Chips'
@@ -180,12 +181,7 @@ function AccountRow({ account }: { account: AccountSummary }) {
   const { locale, t } = useLocalization()
   const card = account.cards.find((card) => card.isActive) ?? account.cards[0]
   // Type is the only account name in the current safe API contract.
-  const name =
-    account.type === ''
-      ? t('Account')
-      : ['black', 'white', 'platinum', 'iron', 'yellow'].includes(account.type)
-        ? `${account.type[0]!.toUpperCase()}${account.type.slice(1)}`
-        : account.type
+  const name = accountName(account.type, t('Account'))
   return (
     <li className="account-row" data-account-id={account.id}>
       <span
@@ -199,14 +195,22 @@ function AccountRow({ account }: { account: AccountSummary }) {
       </div>
       <div className="account-row__metadata">
         <span>
-          {card?.maskedPan
-            ? `${t('Card')} ${card.maskedPan}`
-            : `${t('Account ID')} ${account.id}`}
+          {compactCardNumber(card?.maskedPan) ?? t('Card number unavailable')}
         </span>
         <StatusBadge
           label={t(account.isActive ? 'Active' : 'Unavailable')}
           tone={account.isActive ? 'success' : 'neutral'}
         />
+        <small className="account-row__freshness">
+          {account.balanceUpdatedAt == null
+            ? t('Balance update time unknown')
+            : t('Balance updated {date}', {
+                date: new Intl.DateTimeFormat(locale, {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                }).format(account.balanceUpdatedAt * 1000),
+              })}
+        </small>
       </div>
       <strong className="account-row__balance">
         <MoneyText

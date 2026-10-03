@@ -1,3 +1,7 @@
+import {
+  FilterChips,
+  type ActiveCriterion,
+} from '../../components/ui/FilterChips'
 import { Button, SegmentedControl } from '../../components/ui/Controls'
 import { Icon } from '../../components/ui/Icon'
 import {
@@ -55,6 +59,44 @@ export function TransactionFilters({
     accountsQuery,
     categories,
   } = ledger
+  const criteria: ActiveCriterion[] = []
+  const add = (key: string, label: string, onRemove: () => void) =>
+    criteria.push({
+      key,
+      label,
+      onRemove,
+      removeLabel: t('Remove filter: {filter}', { filter: label }),
+    })
+  if (category !== null || ledger.categoryIdentity !== undefined)
+    add(
+      'category',
+      t('Category: {category}', {
+        category:
+          ledger.categoryLabel ??
+          t(
+            ledger.categoryIdentity?.kind === 'uncategorized'
+              ? 'Uncategorized'
+              : 'Category',
+          ),
+      }),
+      () => setCategory(null),
+    )
+  if (ledger.currency !== null)
+    add(
+      'currency',
+      t('Currency: {currency}', { currency: ledger.currency }),
+      () => ledger.setCurrency(null),
+    )
+  if (ledger.excluded !== null)
+    add(
+      'excluded',
+      t(
+        ledger.excluded
+          ? 'Only excluded transactions'
+          : 'Without excluded transactions',
+      ),
+      () => ledger.setExcluded(null),
+    )
   return (
     <section
       className="transactions-toolbar"
@@ -95,7 +137,7 @@ export function TransactionFilters({
             ? t('All accounts ({count})', {
                 count: accountsQuery.data?.length ?? 0,
               })
-            : t('{count} accounts selected', { count: accountIds.length })
+            : t('{count} accounts', { count: accountIds.length })
         }
       />
       <Popover
@@ -115,6 +157,47 @@ export function TransactionFilters({
               t={t}
               value={category}
             />
+            <FormField label={t('Currency')}>
+              <Select
+                value={ledger.currency ?? ''}
+                onChange={(event) =>
+                  ledger.setCurrency(event.target.value || null)
+                }
+              >
+                <option value="">{t('All original currencies')}</option>
+                {[
+                  ...new Set(
+                    (accountsQuery.data ?? []).map(
+                      (item) => item.currency.code,
+                    ),
+                  ),
+                ].map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label={t('Exclusion policy')}>
+              <Select
+                value={
+                  ledger.excluded === null ? 'all' : String(ledger.excluded)
+                }
+                onChange={(event) =>
+                  ledger.setExcluded(
+                    event.target.value === 'all'
+                      ? null
+                      : event.target.value === 'true',
+                  )
+                }
+              >
+                <option value="all">{t('Include all transactions')}</option>
+                <option value="false">
+                  {t('Without excluded transactions')}
+                </option>
+                <option value="true">{t('Only excluded transactions')}</option>
+              </Select>
+            </FormField>
             {datePreset === 'custom' ? (
               <CustomDateFields
                 customDateFrom={customDateFrom}
@@ -129,7 +212,7 @@ export function TransactionFilters({
               variant="secondary"
               onClick={ledger.resetFilters}
             >
-              {t('Reset filters')}
+              {t('Reset additional filters')}
             </Button>
           </div>
         }
@@ -143,7 +226,8 @@ export function TransactionFilters({
           </span>
         ) : null}
       </Popover>
-      <SegmentedControl
+      <FilterChips criteria={criteria} label={t('Additional filters')} />
+      <SegmentedControl<'all' | 'expense' | 'income'>
         label={t('Direction')}
         onChange={(value) => setDirection(value === 'all' ? null : value)}
         options={DIRECTION_OPTIONS.map((option) => ({

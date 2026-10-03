@@ -1,3 +1,6 @@
+import { useRestoreFinanceScroll } from '../../lib/use-finance-view-history'
+import { DataFreshness } from '../transactions/DataFreshness'
+import { AnalyticsPeriod } from './AnalyticsPeriod'
 import { useState } from 'react'
 import { Button } from '../../components/ui/Controls'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
@@ -46,6 +49,7 @@ export function DashboardPage() {
   } = useDashboardSync()
   const [customizing, setCustomizing] = useState(false)
   const [syncOpen, setSyncOpen] = useState(false)
+  useRestoreFinanceScroll(!analytics.isPending)
   return (
     <PageSurface className="dashboard-page">
       <PageHeader
@@ -87,6 +91,7 @@ export function DashboardPage() {
       <section className="dashboard-command-bar">
         <DashboardFilters
           accounts={accounts ?? []}
+
           analytics={analytics.data}
           baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
           currency={currency}
@@ -102,6 +107,10 @@ export function DashboardPage() {
           preset={preset}
           to={to}
         />
+        <div className="analytics-meta">
+          <AnalyticsPeriod range={range} />
+          <DataFreshness accountIds={filters.accountIds} range={range} />
+        </div>
       </section>
       {error === null ? null : (
         <Alert tone="danger" title={t('Dashboard update failed')}>
@@ -137,6 +146,13 @@ export function DashboardPage() {
       {analytics.data === undefined || range === null ? null : (
         <DashboardLayout
           accounts={accounts ?? []}
+          context={{
+            accountIds: filters.accountIds,
+            ...range,
+            currencyMode: analytics.data.overview.currencyConversion.mode,
+            amountMode: 'effective',
+            excluded: false,
+          }}
           analytics={analytics.data}
           currency={mode === 'original' ? currency : null}
           onPreferences={setPreferences}

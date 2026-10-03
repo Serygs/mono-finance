@@ -3,6 +3,12 @@ export interface TransactionSyncState {
   accountType: string
   currencyCode: string
   lastErrorCode: string | null
+  /** Fully persisted successful statement request intervals; absent/null means unknown legacy coverage. */
+  coverageIntervals?: Array<{
+    fromEpochSeconds: number
+    toEpochSeconds: number
+    completedAt: number
+  }> | null
   lastSuccessfulSyncAt: number | null
   status: 'idle' | 'running' | 'failed'
 }

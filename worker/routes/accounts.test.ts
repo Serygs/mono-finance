@@ -183,6 +183,10 @@ describe('accounts routes', () => {
     expect(JSON.parse(errorLog.mock.calls[0]![0] as string)).toEqual({
       errorCode: 'SQLITE_ERROR',
       errorName: 'Error',
+      databaseBinding: 'DB',
+      databaseReason: 'missing_column',
+      diagnosticHint:
+        'Apply pending D1 migrations to the database used by this Worker.',
       event: 'd1_query_failed',
       method: 'POST',
       path: '/api/sync/accounts',

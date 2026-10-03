@@ -1,3 +1,5 @@
+import { useLocation } from 'react-router'
+import { useFinanceViewHistory } from '../../lib/use-finance-view-history'
 import { useEffect, useMemo, useState } from 'react'
 import {
   loadAccountFilter,
@@ -11,14 +13,31 @@ import {
 } from './dashboard-data'
 
 export function useDashboardFilters() {
-  const [filter, setFilter] = useState<AccountFilter>(loadAccount)
-  const [preset, setPreset] = useState<DashboardDatePreset>(
-    DEFAULT_DASHBOARD_DATE_PRESET,
+  const location = useLocation()
+  const saved = location.state?.financeView as
+    | {
+        filter: AccountFilter
+        preset: DashboardDatePreset
+        from: string
+        to: string
+        mode: 'base' | 'original'
+        currency: string | null
+      }
+    | undefined
+  const [filter, setFilter] = useState<AccountFilter>(
+    () => saved?.filter ?? loadAccount(),
   )
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
-  const [mode, setMode] = useState<'base' | 'original'>('original')
-  const [currency, setCurrency] = useState<string | null>(null)
+  const [preset, setPreset] = useState<DashboardDatePreset>(
+    saved?.preset ?? DEFAULT_DASHBOARD_DATE_PRESET,
+  )
+  const [from, setFrom] = useState(saved?.from ?? '')
+  const [to, setTo] = useState(saved?.to ?? '')
+  const [mode, setMode] = useState<'base' | 'original'>(
+    saved?.mode ?? 'original',
+  )
+  const [currency, setCurrency] = useState<string | null>(
+    saved?.currency ?? null,
+  )
   const range = useMemo(
     () => resolveDashboardRange(preset, from, to),
     [from, preset, to],
@@ -30,6 +49,11 @@ export function useDashboardFilters() {
   useEffect(() => {
     storeAccount(filter)
   }, [filter])
+  const view = useMemo(
+    () => ({ filter, preset, from, to, mode, currency }),
+    [filter, preset, from, to, mode, currency],
+  )
+  useFinanceViewHistory(view)
   return {
     filter,
     setFilter,

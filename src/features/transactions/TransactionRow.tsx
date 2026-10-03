@@ -1,3 +1,4 @@
+import { transactionCategoryLabel } from './transaction-category-presentation'
 import { CategoryIcon } from '../../components/ui/CategoryIcon'
 import { formatMoney } from '../../lib/money-presentation'
 import { formatEpochDate } from '../../lib/date-presentation'
@@ -31,6 +32,8 @@ export function TransactionRow({
   const { locale, t } = useLocalization()
   const visual = resolveRecentTransactionVisual(transaction, categories)
   const amount = formatTransactionAmount(transaction, locale)
+  const categoryLabel = transactionCategoryLabel(transaction.category, t)
+  const fullCategoryLabel = transaction.category.name ?? t('Uncategorized')
   return (
     <button
       aria-pressed={selected}
@@ -54,20 +57,29 @@ export function TransactionRow({
         <strong>{transaction.originalDescription}</strong>
         <TransactionIndicators transaction={transaction} />
       </span>
-      <span className="transactions-ledger-row__category">
-        {transaction.category.name ?? t('Uncategorized')}
-      </span>
-      <span className="transactions-ledger-row__account">
-        {accountLabel(transaction)}
-      </span>
-      <span className="transactions-ledger-row__date">
-        <time
-          dateTime={new Date(
-            transaction.originalTimestamp * 1000,
-          ).toISOString()}
-        >
-          {formatTransactionClock(transaction.originalTimestamp, locale)}
-        </time>
+      <span className="transactions-ledger-row__metadata">
+        <span className="transactions-ledger-row__category">
+          {categoryLabel === fullCategoryLabel ? (
+            categoryLabel
+          ) : (
+            <>
+              <span aria-hidden="true">{categoryLabel}</span>
+              <span className="sr-only">{fullCategoryLabel}</span>
+            </>
+          )}
+        </span>
+        <span className="transactions-ledger-row__account">
+          {accountLabel(transaction, t('Account'))}
+        </span>
+        <span className="transactions-ledger-row__date">
+          <time
+            dateTime={new Date(
+              transaction.originalTimestamp * 1000,
+            ).toISOString()}
+          >
+            {formatTransactionClock(transaction.originalTimestamp, locale)}
+          </time>
+        </span>
       </span>
       <span
         className={
@@ -113,7 +125,7 @@ export function RecentTransactionRow({
   visual: { icon: string | null; colorToken: string | null }
   onSelect(transaction: TransactionListItem): void
 }) {
-  const { locale } = useLocalization()
+  const { locale, t } = useLocalization()
   return (
     <li>
       <button
@@ -147,10 +159,8 @@ export function RecentTransactionRow({
               )}
             </time>
             {' · '}
-            {transaction.account.type}
-            {transaction.account.maskedPan === null
-              ? ''
-              : ` · ${transaction.account.maskedPan.slice(-4)}`}
+            {accountLabel(transaction, t('Account'))}
+            <TransactionIndicators transaction={transaction} />
           </small>
         </span>
         <b

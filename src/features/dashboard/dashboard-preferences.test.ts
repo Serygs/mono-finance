@@ -38,6 +38,20 @@ describe('dashboard preferences', () => {
     expect(loadDashboardPreferences(storage)).toEqual(preferences)
   })
 
+  it.each([10, 20] as const)(
+    'retains the saved recent limit %i',
+    (recentTransactionsLimit) => {
+      const storage = new MapStorage()
+      saveDashboardPreferences(storage, {
+        ...DEFAULT_DASHBOARD_PREFERENCES,
+        recentTransactionsLimit,
+      })
+      expect(loadDashboardPreferences(storage).recentTransactionsLimit).toBe(
+        recentTransactionsLimit,
+      )
+    },
+  )
+
   it('resets only positions and dimensions while preserving widget visibility', () => {
     const preferences: DashboardPreferences = {
       ...DEFAULT_DASHBOARD_PREFERENCES,

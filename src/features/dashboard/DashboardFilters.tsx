@@ -1,3 +1,8 @@
+import { Button } from '../../components/ui/Controls'
+import {
+  FilterChips,
+  type ActiveCriterion,
+} from '../../components/ui/FilterChips'
 import { Popover } from '../../components/ui/Popover'
 import { Icon } from '../../components/ui/Icon'
 import { FormField, Select } from '../../components/ui/FormControls'
@@ -18,9 +23,9 @@ const DATE_PRESETS: Array<{
   label: TranslationKey
   value: DashboardDatePreset
 }> = [
-  { label: 'Last 7 days', value: '7d' },
-  { label: 'Last 30 days', value: '30d' },
-  { label: 'Last 90 days', value: '90d' },
+  { label: '7 days', value: '7d' },
+  { label: '30 days', value: '30d' },
+  { label: '90 days', value: '90d' },
   { label: 'Current month', value: 'current-month' },
   { label: 'Previous month', value: 'previous-month' },
   { label: 'Current year', value: 'current-year' },
@@ -66,11 +71,24 @@ export function DashboardFilters({
       : filter.accountIds
   const chartCurrencies =
     analytics === undefined ? [] : availableCurrencies(analytics)
-  const activeFilterCount = [
-    mode === 'base' || currency !== null,
-    preset === 'custom',
-    filter.mode === 'selected',
-  ].filter(Boolean).length
+  const criteria: ActiveCriterion[] = []
+  if (mode === 'base' || currency !== null) {
+    const label = t('Currency: {currency}', {
+      currency:
+        mode === 'base' ? `${baseCurrency} · ${t('Base currency')}` : currency!,
+    })
+    criteria.push({
+      key: 'currency',
+      label,
+      removeLabel: t('Remove filter: {filter}', { filter: label }),
+      onRemove: () => {
+        onMode('original')
+        onCurrency(null)
+      },
+    })
+  }
+  const activeFilterCount = criteria.length
+
   return (
     <section className="dashboard-toolbar" aria-label={t('Dashboard filters')}>
       <FormField label={t('Period')}>
@@ -101,7 +119,7 @@ export function DashboardFilters({
         triggerLabel={
           ids.length === accounts.length
             ? t('All accounts ({count})', { count: accounts.length })
-            : t('{count} accounts selected', { count: ids.length })
+            : t('{count} accounts', { count: ids.length })
         }
         value={ids}
       />
@@ -161,6 +179,16 @@ export function DashboardFilters({
                 {t('Choose Custom range to set exact dates.')}
               </p>
             )}
+            <Button
+              variant="secondary"
+              disabled={activeFilterCount === 0}
+              onClick={() => {
+                onMode('original')
+                onCurrency(null)
+              }}
+            >
+              {t('Reset additional filters')}
+            </Button>
           </div>
         }
       >
@@ -170,6 +198,15 @@ export function DashboardFilters({
           <span className="dashboard-filter-count">{activeFilterCount}</span>
         ) : null}
       </Popover>
+      <FilterChips criteria={criteria} label={t('Additional filters')} />
+      <p className="analytics-context">
+        {t(
+          mode === 'base'
+            ? 'Converted report · effective amounts'
+            : 'Original currencies · effective amounts',
+        )}{' '}
+        · {t('Without excluded transactions')}
+      </p>
     </section>
   )
 }

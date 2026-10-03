@@ -94,11 +94,9 @@ test('ranking keeps exact per-currency totals, custom visuals and income-specifi
     ranking.locator('.category-ranking-copy small').first(),
   ).toHaveText(percent!)
   await page.getByRole('button', { name: 'Income', exact: true }).click()
-  await expect(page.getByText('Largest income category')).toBeVisible()
+  await expect(page.getByText('Largest income category')).toHaveCount(0)
   await expect(page.getByText('Largest expense category')).toHaveCount(0)
-  await expect(page.locator('.category-ranking')).toContainText(
-    '100% of category income',
-  )
+  await expect(page.locator('.category-ranking')).toContainText('100%')
   await page.route('**/api/analytics/breakdowns?*', (route) =>
     route.fulfill({
       json: {
@@ -503,7 +501,9 @@ test('analytics and mapping loading/errors recover, filtered empties stay truthf
   await expect(page.getByRole('status')).toContainText(
     'Choose a valid date range.',
   )
-  await filters.getByRole('button', { name: 'Reset filters' }).tap()
+  await filters.getByLabel('From').fill('2025-01-10')
+  await filters.getByLabel('To').fill('2025-01-14')
+  await page.keyboard.press('Escape')
   await expect(filters).toHaveCount(0)
   await context.setOffline(true)
   await expect(page.locator('.offline-status')).toContainText('Offline')

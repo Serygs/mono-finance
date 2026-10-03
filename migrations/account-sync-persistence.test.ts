@@ -23,6 +23,11 @@ const transactionSyncMigration = readFileSync(
   'utf8',
 )
 
+const freshnessMigration = readFileSync(
+  new NodeUrl('./0008_verified_data_freshness.sql', import.meta.url),
+  'utf8',
+)
+
 describe('D1AccountsRepository', () => {
   let sqlite: DatabaseSync
   let repository: D1AccountsRepository
@@ -32,6 +37,7 @@ describe('D1AccountsRepository', () => {
     sqlite.exec('PRAGMA foreign_keys = ON')
     sqlite.exec(initialMigration)
     sqlite.exec(transactionSyncMigration)
+    sqlite.exec(freshnessMigration)
     sqlite
       .prepare(
         `INSERT INTO users (id, email, password_hash)
@@ -182,6 +188,7 @@ describe('D1TransactionSyncRepository', () => {
     sqlite.exec('PRAGMA foreign_keys = ON')
     sqlite.exec(initialMigration)
     sqlite.exec(transactionSyncMigration)
+    sqlite.exec(freshnessMigration)
     sqlite
       .prepare(`INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)`)
       .run('owner-1', 'owner@example.com', 'not-a-real-hash')
@@ -209,6 +216,7 @@ describe('D1TransactionSyncRepository', () => {
     await repository.completeWindow({
       accountId: claimed!.accountId,
       backfillCursorAt: 1_000,
+      window: { fromEpochSeconds: 1_000, toEpochSeconds: 3_000_000 },
       lastSyncedTransactionAt: 2_000,
       nowEpochSeconds: 3_000_000,
     })

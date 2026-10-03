@@ -48,6 +48,8 @@
   --color-text-tertiary: var(--text-tertiary);
   --color-border: var(--border-subtle);
   --color-border-strong: var(--border-strong);
+  --color-segment-selected-background: var(--text-primary);
+  --color-segment-selected-foreground: var(--surface-primary);
   --color-action: var(--accent);
   --color-action-foreground: #fff;
   --color-action-hover: #155cbf;

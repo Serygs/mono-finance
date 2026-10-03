@@ -57,7 +57,7 @@ export function TransactionSummary({
         </div>
         <div>
           <dt>{t('Account')}</dt>
-          <dd>{accountLabel(transaction)}</dd>
+          <dd>{accountLabel(transaction, t('Account'))}</dd>
         </div>
         <div>
           <dt>{t('Category')}</dt>

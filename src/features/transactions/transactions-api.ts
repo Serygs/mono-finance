@@ -1,3 +1,4 @@
+import { transactionFilterParameters } from './transaction-drill-down'
 import type { ApiResponse } from '../../types/api'
 import { getOfflineApiData } from '../offline/offline-api'
 
@@ -13,17 +14,7 @@ export async function getTransactions(
   cursor?: string,
   limit?: number,
 ): Promise<TransactionPage> {
-  const parameters = new URLSearchParams()
-  for (const accountId of filters.accountIds) {
-    parameters.append('accountId', accountId)
-  }
-  appendParameter(parameters, 'dateFrom', filters.dateFrom)
-  appendParameter(parameters, 'dateTo', filters.dateTo)
-  appendParameter(parameters, 'direction', filters.direction)
-  appendParameter(parameters, 'currency', filters.currency)
-  appendParameter(parameters, 'category', filters.category)
-  appendParameter(parameters, 'excluded', filters.excluded)
-  appendParameter(parameters, 'search', filters.search)
+  const parameters = transactionFilterParameters(filters)
   appendParameter(parameters, 'cursor', cursor)
   appendParameter(parameters, 'limit', limit)
   const search = parameters.toString()

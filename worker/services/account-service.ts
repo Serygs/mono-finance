@@ -8,6 +8,8 @@ export interface AccountCardView {
 }
 
 export interface AccountView {
+  /** Confirmed account snapshot persisted at this UTC epoch second; absent/null for legacy data. */
+  balanceUpdatedAt?: number | null
   balanceMinor: number
   cards: AccountCardView[]
   creditLimitMinor: number | null

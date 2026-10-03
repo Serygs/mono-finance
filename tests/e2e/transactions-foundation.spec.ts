@@ -140,7 +140,7 @@ test('search, direction, accounts and partial custom dates reset the cursor and 
   await page.goto('/transactions')
   await page.getByRole('button', { name: 'Accounts', exact: true }).click()
   await page
-    .getByRole('checkbox', { name: 'white · USD · account-2', exact: true })
+    .getByRole('checkbox', { name: 'White · USD', exact: true })
     .uncheck()
   await expect
     .poll(() => requested.at(-1)?.searchParams.getAll('accountId'))
@@ -151,7 +151,7 @@ test('search, direction, accounts and partial custom dates reset the cursor and 
   ).toBeFocused()
   await expect(
     page.getByRole('button', { name: 'Accounts', exact: true }),
-  ).toContainText('1 accounts selected')
+  ).toContainText('1 account')
   await page.getByRole('button', { name: 'Load more', exact: true }).click()
   await expect(page.locator('.transactions-ledger-row')).toHaveCount(2)
   await page.getByRole('button', { name: 'Income', exact: true }).click()
@@ -186,20 +186,18 @@ test('search, direction, accounts and partial custom dates reset the cursor and 
     path: 'phase3.local/states/filtered-empty.png',
     animations: 'disabled',
   })
-  await page.getByRole('button', { name: 'Reset filters', exact: true }).click()
+  // Search and direction are visible base controls; a scoped reset must keep them.
+  await page.getByLabel('Search merchant or description').fill('')
   await expect(page.locator('.transactions-ledger-row')).toHaveCount(1)
   await expect(
     page.getByRole('combobox', { name: 'Date range', exact: true }),
-  ).toHaveValue('30d')
+  ).toHaveValue('custom')
   await expect(
-    page.getByRole('button', { name: 'All', exact: true }),
+    page.getByRole('button', { name: 'Income', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByLabel('Search merchant or description')).toHaveValue(
-    '',
-  )
   await expect(
     page.getByRole('button', { name: 'Accounts', exact: true }),
-  ).toContainText('All accounts (2)')
+  ).toContainText('1 account')
 })
 
 test('failed saves retain drafts; restore, category reset and unlink keep originals and related screens current', async ({

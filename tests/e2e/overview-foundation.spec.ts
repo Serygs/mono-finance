@@ -194,7 +194,7 @@ test('mobile help survives the first tap, filters dismiss reliably, and chart de
   await expect(details.locator('.ui-chart-details').nth(2)).toContainText('2')
   await page.keyboard.press('Escape')
   await page
-    .getByRole('link', { name: 'View all transactions', exact: true })
+    .getByRole('link', { name: 'All transactions', exact: true })
     .click()
   await expect(page.locator('.transactions-page')).toBeVisible()
   await page.getByRole('link', { name: 'More', exact: true }).click()

@@ -135,46 +135,53 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
   async completeWindow(input: {
     accountId: string
     backfillCursorAt: number
+    window: { fromEpochSeconds: number; toEpochSeconds: number }
     lastSyncedTransactionAt: number | null
     nowEpochSeconds: number
   }): Promise<void> {
-    await this.database
-      .prepare(
-        `UPDATE sync_state
-         SET status = 'idle',
-             backfill_cursor_at = ?,
-             last_synced_transaction_at = ?,
-             last_successful_sync_at = ?,
-             last_error_code = NULL,
-             lease_expires_at = NULL,
-             updated_at = ?
-         WHERE account_id = ?`,
-      )
-      .bind(
-        input.backfillCursorAt,
-        input.lastSyncedTransactionAt,
-        input.nowEpochSeconds,
-        input.nowEpochSeconds,
-        input.accountId,
-      )
-      .run()
+    // D1 batch atomically commits the interval evidence and successful import metadata.
+    await this.database.batch([
+      this.database
+        .prepare(
+          `INSERT INTO transaction_sync_windows
+        (account_id, from_epoch_seconds, to_epoch_seconds, completed_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(account_id, from_epoch_seconds, to_epoch_seconds)
+        DO UPDATE SET completed_at = excluded.completed_at`,
+        )
+        .bind(
+          input.accountId,
+          input.window.fromEpochSeconds,
+          input.window.toEpochSeconds,
+          input.nowEpochSeconds,
+        ),
+      this.database
+        .prepare(
+          `UPDATE sync_state SET status = 'idle', backfill_cursor_at = ?,
+        last_synced_transaction_at = ?, last_successful_sync_at = ?, last_error_code = NULL,
+        lease_expires_at = NULL, updated_at = ? WHERE account_id = ?`,
+        )
+        .bind(
+          input.backfillCursorAt,
+          input.lastSyncedTransactionAt,
+          input.nowEpochSeconds,
+          input.nowEpochSeconds,
+          input.accountId,
+        ),
+    ])
   }
 
   async completeEmptyWindow(
     accountId: string,
     nowEpochSeconds: number,
   ): Promise<void> {
+    // A no-op performs no provider read and therefore establishes no freshness.
     await this.database
       .prepare(
-        `UPDATE sync_state
-         SET status = 'idle',
-             last_successful_sync_at = ?,
-             last_error_code = NULL,
-             lease_expires_at = NULL,
-             updated_at = ?
-         WHERE account_id = ?`,
+        `UPDATE sync_state SET status = 'idle', last_error_code = NULL,
+      lease_expires_at = NULL, updated_at = ? WHERE account_id = ?`,
       )
-      .bind(nowEpochSeconds, nowEpochSeconds, accountId)
+      .bind(nowEpochSeconds, accountId)
       .run()
   }
 
@@ -209,12 +216,32 @@ export class D1TransactionSyncRepository implements TransactionSyncRepository {
       )
       .bind(userId)
       .all<SyncStatusRow>()
+    const windows = await this.database
+      .prepare(
+        `SELECT transaction_sync_windows.*
+      FROM transaction_sync_windows INNER JOIN accounts ON accounts.id = transaction_sync_windows.account_id
+      WHERE accounts.user_id = ? ORDER BY account_id, from_epoch_seconds`,
+      )
+      .bind(userId)
+      .all<{
+        account_id: string
+        from_epoch_seconds: number
+        to_epoch_seconds: number
+        completed_at: number
+      }>()
     return result.results.map((row) => ({
       accountId: row.account_id,
       accountType: row.account_type,
       currencyCode: row.currency_code,
       lastErrorCode: row.last_error_code,
       lastSuccessfulSyncAt: row.last_successful_sync_at,
+      coverageIntervals: windows.results
+        .filter((window) => window.account_id === row.account_id)
+        .map((window) => ({
+          fromEpochSeconds: window.from_epoch_seconds,
+          toEpochSeconds: window.to_epoch_seconds,
+          completedAt: window.completed_at,
+        })),
       status: row.status,
     }))
   }

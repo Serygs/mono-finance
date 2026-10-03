@@ -5,6 +5,8 @@ export interface AccountCardSummary {
 }
 
 export interface AccountSummary {
+  /** Confirmed account snapshot persisted at this UTC epoch second; absent/null for legacy data. */
+  balanceUpdatedAt?: number | null
   balanceMinor: number
   cards: AccountCardSummary[]
   creditLimitMinor: number | null

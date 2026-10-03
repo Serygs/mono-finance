@@ -42,6 +42,7 @@
 }
 
 .brand-lockup {
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   gap: 0.65rem;

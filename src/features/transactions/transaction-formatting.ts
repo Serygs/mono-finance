@@ -1,3 +1,4 @@
+import { accountDisplayLabel } from '../accounts/account-formatting'
 import { formatEpochDate } from '../../lib/date-presentation'
 import { formatMoney } from '../../lib/money-presentation'
 import type { TransactionListItem } from './transaction-types'
@@ -80,11 +81,14 @@ export function groupTransactionsByDate<
     }))
 }
 
-export function accountLabel(transaction: TransactionListItem): string {
-  const type = `${transaction.account.type.charAt(0).toUpperCase()}${transaction.account.type.slice(1)}`
-  return transaction.account.maskedPan === null
-    ? `${type} · ${transaction.currencyCode} · ${transaction.account.id}`
-    : `${type} •••• ${transaction.account.maskedPan.slice(-4)}`
+export function accountLabel(
+  transaction: Pick<TransactionListItem, 'account' | 'currencyCode'>,
+  fallback: string,
+): string {
+  return accountDisplayLabel(
+    { ...transaction.account, currencyCode: transaction.currencyCode },
+    fallback,
+  )
 }
 
 function localDateKey(epochSeconds: number): string {

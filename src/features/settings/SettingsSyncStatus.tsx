@@ -1,5 +1,6 @@
+import { FreshnessDetails } from '../transactions/DataFreshness'
+import { useAccountsQuery } from '../accounts/account-queries'
 import { useQuery } from '@tanstack/react-query'
-import { StatusBadge } from '../../components/ui/Chips'
 import { Button } from '../../components/ui/Controls'
 import { Alert, EmptyState, Skeleton } from '../../components/ui/Feedback'
 import { Icon } from '../../components/ui/Icon'
@@ -8,15 +9,12 @@ import { useOnlineState } from '../../lib/use-online-state'
 import { useLocalization } from '../localization/localization'
 import { getTransactionSyncStatus } from '../transactions/transaction-sync-api'
 import { transactionQueryKeys } from '../transactions/transaction-queries'
-import {
-  transactionSyncLabel,
-  transactionSyncTone,
-} from '../transactions/transaction-sync-presentation'
 import { SettingsRowContent } from './SettingsSections'
 
 export function SettingsSyncStatus() {
-  const { locale, t } = useLocalization()
+  const { t } = useLocalization()
   const online = useOnlineState()
+  const accounts = useAccountsQuery()
   const status = useQuery({
     queryFn: getTransactionSyncStatus,
     queryKey: transactionQueryKeys.syncStatus,
@@ -34,10 +32,10 @@ export function SettingsSyncStatus() {
               'Transaction refreshes process one account window at a time. Older history may still be incomplete.',
             )}
           </p>
-          {status.isPending ? (
+          {status.isPending || accounts.isPending ? (
             <Skeleton label={t('Loading transaction sync status…')} lines={2} />
           ) : null}
-          {status.isError ? (
+          {status.isError || accounts.isError ? (
             <Alert tone="danger">
               {t('Transaction sync status could not be loaded.')}
             </Alert>
@@ -47,26 +45,19 @@ export function SettingsSyncStatus() {
               <p>{t('Synchronize accounts before importing transactions.')}</p>
             </EmptyState>
           ) : null}
-          {status.data === undefined ? null : (
-            <ul className="settings-sync-details__list">
-              {status.data.map((state) => (
-                <li key={state.accountId}>
-                  <span>
-                    {state.accountType} · {state.currencyCode}
-                  </span>
-                  <StatusBadge
-                    label={transactionSyncLabel(state, t, locale)}
-                    tone={transactionSyncTone(state)}
-                  />
-                </li>
-              ))}
-            </ul>
+          {accounts.data === undefined ? null : (
+            <FreshnessDetails
+              accounts={accounts.data}
+              states={status.data ?? []}
+            />
           )}
           <Button
             variant="secondary"
-            loading={status.isFetching}
+            loading={status.isFetching || accounts.isFetching}
             disabled={!online}
-            onClick={() => void status.refetch()}
+            onClick={() =>
+              void Promise.allSettled([status.refetch(), accounts.refetch()])
+            }
           >
             {t(
               status.isFetching
