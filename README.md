@@ -23,18 +23,9 @@ See the [self-hosting guide](docs/SELF_HOSTING.md) to run your own instance.
 
 ## Architecture
 
-[View the architecture diagram (4K PDF)](output/pdf/mono-finance-architecture-4k.pdf).
+[![Mono Finance architecture: owner browser, Cloudflare Worker and D1, Monobank APIs, and the release pipeline](docs/architecture/mono-finance-architecture-4k.png)](docs/architecture/mono-finance-architecture-4k.png)
 
-```text
-React + TypeScript + Vite PWA
-              |
-              | same-origin /api/*
-              v
-Cloudflare Worker + Hono
-        |             |
-        v             v
-Cloudflare D1    Monobank APIs
-```
+[Architecture guide](docs/architecture/README.md) · [Full-size 4K image](docs/architecture/mono-finance-architecture-4k.png) · [Vector PDF](output/pdf/mono-finance-architecture-4k.pdf).
 
 - `src/app/` owns routing and the application shell.
 - `src/features/` contains feature-owned React components, hooks, and API adapters.
