@@ -22,19 +22,31 @@ for (const theme of ['light', 'dark']) {
         { theme, locale },
       )
       await page.reload()
-      for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
-        await page.setViewportSize({ width, height: 932 })
-        for (const [url, owner] of [
-          ['/', 'dashboard'],
-          ['/transactions', 'transactions'],
-          ['/settings#categories', 'categories'],
-          ['/#accounts', 'accounts'],
-          ['/settings', 'settings'],
-        ]) {
-          await page.goto(url!)
+      // Load each destination once, then exercise its responsive transitions.
+      for (const [url, owner] of [
+        ['/', 'dashboard'],
+        ['/transactions', 'transactions'],
+        ['/settings#categories', 'categories'],
+        ['/#accounts', 'accounts'],
+        ['/settings', 'settings'],
+      ]) {
+        await page.setViewportSize({ width: 320, height: 932 })
+        await page.goto(url!)
+        for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
+          await page.setViewportSize({ width, height: 932 })
           await expect(page.locator(`.${owner}-page`)).toBeVisible()
           // Hidden category subviews retain state; only visible loading affects layout.
           await expect(page.locator('.ui-skeleton:visible')).toHaveCount(0)
+          await expect
+            .poll(
+              () =>
+                page.evaluate(
+                  () =>
+                    document.documentElement.scrollWidth <= window.innerWidth,
+                ),
+              { message: `${owner} ${width} ${theme} ${locale}` },
+            )
+            .toBe(true)
           // Freeze animations so before/after screenshots describe layout only.
           if ((width === 390 || width === 1440) && locale === 'en') {
             await page.screenshot({
@@ -43,11 +55,6 @@ for (const theme of ['light', 'dark']) {
               animations: 'disabled',
             })
           }
-          expect(
-            await page.evaluate(
-              () => document.documentElement.scrollWidth <= window.innerWidth,
-            ),
-          ).toBe(true)
         }
       }
     })

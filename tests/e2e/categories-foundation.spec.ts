@@ -334,10 +334,11 @@ for (const locale of ['en', 'uk']) {
         },
         { locale, theme },
       )
-      for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
-        await page.setViewportSize({ width, height: 932 })
-        for (const view of ['analysis', 'manage', 'bank-types']) {
-          await page.goto(`/settings?categoryView=${view}#categories`)
+      for (const view of ['analysis', 'manage', 'bank-types']) {
+        await page.setViewportSize({ width: 320, height: 932 })
+        await page.goto(`/settings?categoryView=${view}#categories`)
+        for (const width of [320, 375, 390, 430, 768, 1200, 1440]) {
+          await page.setViewportSize({ width, height: 932 })
           await expect(page.locator('.categories-page')).toBeVisible()
           await expect(
             page
@@ -350,13 +351,17 @@ for (const locale of ['en', 'uk']) {
               )
               .first(),
           ).toBeVisible()
-          const overflow = await page.evaluate(() => ({
-            client: document.documentElement.clientWidth,
-            scroll: document.documentElement.scrollWidth,
-          }))
-          expect(overflow.scroll, `${locale} ${theme} ${width} ${view}`).toBe(
-            overflow.client,
-          )
+          await expect
+            .poll(
+              () =>
+                page.evaluate(
+                  () =>
+                    document.documentElement.scrollWidth ===
+                    document.documentElement.clientWidth,
+                ),
+              { message: `${locale} ${theme} ${width} ${view}` },
+            )
+            .toBe(true)
           if (locale === 'en' && [390, 1440].includes(width))
             await page.screenshot({
               path: `phase4.local/screenshots/${view}-${width}-${theme}.png`,
