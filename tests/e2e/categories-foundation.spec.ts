@@ -96,7 +96,34 @@ test('ranking keeps exact per-currency totals, custom visuals and income-specifi
   await page.getByRole('button', { name: 'Income', exact: true }).click()
   await expect(page.getByText('Largest income category')).toHaveCount(0)
   await expect(page.getByText('Largest expense category')).toHaveCount(0)
-  await expect(page.locator('.category-ranking')).toContainText('100%')
+  const incomeRanking = page
+    .getByRole('region', { name: 'UAH', exact: true })
+    .filter({
+      has: page.getByRole('button', { name: 'Total income', exact: true }),
+    })
+  await expect(incomeRanking).toBeVisible()
+  await expect(page.locator('.category-ranking')).toHaveCount(1)
+  await expect(
+    incomeRanking.locator('.category-ranking-list > li'),
+  ).toHaveCount(1)
+  await expect(
+    incomeRanking.getByRole('link', {
+      name: 'View transactions for Salary',
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(
+    incomeRanking.locator('.category-analysis-summary strong'),
+  ).toHaveText(
+    formatMoney(1_800_000n, {
+      currencyCode: 'UAH',
+      minorUnit: 2,
+      locale: 'en',
+    }),
+  )
+  await expect(
+    incomeRanking.locator('.category-ranking-copy small'),
+  ).toHaveText('100%')
   await page.route('**/api/analytics/breakdowns?*', (route) =>
     route.fulfill({
       json: {
