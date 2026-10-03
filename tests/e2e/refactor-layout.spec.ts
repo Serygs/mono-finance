@@ -5,7 +5,7 @@ for (const theme of ['light', 'dark']) {
   for (const locale of ['en', 'uk']) {
     test(`all five legacy destinations retain their layout in ${theme} theme and ${locale} locale`, async ({
       page,
-    }) => {
+    }, testInfo) => {
       test.setTimeout(60_000)
       await installFinanceApiMock(page)
       await page.clock.install({ time: new Date('2025-01-15T12:00:00Z') })
@@ -50,7 +50,10 @@ for (const theme of ['light', 'dark']) {
           // Freeze animations so before/after screenshots describe layout only.
           if ((width === 390 || width === 1440) && locale === 'en') {
             await page.screenshot({
-              path: `phase2.local/${process.env['PHASE2_CAPTURE'] ?? 'screenshots'}/${owner}-${width}-${theme}.png`,
+              path: testInfo.outputPath(
+                process.env['PHASE2_CAPTURE'] ?? 'screenshots',
+                `${owner}-${width}-${theme}.png`,
+              ),
               fullPage: true,
               animations: 'disabled',
             })
