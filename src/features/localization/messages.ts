@@ -8,6 +8,7 @@ export const ENGLISH_MESSAGE_KEYS = [
   'View transactions for {category}',
   'View transactions for {metric} · {currency}',
   'View transactions',
+  'View transactions: {metric}',
   'Converted totals cannot be explained by the original-currency ledger.',
   'Daily average uses {days} days and is rounded to minor units.',
   'Converted amounts help',
@@ -538,6 +539,7 @@ export const UKRAINIAN_MESSAGES = {
   'View transactions for {metric} · {currency}':
     'Переглянути операції: {metric} · {currency}',
   'View transactions': 'Переглянути операції',
+  'View transactions: {metric}': 'Переглянути операції: {metric}',
   'Converted totals cannot be explained by the original-currency ledger.':
     'Список в оригінальних валютах не пояснює точно конвертовану суму.',
   'Daily average uses {days} days and is rounded to minor units.':

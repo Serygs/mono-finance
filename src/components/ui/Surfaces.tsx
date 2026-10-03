@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { Popover } from './Popover'
 import { Icon } from './Icon'
 
@@ -53,36 +54,76 @@ interface KpiCardProps {
   description?: string
   icon?: ReactNode
   value: ReactNode
+  drillDown?: {
+    label: string
+    destinations: { label: string; to: string }[]
+  }
 }
 
 export function KpiCard({
   accent = 'cyan',
   context,
   description,
+  drillDown,
   icon,
   label,
   value,
 }: KpiCardProps) {
+  const destinations = drillDown?.destinations ?? []
+  const amount = (
+    <span className="ui-kpi__value">
+      <span className="ui-kpi__amounts">{value}</span>
+      {destinations.length === 0 ? null : (
+        <Icon className="ui-kpi__chevron" name="chevron" />
+      )}
+    </span>
+  )
   return (
     <section className={`ui-kpi ui-kpi--${accent}`}>
       <header className="ui-kpi__header">
-        <h2>
-          {description === undefined ? (
-            label
-          ) : (
-            <InfoTooltip description={description} label={label}>
-              {label}
-              <Icon name="info" />
-            </InfoTooltip>
-          )}
-        </h2>
+        <h2>{label}</h2>
         {icon === undefined ? null : (
           <span aria-hidden="true" className="ui-kpi__icon">
             {icon}
           </span>
         )}
       </header>
-      <div className="ui-kpi__value">{value}</div>
+      {destinations.length === 1 ? (
+        <Link
+          className="ui-kpi__action"
+          to={destinations[0]!.to}
+          aria-label={destinations[0]!.label}
+        >
+          {amount}
+        </Link>
+      ) : destinations.length > 1 ? (
+        <Popover
+          className="ui-kpi__picker"
+          label={drillDown!.label}
+          content={
+            <div className="ui-kpi__destinations">
+              {destinations.map((destination) => (
+                <Link
+                  key={destination.to}
+                  to={destination.to}
+                  data-popover-dismiss
+                >
+                  {destination.label}
+                </Link>
+              ))}
+            </div>
+          }
+        >
+          {amount}
+        </Popover>
+      ) : (
+        amount
+      )}
+      {description === undefined ? null : (
+        <span className="ui-kpi__help">
+          <InfoTooltip description={description} label={label} />
+        </span>
+      )}
       {context === undefined ? null : (
         <div className="ui-kpi__context">{context}</div>
       )}

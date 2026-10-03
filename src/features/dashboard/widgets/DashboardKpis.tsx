@@ -1,4 +1,3 @@
-import { Link } from 'react-router'
 import {
   analyticsTransactionFilters,
   transactionDrillDownUrl,
@@ -92,11 +91,32 @@ function DashboardMetric({
   values: CurrencyAmount[]
 }) {
   const { locale, t } = useLocalization()
+  const destinations = values.flatMap((item) => {
+    const filters = analyticsTransactionFilters(context, {
+      currency: item.currencyCode,
+      direction,
+    })
+    return filters === null
+      ? []
+      : [
+          {
+            to: transactionDrillDownUrl(filters),
+            label: t('View transactions for {metric} · {currency}', {
+              metric: title,
+              currency: item.currencyCode,
+            }),
+          },
+        ]
+  })
   return (
     <KpiCard
       accent={accent}
       description={description}
       label={title}
+      drillDown={{
+        label: t('View transactions: {metric}', { metric: title }),
+        destinations,
+      }}
       context={
         context.currencyMode === 'base' ? (
           <span>
@@ -110,38 +130,31 @@ function DashboardMetric({
         values.length === 0 ? (
           '—'
         ) : (
-          <div className="metric-values">
+          <span className="metric-values">
             {values.map((item) => (
-              <div key={item.currencyCode}>
-                <strong>
-                  {formatCurrencyAmount(
-                    item.amountMinor,
-                    item.currencyCode,
-                    units.get(item.currencyCode) ?? 2,
-                    locale,
-                  )}
-                </strong>
-                {(() => {
-                  const filters = analyticsTransactionFilters(context, {
-                    currency: item.currencyCode,
-                    direction,
-                  })
-                  return filters === null ? null : (
-                    <Link
-                      className="ui-kpi__drill-down"
-                      to={transactionDrillDownUrl(filters)}
-                      aria-label={t(
-                        'View transactions for {metric} · {currency}',
-                        { metric: title, currency: item.currencyCode },
-                      )}
+              <strong key={item.currencyCode}>
+                {formatCurrencyAmount(
+                  item.amountMinor,
+                  item.currencyCode,
+                  units.get(item.currencyCode) ?? 2,
+                  locale,
+                )
+                  .split(/([A-Z]{3})/u)
+                  .map((part, index) => (
+                    <span
+                      key={index}
+                      className={
+                        part === item.currencyCode
+                          ? 'ui-kpi__currency'
+                          : undefined
+                      }
                     >
-                      {t('View transactions')}
-                    </Link>
-                  )
-                })()}
-              </div>
+                      {part}
+                    </span>
+                  ))}
+              </strong>
             ))}
-          </div>
+          </span>
         )
       }
     />
