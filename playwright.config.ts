@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { availableParallelism } from 'node:os'
 
 export default defineConfig({
   fullyParallel: true,
+  // CI shards have separate runners; keep each runner's browser load bounded.
+  workers: process.env.CI
+    ? 2
+    : Math.max(1, Math.min(4, Math.floor(availableParallelism() / 2))),
   testDir: './tests/e2e',
   timeout: 30_000,
   use: {

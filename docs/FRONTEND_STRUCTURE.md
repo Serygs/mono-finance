@@ -78,7 +78,7 @@ Run `npm run typecheck`, `npm run lint`, targeted frontend unit tests,
 The repository's localization check is `npm run i18n:check`.
 The layout regression captures synthetic fixtures at 390/1440 px in both themes,
 checks all five destinations in uk/en at 320, 375, 390, 430, 768, 1200 and 1440 px,
-and writes local screenshots under ignored `phase2.local/screenshots/`.
+and writes local screenshots into per-test directories under ignored `test-results/`.
 
 Phase 2 supplies the grid's visible resize affordance in dashboard.css. The
 regression test exercises actual pointer resizing and dragging, persisted sizes

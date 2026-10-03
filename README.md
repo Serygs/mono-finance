@@ -23,6 +23,8 @@ See the [self-hosting guide](docs/SELF_HOSTING.md) to run your own instance.
 
 ## Architecture
 
+[View the architecture diagram (4K PDF)](output/pdf/mono-finance-architecture-4k.pdf).
+
 ```text
 React + TypeScript + Vite PWA
               |
@@ -293,6 +295,8 @@ npm run test:e2e -- tests/e2e/critical-finance-flow.spec.ts --workers=2
 ```
 
 The full suite remains required in CI. The legacy-page, category, and Settings layout matrices load each destination once per theme/locale and resize through all seven breakpoints, preserving assertions and screenshots without reloading the same page for every width. Overflow checks retry until the responsive layout settles instead of relying on fixed sleeps.
+
+Local runs use half the available CPUs, capped at four workers with a minimum of one; `--workers=N` overrides the default. CI splits all tests across two parallel runners with two workers each, giving four workers in total without increasing the load on one runner. Both shards must pass before the existing `Critical browser flows` check succeeds or production deployment can start. Failure artifacts have separate shard names. Layout screenshots that share filenames use Playwright's per-test directories under ignored `test-results/` to prevent concurrent writes.
 
 Coverage floors are 65% statements, 60% branches, 62% functions, and 67% lines. Do not reduce them to accept a regression.
 

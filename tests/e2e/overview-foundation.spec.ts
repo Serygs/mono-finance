@@ -206,7 +206,7 @@ test('mobile help survives the first tap, filters dismiss reliably, and chart de
 
 test('Overview foregrounds meet contrast and mobile controls have full touch targets in both themes', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await installFinanceApiMock(page)
   await login(page)
@@ -287,7 +287,7 @@ test('Overview foregrounds meet contrast and mobile controls have full touch tar
     expect(measurements.chart).toBeGreaterThanOrEqual(3)
     expect(measurements.controls).toEqual([])
     await page.screenshot({
-      path: `phase2.local/screenshots/dashboard-390-${theme}.png`,
+      path: testInfo.outputPath(`dashboard-390-${theme}.png`),
       fullPage: true,
       animations: 'disabled',
     })
@@ -296,7 +296,7 @@ test('Overview foregrounds meet contrast and mobile controls have full touch tar
 
 test('desktop chart details support focus, hover and Escape within the viewport', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 932 })
   await installFinanceApiMock(page)
   await login(page)
@@ -317,7 +317,7 @@ test('desktop chart details support focus, hover and Escape within the viewport'
   await page.getByRole('heading', { name: 'Finance overview' }).click()
   await expect(details).toHaveCount(0)
   await page.screenshot({
-    path: 'phase2.local/screenshots/dashboard-1440-light.png',
+    path: testInfo.outputPath('dashboard-1440-light.png'),
     fullPage: true,
     animations: 'disabled',
   })
@@ -327,7 +327,7 @@ test('desktop chart details support focus, hover and Escape within the viewport'
   await page.reload()
   await expect(page.locator('.dashboard-recent-card')).toBeVisible()
   await page.screenshot({
-    path: 'phase2.local/screenshots/dashboard-1440-dark.png',
+    path: testInfo.outputPath('dashboard-1440-dark.png'),
     fullPage: true,
     animations: 'disabled',
   })
