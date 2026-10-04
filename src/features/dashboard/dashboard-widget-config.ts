@@ -7,28 +7,28 @@ import {
 } from './dashboard-preferences'
 
 export const WIDGET_HELP: Record<DashboardWidgetId, TranslationKey> = {
-  'fixed-variable-expenses': 'Fixed vs variable expenses help',
+  'fixed-variable-expenses': 'Repeated vs other expenses help',
   'income-expenses': 'Income vs expenses help',
   'largest-transactions': 'Largest transactions help',
   'monthly-trend': 'Monthly trend help',
   'recent-compensations': 'Recent compensations help',
   'recent-corrections': 'Recent corrections help',
   'recent-transactions': 'Recent transactions help',
-  'recurring-expenses': 'Recurring expenses help',
+  'recurring-expenses': 'Repeated purchases help',
   'spending-by-category': 'Spending by category help',
   'spending-by-weekday': 'Spending by weekday help',
   'spending-trend': 'Spending trend help',
   'top-merchants': 'Top merchants help',
 }
 export const WIDGET_TITLES: Record<DashboardWidgetId, TranslationKey> = {
-  'fixed-variable-expenses': 'Fixed vs variable expenses',
+  'fixed-variable-expenses': 'Repeated vs other expenses',
   'income-expenses': 'Income vs expenses',
   'largest-transactions': 'Largest transactions',
   'monthly-trend': 'Monthly trend',
   'recent-compensations': 'Recent compensations',
   'recent-corrections': 'Recent corrections',
   'recent-transactions': 'Recent transactions',
-  'recurring-expenses': 'Recurring expenses',
+  'recurring-expenses': 'Repeated purchases',
   'spending-by-category': 'Spending by category',
   'spending-by-weekday': 'Spending by weekday',
   'spending-trend': 'Spending trend',

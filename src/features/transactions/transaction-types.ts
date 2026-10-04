@@ -9,6 +9,8 @@ export interface TransactionListFilters {
   dateTo: number | null
   direction: TransactionDirection | null
   excluded: boolean | null
+  hasAdjustment?: boolean
+  hasCompensation?: boolean
   search: string | null
 }
 

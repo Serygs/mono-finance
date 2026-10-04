@@ -47,6 +47,136 @@ function fixture() {
 }
 
 describe('financial trust repository contracts on SQLite', () => {
+  it('finds corrected and compensated transactions older than the latest 100 within the selected period', async () => {
+    const { sqlite, database } = fixture()
+    const insert = sqlite.prepare(
+      `INSERT INTO transactions(id,user_id,account_id,monobank_transaction_id,original_amount_minor,original_currency_code,original_description,original_timestamp,direction)
+       VALUES (?, 'owner', 'a', ?, ?, 'UAH', 'Synthetic merchant', ?, ?)`,
+    )
+    insert.run('old-expense', 'old-expense', -4000, 150, 'expense')
+    insert.run('old-income', 'old-income', 1000, 160, 'income')
+    for (let index = 0; index < 101; index++)
+      insert.run(`new-${index}`, `new-${index}`, -100, 500 + index, 'expense')
+    sqlite.exec(`INSERT INTO transaction_adjustments(id,transaction_id,user_id,adjusted_amount_minor)
+      VALUES ('adjustment', 'old-expense', 'owner', -3000);
+      INSERT INTO compensation_links(id,expense_transaction_id,compensation_transaction_id,user_id,compensated_amount_minor,currency_code)
+      VALUES ('link', 'old-expense', 'old-income', 'owner', 1000, 'UAH');`)
+    const repository = new D1TransactionsRepository(database)
+    const query = {
+      accountIds: ['a'],
+      category: null,
+      currency: 'UAH',
+      cursor: null,
+      dateFrom: 100,
+      dateTo: 1000,
+      direction: null,
+      excluded: false,
+      limit: 5,
+      search: null,
+      userId: 'owner',
+    }
+    const recent = await repository.list({ ...query, limit: 100 })
+    expect(recent.transactions).toHaveLength(100)
+    expect(recent.transactions.some((row) => row.id.startsWith('old-'))).toBe(
+      false,
+    )
+    const corrections = await repository.list({ ...query, hasAdjustment: true })
+    expect(corrections.transactions.map((row) => row.id)).toEqual([
+      'old-expense',
+    ])
+    expect(corrections.transactions[0]?.effectiveAmountMinor).toBe(-3000)
+    expect(corrections.nextCursor).toBeNull()
+    const compensations = await repository.list({
+      ...query,
+      hasCompensation: true,
+    })
+    expect(compensations.transactions.map((row) => row.id)).toEqual([
+      'old-income',
+      'old-expense',
+    ])
+    expect(compensations.nextCursor).toBeNull()
+
+    for (const filters of [
+      { hasAdjustment: true },
+      { hasCompensation: true },
+    ]) {
+      for (const outside of [
+        { dateFrom: 200 },
+        { dateTo: 140 },
+        { accountIds: ['unselected-account'] },
+        { currency: 'USD' },
+        { userId: 'other-owner' },
+      ]) {
+        expect(
+          (await repository.list({ ...query, ...filters, ...outside }))
+            .transactions,
+        ).toEqual([])
+      }
+    }
+    sqlite.exec(`INSERT INTO transaction_exclusions(id,transaction_id,user_id)
+      VALUES ('exclusion-expense', 'old-expense', 'owner'), ('exclusion-income', 'old-income', 'owner');`)
+    expect(
+      (await repository.list({ ...query, hasAdjustment: true })).transactions,
+    ).toEqual([])
+    expect(
+      (await repository.list({ ...query, hasCompensation: true })).transactions,
+    ).toEqual([])
+    sqlite.close()
+  })
+
+  it('bounds matching correction results and paginates with deterministic transaction-date ordering', async () => {
+    const { sqlite, database } = fixture()
+    for (let index = 0; index < 7; index++) {
+      const id = `corrected-${index}`
+      sqlite
+        .prepare(
+          `INSERT INTO transactions(id,user_id,account_id,monobank_transaction_id,original_amount_minor,original_currency_code,original_description,original_timestamp,direction)
+        VALUES (?, 'owner', 'a', ?, -1000, 'UAH', 'Synthetic merchant', 150, 'expense')`,
+        )
+        .run(id, id)
+      sqlite
+        .prepare(
+          `INSERT INTO transaction_adjustments(id,transaction_id,user_id,adjusted_amount_minor)
+        VALUES (?, ?, 'owner', -900)`,
+        )
+        .run(`adjustment-${index}`, id)
+    }
+    const repository = new D1TransactionsRepository(database)
+    const query = {
+      accountIds: [],
+      category: null,
+      currency: null,
+      cursor: null,
+      dateFrom: 100,
+      dateTo: 200,
+      direction: null,
+      excluded: false,
+      hasAdjustment: true,
+      limit: 5,
+      search: null,
+      userId: 'owner',
+    }
+    const first = await repository.list(query)
+    expect(first.transactions.map((row) => row.id)).toEqual([
+      'corrected-6',
+      'corrected-5',
+      'corrected-4',
+      'corrected-3',
+      'corrected-2',
+    ])
+    expect(first.nextCursor).not.toBeNull()
+    const second = await repository.list({ ...query, cursor: first.nextCursor })
+    expect(second.transactions.map((row) => row.id)).toEqual([
+      'corrected-1',
+      'corrected-0',
+    ])
+    expect(second.nextCursor).toBeNull()
+    expect(
+      (await repository.list({ ...query, hasAdjustment: false })).transactions,
+    ).toEqual([])
+    sqlite.close()
+  })
+
   it('queries exact effective category identity across cursor pages and matches overview/category totals', async () => {
     const { sqlite, database } = fixture()
     for (const [id, amount, category] of [

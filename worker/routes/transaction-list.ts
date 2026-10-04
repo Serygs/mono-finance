@@ -43,6 +43,8 @@ function parseFilters(
   const accountIds = toArray(query['accountId'])
   const direction = nullableDirection(query['direction'])
   const excluded = nullableBoolean(query['excluded'])
+  const hasAdjustment = nullableBoolean(query['hasAdjustment'])
+  const hasCompensation = nullableBoolean(query['hasCompensation'])
   const dateFrom = nullableEpoch(query['dateFrom'])
   const dateTo = nullableEpoch(query['dateTo'])
   const limit = nullablePositiveInteger(query['limit']) ?? DEFAULT_PAGE_SIZE
@@ -56,6 +58,8 @@ function parseFilters(
     accountIds === null ||
     direction === undefined ||
     excluded === undefined ||
+    hasAdjustment === undefined ||
+    hasCompensation === undefined ||
     dateFrom === undefined ||
     dateTo === undefined ||
     limit > MAX_PAGE_SIZE ||
@@ -86,6 +90,8 @@ function parseFilters(
     dateTo,
     direction,
     excluded,
+    ...(hasAdjustment === null ? {} : { hasAdjustment }),
+    ...(hasCompensation === null ? {} : { hasCompensation }),
     limit,
     search,
     userId,

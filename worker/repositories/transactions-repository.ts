@@ -35,6 +35,13 @@ interface TransactionCursor {
   timestamp: number
 }
 
+const COMPENSATION_EXISTS = `EXISTS (
+  SELECT 1 FROM compensation_links
+  WHERE compensation_links.user_id = transactions.user_id
+    AND (compensation_links.expense_transaction_id = transactions.id
+      OR compensation_links.compensation_transaction_id = transactions.id)
+)`
+
 export class D1TransactionsRepository implements TransactionQueryRepository {
   private readonly database: D1Database
 
@@ -90,6 +97,20 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
       conditions.push('COALESCE(transaction_exclusions.is_excluded, 0) = ?')
       bindings.push(input.excluded ? 1 : 0)
     }
+    if (input.hasAdjustment !== undefined) {
+      conditions.push(
+        input.hasAdjustment
+          ? 'transaction_adjustments.id IS NOT NULL'
+          : 'transaction_adjustments.id IS NULL',
+      )
+    }
+    if (input.hasCompensation !== undefined) {
+      conditions.push(
+        input.hasCompensation
+          ? COMPENSATION_EXISTS
+          : `NOT ${COMPENSATION_EXISTS}`,
+      )
+    }
     if (input.search !== null) {
       conditions.push(
         "LOWER(transactions.original_description) LIKE ? ESCAPE '\\'",
@@ -120,11 +141,7 @@ export class D1TransactionsRepository implements TransactionQueryRepository {
            transaction_adjustments.note AS adjustment_note,
            CASE WHEN transaction_exclusions.is_excluded = 1 THEN 1 ELSE 0 END AS is_excluded,
            transaction_exclusions.reason AS exclusion_reason,
-           CASE WHEN EXISTS (
-             SELECT 1 FROM compensation_links
-             WHERE compensation_links.expense_transaction_id = transactions.id
-                OR compensation_links.compensation_transaction_id = transactions.id
-           ) THEN 1 ELSE 0 END AS has_compensation,
+           CASE WHEN ${COMPENSATION_EXISTS} THEN 1 ELSE 0 END AS has_compensation,
            accounts.id AS account_id,
            accounts.type AS account_type,
            account_cards.masked_pan AS card_masked_pan,

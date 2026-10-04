@@ -100,6 +100,7 @@ export interface WeekdayAmount extends CurrencyAmount {
   weekday: number
 }
 export interface RecurringExpense {
+  // Legacy API name: repeat-purchase evidence, not a confirmed recurring obligation.
   averageAmountMinor: number
   currencyCode: string
   description: string
@@ -108,11 +109,13 @@ export interface RecurringExpense {
   transactionCount: number
 }
 export interface FixedVariableExpenseAmount {
+  // Legacy API fields split repeated merchant purchases from other expenses.
   currencyCode: string
   fixedExpenseAmountMinor: number
   variableExpenseAmountMinor: number
 }
 export interface LargestTransaction extends CurrencyAmount {
+  // amountMinor is a magnitude; direction carries the financial meaning.
   description: string
   direction: 'expense' | 'income'
   timestamp: number

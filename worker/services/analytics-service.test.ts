@@ -9,6 +9,78 @@ import {
 describe('AnalyticsService', () => {
   it.each([
     {
+      name: 'occasional repeated purchases',
+      days: [0, 180],
+      amounts: [5000, 7000],
+      average: 6000,
+      interval: 180,
+    },
+    {
+      name: 'periodic payments',
+      days: [0, 30, 60],
+      amounts: [12000, 12000, 12000],
+      average: 12000,
+      interval: 30,
+    },
+    {
+      name: 'variable payment amounts',
+      days: [0, 30, 60],
+      amounts: [10000, 14000, 12000],
+      average: 12000,
+      interval: 30,
+    },
+  ])(
+    'preserves observed repeat-purchase evidence for $name without validating an obligation',
+    async ({ name, days, amounts, average, interval }) => {
+      const start = 1_704_067_200
+      const service = new AnalyticsService(
+        new FakeAnalyticsRepository(
+          days.map((day, index) =>
+            item({
+              id: `purchase-${index}`,
+              amount: -amounts[index]!,
+              originalDescription: name,
+              timestamp: start + day * 86400,
+            }),
+          ),
+        ),
+      )
+      const dateFrom = start + days.at(-1)! * 86400
+      const breakdowns = await service.breakdowns({
+        ...filters(),
+        dateFrom,
+        dateTo: dateFrom + 86399,
+      })
+      expect(breakdowns.recurringExpenses).toEqual([
+        {
+          averageAmountMinor: average,
+          currencyCode: 'UAH',
+          description: name,
+          frequencyDays: interval,
+          lastAmountMinor: amounts.at(-1),
+          transactionCount: days.length,
+        },
+      ])
+    },
+  )
+
+  it('returns positive largest-transaction magnitudes together with explicit expense and income direction', async () => {
+    const service = new AnalyticsService(
+      new FakeAnalyticsRepository([
+        item({ id: 'expense', amount: -4000, timestamp: 1_704_067_200 }),
+        item({ id: 'income', amount: 2000, timestamp: 1_704_067_201 }),
+      ]),
+    )
+    const breakdowns = await service.breakdowns(filters())
+    expect(breakdowns.largestTransactions).toMatchObject([
+      { amountMinor: 4000, direction: 'expense', transactionId: 'expense' },
+      { amountMinor: 2000, direction: 'income', transactionId: 'income' },
+    ])
+    expect(breakdowns.topMerchants[0]?.amountMinor).toBe(4000)
+  })
+
+  it.each([
+    {
       compensated: 5_000,
       currency: 'USD',
       expense: 400_000,
@@ -283,7 +355,7 @@ describe('AnalyticsService', () => {
     })
   })
 
-  it('returns weekday, merchant, recurring, and fixed-versus-variable expense aggregates', async () => {
+  it('returns weekday and merchant aggregates with legacy repeat-purchase evidence fields', async () => {
     const service = new AnalyticsService(
       new FakeAnalyticsRepository([
         item({

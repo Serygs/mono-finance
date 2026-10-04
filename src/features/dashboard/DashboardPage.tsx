@@ -36,7 +36,8 @@ export function DashboardPage() {
     setCurrency,
     range,
   } = filters
-  const { currencies, analytics, recent } = useDashboardQueries(filters)
+  const { currencies, analytics, recent, corrections, compensations } =
+    useDashboardQueries(filters)
   const { preferences, setPreferences } = useDashboardPreferences()
   const {
     accounts,
@@ -154,6 +155,20 @@ export function DashboardPage() {
             excluded: false,
           }}
           analytics={analytics.data}
+          evidence={{
+            corrections: {
+              error: corrections.isError,
+              loading: corrections.isPending,
+              onRetry: () => void corrections.refetch(),
+              transactions: corrections.data?.transactions ?? [],
+            },
+            compensations: {
+              error: compensations.isError,
+              loading: compensations.isPending,
+              onRetry: () => void compensations.refetch(),
+              transactions: compensations.data?.transactions ?? [],
+            },
+          }}
           currency={mode === 'original' ? currency : null}
           onPreferences={setPreferences}
           preferences={preferences}

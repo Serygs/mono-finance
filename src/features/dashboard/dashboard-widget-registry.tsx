@@ -4,7 +4,6 @@ import { Card, InfoTooltip } from '../../components/ui/Surfaces'
 import { displayExpenseCategories } from '../categories/category-analytics-data'
 import type { CustomCategory } from '../categories/categories-api'
 import { type TranslationKey } from '../localization/localization'
-import type { TransactionListItem } from '../transactions/transaction-types'
 import type { DashboardAnalytics } from './dashboard-data'
 import { formatPeriod } from './dashboard-data'
 import type { DashboardWidgetId } from './dashboard-preferences'
@@ -20,7 +19,13 @@ import {
   FixedVariableExpensesWidget,
   RecurringExpensesWidget,
   TransactionEvidenceWidget,
+  type TransactionEvidenceState,
 } from './widgets/DashboardEvidenceWidgets'
+
+export interface DashboardEvidenceData {
+  corrections: TransactionEvidenceState
+  compensations: TransactionEvidenceState
+}
 
 export function buildDashboardWidgets(
   t: (
@@ -33,17 +38,10 @@ export function buildDashboardWidgets(
   categories: ReturnType<typeof displayExpenseCategories>,
   expanded: boolean,
   setExpanded: (value: boolean | ((value: boolean) => boolean)) => void,
-  loading: boolean,
-  transactions: TransactionListItem[],
+  evidence: DashboardEvidenceData,
   locale: string,
   customCategories: CustomCategory[],
 ) {
-  const corrections = transactions
-    .filter((item) => item.hasAdjustment)
-    .slice(0, 5)
-  const compensations = transactions
-    .filter((item) => item.hasCompensation)
-    .slice(0, 5)
   return [
     createDashboardWidget(
       t,
@@ -141,6 +139,7 @@ export function buildDashboardWidgets(
         values={chart.breakdowns.topMerchants.map((item) => ({
           ...item,
           detail: t('{count} transactions', { count: item.transactionCount }),
+          direction: 'expense' as const,
           label: item.description,
         }))}
       />,
@@ -150,7 +149,7 @@ export function buildDashboardWidgets(
     createDashboardWidget(
       t,
       'recurring-expenses',
-      'Recurring expenses',
+      'Repeated purchases',
       <RecurringExpensesWidget
         units={units}
         values={chart.breakdowns.recurringExpenses}
@@ -161,13 +160,13 @@ export function buildDashboardWidgets(
     createDashboardWidget(
       t,
       'fixed-variable-expenses',
-      'Fixed vs variable expenses',
+      'Repeated vs other expenses',
       <FixedVariableExpensesWidget
         units={units}
         values={chart.breakdowns.fixedVariableExpenses}
       />,
       6,
-      5,
+      7,
     ),
     createDashboardWidget(
       t,
@@ -190,8 +189,7 @@ export function buildDashboardWidgets(
       'Recent corrections',
       <TransactionEvidenceWidget
         empty="No corrected transactions in this period."
-        loading={loading}
-        transactions={corrections}
+        {...evidence.corrections}
         units={units}
         locale={locale}
       />,
@@ -204,8 +202,7 @@ export function buildDashboardWidgets(
       'Recent compensations',
       <TransactionEvidenceWidget
         empty="No compensation links in this period."
-        loading={loading}
-        transactions={compensations}
+        {...evidence.compensations}
         units={units}
         locale={locale}
       />,

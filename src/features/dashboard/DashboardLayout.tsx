@@ -20,7 +20,10 @@ import {
   compareWidgetOrder,
   defaultWidgetLayout,
 } from './dashboard-widget-config'
-import { buildDashboardWidgets } from './dashboard-widget-registry'
+import {
+  buildDashboardWidgets,
+  type DashboardEvidenceData,
+} from './dashboard-widget-registry'
 import { DashboardKpis } from './widgets/DashboardKpis'
 import { RecentTransactionsWidget } from './widgets/RecentTransactionsWidget'
 
@@ -28,6 +31,7 @@ export function DashboardLayout({
   accounts,
   context,
   analytics,
+  evidence,
   currency,
   onPreferences,
   preferences,
@@ -40,6 +44,7 @@ export function DashboardLayout({
   context: AnalyticsTransactionContext
   accounts: AccountSummary[]
   analytics: DashboardAnalytics
+  evidence: DashboardEvidenceData
   currency: string | null
   onPreferences(value: DashboardPreferences): void
   preferences: DashboardPreferences
@@ -75,8 +80,7 @@ export function DashboardLayout({
     categories,
     expanded,
     setExpanded,
-    recentLoading,
-    transactions,
+    evidence,
     locale,
     customCategories,
   )

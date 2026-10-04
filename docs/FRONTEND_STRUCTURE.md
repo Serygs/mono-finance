@@ -29,6 +29,11 @@ retaining route paths, API contracts, storage keys and financial semantics.
   widget preferences/configuration/registry, customization; `widgets/` owns
   KPI, recent, chart and evidence presentation. Pure chart transforms remain in
   dashboard-data. Financial queries do not depend on layout or visibility.
+  Corrections and compensations use separate five-record server-filtered queries,
+  share the recent-query invalidation prefix, and have independent loading/error
+  states. Expense evidence uses explicit direction, localized labels, and signed
+  amounts; a positive aggregate magnitude does not imply income. Repeated merchant
+  purchases remain unconfirmed evidence, with no fixed-obligation claim.
 - `src/features/transactions/`: ledger queries/filters, explicit ledger and recent
   row presentations, selection, one details sheet, detail sections and mutation
   hooks. Amount input parsing/editing remains separate from display formatting.

@@ -13,7 +13,10 @@ export function useDashboardQueries({
   range,
   mode,
   currency,
-}: ReturnType<typeof useDashboardFilters>) {
+}: Pick<
+  ReturnType<typeof useDashboardFilters>,
+  'accountIds' | 'range' | 'mode' | 'currency'
+>) {
   const currencies = useQuery({
     queryFn: getCurrencyPreferences,
     queryKey: settingsQueryKeys.currency,
@@ -55,5 +58,25 @@ export function useDashboardQueries({
     queryFn: () => getTransactions(transactionFilters, undefined, 100),
     queryKey: dashboardQueryKeys.recentFor(transactionFilters),
   })
-  return { currencies, analytics, recent }
+  const corrections = useQuery({
+    enabled: analyticsFilters !== null,
+    queryFn: () =>
+      getTransactions(
+        { ...transactionFilters, hasAdjustment: true },
+        undefined,
+        5,
+      ),
+    queryKey: dashboardQueryKeys.correctionsFor(transactionFilters),
+  })
+  const compensations = useQuery({
+    enabled: analyticsFilters !== null,
+    queryFn: () =>
+      getTransactions(
+        { ...transactionFilters, hasCompensation: true },
+        undefined,
+        5,
+      ),
+    queryKey: dashboardQueryKeys.compensationsFor(transactionFilters),
+  })
+  return { currencies, analytics, recent, corrections, compensations }
 }

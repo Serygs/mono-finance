@@ -8,4 +8,8 @@ export const dashboardQueryKeys = {
   recent: ['dashboard-recent'] as const,
   recentFor: (filters: TransactionListFilters) =>
     ['dashboard-recent', filters] as const,
+  correctionsFor: (filters: TransactionListFilters) =>
+    ['dashboard-recent', 'corrections', filters] as const,
+  compensationsFor: (filters: TransactionListFilters) =>
+    ['dashboard-recent', 'compensations', filters] as const,
 }

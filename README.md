@@ -163,7 +163,9 @@ Public endpoints are limited to health and the authentication lifecycle. All fin
 | `POST` | `/api/sync/transactions`        | Execute one bounded, resumable statement synchronization step.    |
 | `GET`  | `/api/sync/transactions/status` | Return safe per-account synchronization state.                    |
 
-`GET /api/transactions` accepts repeated `accountId`, inclusive UTC epoch-second `dateFrom` and `dateTo`, `direction=income|expense`, three-letter `currency`, exact effective `category`, `excluded=true|false`, literal case-insensitive `search`, an opaque `cursor`, and `limit` from 1 to 100.
+`GET /api/transactions` accepts repeated `accountId`, inclusive UTC epoch-second `dateFrom` and `dateTo`, `direction=income|expense`, three-letter `currency`, exact effective `category`, `excluded=true|false`, optional `hasAdjustment=true|false` and `hasCompensation=true|false`, literal case-insensitive `search`, an opaque `cursor`, and `limit` from 1 to 100. Record filters apply before pagination. Compensation matching includes either side of an owner’s link. Results retain original transaction date descending, then ID descending ordering.
+
+Overview requests five matching adjusted transactions and five matching compensated transactions independently of its recent transaction page. All three queries retain the selected transaction-period, account, currency, and exclusion filters. A failed evidence query shows an error and retry action rather than an empty result.
 
 ### Transaction metadata
 
@@ -198,6 +200,8 @@ Direct category deletion returns `409 category_referenced` while overrides or so
 | `GET`  | `/api/analytics/overview`   | Totals, cash flow, daily average, comparison, compensations, exclusions, and projection. |
 | `GET`  | `/api/analytics/breakdowns` | Category, account, currency, merchant, and largest-transaction aggregates.               |
 | `GET`  | `/api/analytics/trends`     | Daily/monthly income, expense, net, and spending-trend series.                           |
+
+Repeat-purchase widgets show unconfirmed evidence from matching descriptions and report currencies in the trailing year ending at the selected period’s end. Observed average intervals do not establish periodicity or fixed obligations. The legacy `recurringExpenses` and `fixedVariableExpenses` response fields and saved widget IDs remain compatible; the UI labels them **Repeated purchases** and **Repeated vs other expenses** until a recurring-obligation classification is defined.
 
 Analytics accept repeated `accountId`, `dateFrom`, and `dateTo`; the required date range is capped at 366 days. Optional `baseCurrency` requests a reproducible converted view. Aggregate responses do not send the complete transaction ledger.
 

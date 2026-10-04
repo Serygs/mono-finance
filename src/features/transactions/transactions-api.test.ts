@@ -10,6 +10,40 @@ beforeEach(() => activatePrivateSession(4_102_444_800))
 afterEach(() => endPrivateSession('logout'))
 
 describe('getTransactions', () => {
+  it.each(['hasAdjustment', 'hasCompensation'] as const)(
+    'requests five server-selected matching records with %s',
+    async (filter) => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ data: { nextCursor: null, transactions: [] } }),
+            { status: 200 },
+          ),
+        )
+      vi.stubGlobal('fetch', fetchMock)
+      await getTransactions(
+        {
+          accountIds: ['account-1'],
+          category: null,
+          currency: 'UAH',
+          dateFrom: 100,
+          dateTo: 200,
+          direction: null,
+          excluded: false,
+          search: null,
+          [filter]: true,
+        },
+        undefined,
+        5,
+      )
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/transactions?accountId=account-1&dateFrom=100&dateTo=200&currency=UAH&excluded=false&${filter}=true&limit=5`,
+        expect.objectContaining({ credentials: 'same-origin' }),
+      )
+    },
+  )
+
   afterEach(() => {
     vi.unstubAllGlobals()
   })

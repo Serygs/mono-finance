@@ -525,6 +525,11 @@
   font-size: 0.875rem;
   text-align: center;
 }
+.dashboard-evidence-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
 .dashboard-evidence-list {
   list-style: none;
   margin: 0;

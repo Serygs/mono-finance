@@ -60,6 +60,9 @@ export function transactionFilterParameters(
     result.set('categoryId', filters.categoryIdentity.id)
   if (filters.categoryIdentity?.kind === 'uncategorized')
     result.set('uncategorized', 'true')
+  for (const key of ['hasAdjustment', 'hasCompensation'] as const) {
+    if (filters[key] !== undefined) result.set(key, String(filters[key]))
+  }
   return result
 }
 

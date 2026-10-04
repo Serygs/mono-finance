@@ -1,4 +1,12 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  '{percent}% of period expenses',
+  'Repeated purchases',
+  'Repeated purchases help',
+  'Repeated vs other expenses',
+  'Repeated vs other expenses help',
+  'Other expenses',
+  'Average interval: {days} days · {count} purchases',
+  'Repeated purchases do not establish recurring or fixed expenses.',
   'Local data could not be removed. Check browser storage permissions and retry.',
   'Mono Finance',
   'Unable to display the application.',
@@ -525,6 +533,14 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
   ...(Object.fromEntries(
     ENGLISH_MESSAGE_KEYS.map((key) => [key, key]),
   ) as Record<TranslationKey, string>),
+  'Repeated purchases help':
+    'Purchases with the same description and report currency appearing at least twice in the year ending at the selected period’s end, with a purchase in the selected period. Average intervals describe observed history; they do not validate periodicity or confirm an obligation.',
+  'Repeated vs other expenses help':
+    'Selected-period expenses from merchants with repeated purchases in the year ending at the selected period’s end compared with other expenses. This is purchase evidence, not a classification of recurring or fixed obligations.',
+  'Recent corrections help':
+    'Matching adjusted transactions across the selected transaction period, with the newest transaction dates first.',
+  'Recent compensations help':
+    'Transactions with compensation links across the selected transaction period, with the newest transaction dates first.',
   'Total spent help':
     'Sum of expense transaction magnitudes for the selected period and accounts.',
   'Total income help':
@@ -542,6 +558,18 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
 }
 
 export const UKRAINIAN_MESSAGES = {
+  '{percent}% of period expenses': '{percent}% витрат періоду',
+  'Repeated purchases': 'Повторні покупки',
+  'Repeated purchases help':
+    'Покупки з однаковим описом і валютою звіту, які трапилися щонайменше двічі за рік до кінця вибраного періоду, з покупкою у вибраному періоді. Середні інтервали описують спостережену історію, але не підтверджують періодичність або зобов’язання.',
+  'Repeated vs other expenses': 'Повторні покупки та інші витрати',
+  'Repeated vs other expenses help':
+    'Витрати вибраного періоду в продавців із повторними покупками за рік до кінця вибраного періоду порівняно з іншими витратами. Це дані про покупки, а не класифікація регулярних чи постійних зобов’язань.',
+  'Other expenses': 'Інші витрати',
+  'Average interval: {days} days · {count} purchases':
+    'Середній інтервал: {days} днів · {count} покупок',
+  'Repeated purchases do not establish recurring or fixed expenses.':
+    'Повторні покупки не підтверджують регулярні чи постійні витрати.',
   'Local data could not be removed. Check browser storage permissions and retry.':
     'Не вдалося видалити локальні дані. Перевірте дозволи браузера на сховище та повторіть спробу.',
   'Mono Finance': 'Mono Finance',
@@ -764,10 +792,10 @@ export const UKRAINIAN_MESSAGES = {
     'Надходження мінус витрати. Позитивний чистий грошовий потік не є показником заощаджень.',
   'No expenses in this period.': 'У цьому періоді немає витрат.',
   'Recent compensations help':
-    'Останні зв’язки компенсацій серед транзакцій вибраного періоду.',
+    'Транзакції зі зв’язками компенсацій за весь вибраний період транзакцій, від найновішої дати транзакції.',
   'Recent corrections': 'Останні коригування',
   'Recent corrections help':
-    'Останні скориговані транзакції у вибраному періоді.',
+    'Скориговані транзакції за весь вибраний період транзакцій, від найновішої дати транзакції.',
   'Recent transactions': 'Останні транзакції',
   'Recent transactions help':
     'Нещодавно імпортовані транзакції, що відповідають поточним фільтрам.',
