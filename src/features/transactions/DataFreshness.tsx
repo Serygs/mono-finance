@@ -40,6 +40,11 @@ export function FreshnessDetails({
           'Coverage records successful statement windows, not the first or last transaction. Unverified gaps remain unknown.',
         )}
       </p>
+      <p>
+        {t(
+          'Coverage is checked only through the current time. Future intervals are not gaps.',
+        )}
+      </p>
       {accounts.length === 0 ? (
         <p>{t('No accounts ready for sync')}</p>
       ) : (
@@ -82,10 +87,12 @@ export function FreshnessDetails({
                 <span>
                   {t(
                     coverage === 'covered'
-                      ? 'Selected period has verified import coverage'
+                      ? 'Elapsed portion has verified import coverage'
                       : coverage === 'partial'
-                        ? 'Selected period has unverified gaps'
-                        : 'History coverage unknown',
+                        ? 'Elapsed portion has unverified gaps'
+                        : coverage === 'future'
+                          ? 'Selected period is in the future'
+                          : 'History coverage unknown',
                   )}
                 </span>
                 {state?.coverageIntervals?.length ? (
@@ -190,7 +197,7 @@ export function DataFreshness({
       {partial || failed ? (
         <p role="status">
           {t(
-            failed ? 'Sync needs retry' : 'Selected period has unverified gaps',
+            failed ? 'Sync needs retry' : 'Elapsed portion has unverified gaps',
           )}
         </p>
       ) : null}

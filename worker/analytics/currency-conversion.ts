@@ -8,6 +8,7 @@ export interface HistoricalExchangeRate {
 }
 
 interface ConvertibleTransaction {
+  compensationAmountMinor: number
   currencyCode: string
   effectiveAmountMinor: number
   id: string
@@ -51,6 +52,11 @@ export function convertTransactionsToBaseCurrency<
     }
     converted.push({
       ...transaction,
+      compensationAmountMinor: multiplyAndRound(
+        transaction.compensationAmountMinor,
+        rate.numerator,
+        rate.denominator,
+      ),
       conversionRateSources: rate.sources,
       currencyCode: baseCurrencyCode,
       effectiveAmountMinor: multiplyAndRound(
@@ -176,6 +182,7 @@ function multiplyAndRound(
   denominator: bigint,
 ): number {
   const negative = amountMinor < 0
+  // Round each reported field to the nearest minor unit, with ties away from zero.
   const absoluteAmount = BigInt(Math.abs(amountMinor)) * numerator
   const rounded = (absoluteAmount + denominator / 2n) / denominator
   const result = negative ? -rounded : rounded

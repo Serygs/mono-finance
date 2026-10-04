@@ -7,6 +7,114 @@ import {
 } from './analytics-service'
 
 describe('AnalyticsService', () => {
+  it.each([
+    {
+      compensated: 5_000,
+      currency: 'USD',
+      expense: 400_000,
+      compensation: 200_000,
+      personal: 200_000,
+    },
+    {
+      compensated: 10_000,
+      currency: 'USD',
+      expense: 400_000,
+      compensation: 400_000,
+      personal: 0,
+    },
+    {
+      compensated: 15_000,
+      currency: 'USD',
+      expense: 400_000,
+      compensation: 400_000,
+      personal: 0,
+    },
+    {
+      compensated: 5_000,
+      currency: 'UAH',
+      expense: 10_000,
+      compensation: 5_000,
+      personal: 5_000,
+    },
+  ])(
+    'reports compensation in base currency for $currency / $compensated',
+    async ({ compensated, currency, expense, compensation, personal }) => {
+      const service = new AnalyticsService(
+        new FakeAnalyticsRepository(
+          [
+            item({
+              id: 'expense',
+              amount: -10_000,
+              compensated,
+              currency,
+              timestamp: 1_704_067_200,
+            }),
+          ],
+          [
+            {
+              rateAt: 1_704_000_000,
+              rateDenominator: 1,
+              rateNumerator: 40,
+              source: 'test',
+              sourceCurrencyCode: 'USD',
+              targetCurrencyCode: 'UAH',
+            },
+          ],
+        ),
+      )
+      const overview = await service.overview({
+        ...filters(),
+        baseCurrencyCode: 'UAH',
+      })
+      expect(overview.compensation).toEqual([
+        {
+          amountMinor: expense,
+          compensatedExpenseAmountMinor: compensation,
+          currencyCode: 'UAH',
+          personalExpenseAmountMinor: personal,
+        },
+      ])
+    },
+  )
+
+  it('derives rounded personal expense from the converted expense and compensation', async () => {
+    const service = new AnalyticsService(
+      new FakeAnalyticsRepository(
+        [
+          item({
+            id: 'expense',
+            amount: -3,
+            compensated: 1,
+            currency: 'USD',
+            timestamp: 1_704_067_200,
+          }),
+        ],
+        [
+          {
+            rateAt: 1_704_000_000,
+            rateDenominator: 2,
+            rateNumerator: 1,
+            source: 'test',
+            sourceCurrencyCode: 'USD',
+            targetCurrencyCode: 'UAH',
+          },
+        ],
+      ),
+    )
+    const overview = await service.overview({
+      ...filters(),
+      baseCurrencyCode: 'UAH',
+    })
+    expect(overview.compensation).toEqual([
+      {
+        amountMinor: 2,
+        compensatedExpenseAmountMinor: 1,
+        currencyCode: 'UAH',
+        personalExpenseAmountMinor: 1,
+      },
+    ])
+  })
+
   it('uses effective values, omits exclusions, resolves overrides, and separates compensation', async () => {
     const service = new AnalyticsService(
       new FakeAnalyticsRepository([

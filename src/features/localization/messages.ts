@@ -32,6 +32,10 @@ export const ENGLISH_MESSAGE_KEYS = [
   'History coverage unknown',
   'Selected period has unverified gaps',
   'Selected period has verified import coverage',
+  'Elapsed portion has verified import coverage',
+  'Elapsed portion has unverified gaps',
+  'Selected period is in the future',
+  'Coverage is checked only through the current time. Future intervals are not gaps.',
   'Transaction import time unknown',
   'Balance updated {date}',
   'Balance update time unknown',
@@ -588,6 +592,13 @@ export const UKRAINIAN_MESSAGES = {
     'У вибраному періоді є неперевірені проміжки',
   'Selected period has verified import coverage':
     'Імпорт вибраного періоду підтверджено',
+  'Elapsed portion has verified import coverage':
+    'Імпорт минулої частини періоду підтверджено',
+  'Elapsed portion has unverified gaps':
+    'У минулій частині періоду є неперевірені проміжки',
+  'Selected period is in the future': 'Вибраний період ще не настав',
+  'Coverage is checked only through the current time. Future intervals are not gaps.':
+    'Покриття перевіряється лише до поточного часу. Майбутні проміжки не є прогалинами.',
   'Transaction import time unknown': 'Час імпорту транзакцій невідомий',
   'Balance updated {date}': 'Баланс оновлено {date}',
   'Balance update time unknown': 'Час оновлення балансу невідомий',

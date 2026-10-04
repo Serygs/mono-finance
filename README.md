@@ -215,6 +215,8 @@ Provider failures map to safe error categories: unauthorized token, rate limit w
 
 The original-currency view keeps currencies separate. Base-currency analytics use only a stored rate whose timestamp is at or before the transaction timestamp and may compose a cross-rate through UAH. Missing historical rates cause affected transactions to be omitted from the converted aggregate and reported by original currency; the application never silently applies a newer rate.
 
+Effective amounts and linked compensation totals use the same historical rational rate. Each is rounded to the nearest integer minor unit, with ties away from zero, using integer arithmetic. Reported compensation is capped at the converted expense; personal expense is the converted expense minus that capped compensation. Imported amounts and timestamps remain unchanged.
+
 The Monobank public rate feed supplies current snapshots, not historical backfill. Consequently, older imported transactions remain available in original-currency analytics until an appropriate historical rate source is configured.
 
 ## PWA and offline behavior

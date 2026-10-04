@@ -19,13 +19,11 @@ describe('authentication responses', () => {
     async (status, kind) => {
       vi.stubGlobal(
         'fetch',
-        vi
-          .fn()
-          .mockResolvedValue(
-            new Response('sensitive server details', {
-              status: Number(status),
-            }),
-          ),
+        vi.fn().mockResolvedValue(
+          new Response('sensitive server details', {
+            status: Number(status),
+          }),
+        ),
       )
       await expect(
         login('owner@example.com', 'synthetic-password'),
