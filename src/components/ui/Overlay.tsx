@@ -1,5 +1,9 @@
 import { useId, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { AnimatePresence, useIsPresent } from 'motion/react'
+import * as m from 'motion/react-m'
 import { useModalDialog } from './use-modal-dialog'
+import { usePresenceMotion } from './motion'
 
 import { useLocalization } from '../../features/localization/localization'
 import { IconButton } from './Controls'
@@ -22,29 +26,50 @@ export function Dialog(props: OverlayProps) {
 }
 
 function OverlayFrame({
+  open,
+  ...props
+}: OverlayProps & { kind: 'dialog' | 'sheet' }) {
+  const content = (
+    <AnimatePresence>
+      {open ? <PresentOverlay key="overlay" {...props} /> : null}
+    </AnimatePresence>
+  )
+  // The closing visual has left the native top layer. Keep it outside grid,
+  // overflow and transformed ancestors for the remainder of its exit.
+  return typeof document === 'undefined'
+    ? content
+    : createPortal(content, document.body)
+}
+
+function PresentOverlay({
   children,
   className,
   kind,
   onClose,
-  open,
   title,
-}: OverlayProps & { kind: 'dialog' | 'sheet' }) {
+}: Omit<OverlayProps, 'open'> & { kind: 'dialog' | 'sheet' }) {
   const { t } = useLocalization()
-  const { dialogRef, onCancel, onBackdropClick } = useModalDialog(open, onClose)
+  const present = useIsPresent()
+  const animation = usePresenceMotion(kind)
+  const { dialogRef, onCancel, onBackdropClick } = useModalDialog(
+    present,
+    onClose,
+  )
   const titleId = useId()
-
-  if (!open) return null
 
   return (
     <dialog
       aria-labelledby={titleId}
-      aria-modal="true"
+      aria-modal={present ? true : undefined}
+      aria-hidden={present ? undefined : true}
+      inert={!present}
+      data-exiting={present ? undefined : ''}
       className={`ui-overlay ui-overlay--${kind}${className ? ` ${className}` : ''}`}
       onCancel={onCancel}
       onClick={onBackdropClick}
       ref={dialogRef}
     >
-      <div className="ui-overlay__surface">
+      <m.div className="ui-overlay__surface" {...animation}>
         <header className="ui-overlay__header">
           <h2 id={titleId}>{title}</h2>
           <IconButton label={t('Close')} onClick={onClose}>
@@ -52,7 +77,7 @@ function OverlayFrame({
           </IconButton>
         </header>
         <div className="ui-overlay__content">{children}</div>
-      </div>
+      </m.div>
     </dialog>
   )
 }

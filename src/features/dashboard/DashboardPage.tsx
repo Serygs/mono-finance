@@ -223,13 +223,12 @@ export function DashboardPage() {
         </div>
         <DashboardSyncSummary states={syncStates} />
       </BottomSheet>
-      {customizing ? (
-        <DashboardCustomization
-          onChange={setPreferences}
-          onClose={() => setCustomizing(false)}
-          preferences={preferences}
-        />
-      ) : null}
+      <DashboardCustomization
+        open={customizing}
+        onChange={setPreferences}
+        onClose={() => setCustomizing(false)}
+        preferences={preferences}
+      />
     </PageSurface>
   )
 }

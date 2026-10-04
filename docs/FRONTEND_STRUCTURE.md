@@ -56,6 +56,30 @@ remain intentional, rather than a second stylesheet overriding the first.
 Superseded declarations and selectors for unused legacy markup were removed.
 The shared form-action layout is `ui-form-actions`.
 
+## Interaction motion
+
+`MotionProvider` loads only Motion's `domAnimation` features using strict
+`LazyMotion`. Features are synchronous so first-use feedback and offline controls
+do not depend on an extra chunk request; layout/drag features are excluded.
+`motion.ts` shares the existing 140/200ms timing and easing for press feedback,
+popover insertion/removal, and modal/sheet transitions. Motion does not animate
+financial values, routes, filter chips or grid layout.
+
+The provider subscribes to the OS reduced-motion preference, including changes
+while the app is open, and applies it to shared targets and durations. Reduced motion removes
+both spatial motion and transition delays. CSS owns color feedback; Motion owns
+transform/opacity on the animated primitives. Shared presence controls stop and
+settle an active entry/exit when the preference changes; stale animation completion
+cannot remove a reopened surface. `MotionConfig`'s automatic reduction is disabled
+because Motion 14 snapshots it at mount; the shared live policy handles both reducing
+and re-enabling motion without remounting controls or financial screens.
+
+Native dialogs still own focus trapping and background inertness. Closing releases
+the native modal, scroll lock and focus immediately. `AnimatePresence` retains only
+an inert, `aria-hidden` visual for the short exit; no business state or focus change
+waits for animation completion. Route/session teardown removes overlays immediately.
+Keep overlay owners mounted and update `open` to allow ordinary close animations.
+
 ## Compatibility boundaries
 
 - Money formatting divides bigint integer minor units and formats the remainder

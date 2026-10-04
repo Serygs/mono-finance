@@ -12,17 +12,19 @@ import {
 import { WIDGET_TITLES } from './dashboard-widget-config'
 
 export function DashboardCustomization({
+  open,
   onChange,
   onClose,
   preferences,
 }: {
+  open: boolean
   onChange(value: DashboardPreferences): void
   onClose(): void
   preferences: DashboardPreferences
 }) {
   const { t } = useLocalization()
   return (
-    <Dialog open onClose={onClose} title={t('Customize dashboard')}>
+    <Dialog open={open} onClose={onClose} title={t('Customize dashboard')}>
       <FormField label={t('Recent transaction count')}>
         <Select
           value={preferences.recentTransactionsLimit}

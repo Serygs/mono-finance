@@ -300,7 +300,11 @@ test('category shares use the full total and drill-down preserves identity and c
     .getByRole('combobox', { name: 'Period', exact: true })
     .selectOption('7d')
   const categoryLink = group.locator('.category-ranking-link').first()
-  await categoryLink.scrollIntoViewIfNeeded()
+  // Clear the fixed mobile navigation before recording the departure position;
+  // otherwise Playwright may scroll again to click after this snapshot.
+  await categoryLink.evaluate((node) =>
+    node.scrollIntoView({ block: 'center' }),
+  )
   const scroll = await page.evaluate(() => window.scrollY)
   await categoryLink.click()
   await expect(page).toHaveURL(/categoryId=5411/)

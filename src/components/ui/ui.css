@@ -81,8 +81,7 @@
   transition:
     background-color var(--motion-fast),
     border-color var(--motion-fast),
-    color var(--motion-fast),
-    transform var(--motion-fast);
+    color var(--motion-fast);
 }
 
 .ui-button {
@@ -108,11 +107,6 @@
 
 .ui-button--primary:hover {
   background: var(--color-action-hover);
-}
-
-.ui-button:not(:disabled):active,
-.ui-icon-button:not(:disabled):active {
-  transform: scale(0.98);
 }
 
 .ui-button--secondary,
@@ -294,7 +288,6 @@
   box-shadow: var(--shadow-overlay);
   overscroll-behavior: contain;
   padding: var(--space-1);
-  animation: ui-popover-enter var(--motion-standard) both;
 }
 
 .ui-popover__content--portal {
@@ -426,13 +419,6 @@
   max-width: min(24rem, calc(100vw - 2rem));
 }
 
-@keyframes ui-popover-enter {
-  from {
-    opacity: 0;
-    transform: translateY(-0.25rem) scale(0.985);
-  }
-}
-
 .ui-segmented-control {
   display: grid;
   min-width: 0;
@@ -470,8 +456,7 @@
   text-align: center;
   transition:
     background-color var(--motion-fast),
-    color var(--motion-fast),
-    transform var(--motion-fast);
+    color var(--motion-fast);
 }
 
 .ui-segmented-control__label {
@@ -483,10 +468,6 @@
 
 .ui-segmented-control button:not(:disabled):not([aria-pressed='true']):hover {
   color: var(--color-text);
-}
-
-.ui-segmented-control button:not(:disabled):active {
-  transform: scale(0.98);
 }
 
 .ui-segmented-control button:disabled {
@@ -1039,8 +1020,24 @@ button.ui-chip {
   padding: 0;
 }
 
-.ui-overlay:not([open]) {
+.ui-overlay:not([open]):not([data-exiting]) {
   display: none;
+}
+
+.ui-overlay--sheet {
+  display: block;
+}
+
+/* Closing is immediate semantically; only the inert visual remains for exit. */
+.ui-overlay[data-exiting] {
+  position: fixed;
+  z-index: 90;
+}
+
+.ui-overlay[data-exiting],
+.ui-popover__content[data-exiting],
+.ui-multi-select__menu[data-exiting] {
+  pointer-events: none;
 }
 
 .ui-overlay::backdrop {
@@ -1054,7 +1051,6 @@ button.ui-chip {
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   box-shadow: var(--shadow-overlay);
-  animation: overlay-enter var(--motion-spring) both;
 }
 
 .ui-overlay--sheet .ui-overlay__surface {
@@ -1102,13 +1098,6 @@ button.ui-chip {
   padding: 1.15rem max(1.15rem, env(safe-area-inset-right))
     max(1.15rem, env(safe-area-inset-bottom))
     max(1.15rem, env(safe-area-inset-left));
-}
-
-@keyframes overlay-enter {
-  from {
-    opacity: 0;
-    transform: translateX(2rem) scale(0.985);
-  }
 }
 
 .ui-kpi {
@@ -1182,13 +1171,6 @@ button.ui-chip {
   }
 }
 
-@keyframes overlay-enter {
-  from {
-    opacity: 0;
-    transform: translateY(2rem) scale(0.985);
-  }
-}
-
 @media (max-width: 47.99rem) {
   .ui-popover__content {
     right: auto;
@@ -1197,11 +1179,13 @@ button.ui-chip {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-overlay__surface,
-  .ui-skeleton > span:not(.sr-only),
-  .ui-multi-select__menu,
-  .ui-popover__content {
+  .ui-skeleton > span:not(.sr-only) {
     animation: none;
+  }
+
+  .ui-multi-select__trigger:not(:disabled):active,
+  .ui-popover__trigger:not(:disabled):active {
+    transform: none;
   }
 
   :where(

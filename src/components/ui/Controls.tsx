@@ -1,9 +1,12 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import type { HTMLMotionProps } from 'motion/react'
+import * as m from 'motion/react-m'
+import { motionTiming, useReducedAnimation } from './motion'
 
 type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger'
 type ButtonSize = 'small' | 'medium' | 'large'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends HTMLMotionProps<'button'> {
   loading?: boolean
   size?: ButtonSize
   variant?: ButtonVariant
@@ -19,7 +22,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
+    <PressButton
       {...props}
       aria-busy={loading || undefined}
       className={classes(
@@ -31,12 +34,12 @@ export function Button({
       disabled={disabled || loading}
     >
       {children}
-    </button>
+    </PressButton>
   )
 }
 
 interface IconButtonProps extends Omit<
-  ButtonHTMLAttributes<HTMLButtonElement>,
+  HTMLMotionProps<'button'>,
   'aria-label'
 > {
   label: string
@@ -50,7 +53,7 @@ export function IconButton({
   ...props
 }: IconButtonProps) {
   return (
-    <button
+    <PressButton
       {...props}
       aria-label={label}
       className={classes('ui-icon-button', className)}
@@ -58,7 +61,7 @@ export function IconButton({
       type={props.type ?? 'button'}
     >
       <span aria-hidden="true">{children}</span>
-    </button>
+    </PressButton>
   )
 }
 
@@ -85,17 +88,33 @@ export function SegmentedControl<T extends string>({
       <legend className="ui-field-label">{label}</legend>
       <div className="ui-segmented-control__track">
         {options.map((option) => (
-          <button
+          <PressButton
             aria-pressed={option.value === value}
             key={option.value}
             onClick={() => onChange(option.value)}
             type="button"
           >
             <span className="ui-segmented-control__label">{option.label}</span>
-          </button>
+          </PressButton>
         ))}
       </div>
     </fieldset>
+  )
+}
+
+function PressButton({ disabled, ...props }: HTMLMotionProps<'button'>) {
+  const reduced = useReducedAnimation()
+  return (
+    <m.button
+      {...props}
+      disabled={disabled}
+      animate={{ scale: 1 }}
+      whileTap={{ scale: disabled || reduced ? 1 : 0.98 }}
+      transition={{
+        duration: reduced ? 0 : motionTiming.feedback,
+        ease: motionTiming.ease,
+      }}
+    />
   )
 }
 

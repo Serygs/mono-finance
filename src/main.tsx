@@ -8,6 +8,7 @@ import './components/ui/ui.css'
 import './app/app-shell.css'
 import { AppRouter } from './app/AppRouter'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { MotionProvider } from './components/ui/MotionProvider'
 import { LocalizationProvider } from './features/localization/localization'
 import './features/accounts/accounts.css'
 import './features/auth/auth.css'
@@ -41,11 +42,13 @@ createRoot(document.getElementById('root')!, {
   <StrictMode>
     <LocalizationProvider>
       <AppErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <AppRouter />
-          </BrowserRouter>
-        </QueryClientProvider>
+        <MotionProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <AppRouter />
+            </BrowserRouter>
+          </QueryClientProvider>
+        </MotionProvider>
       </AppErrorBoundary>
     </LocalizationProvider>
   </StrictMode>,

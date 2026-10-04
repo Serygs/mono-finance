@@ -1,9 +1,14 @@
-import { useEffect, useRef, type MouseEvent, type SyntheticEvent } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  type MouseEvent,
+  type SyntheticEvent,
+} from 'react'
 
 // One native-modal lifecycle for shared sheets/dialogs and feature-owned chrome.
 export function useModalDialog(open: boolean, onClose: () => void) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = dialogRef.current
     if (!open || dialog === null) return
     const opener =

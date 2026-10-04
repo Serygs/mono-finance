@@ -1,5 +1,7 @@
 import { Icon } from './Icon'
 import { Button } from './Controls'
+import { AnimatePresence } from 'motion/react'
+import { MotionPopover } from './MotionPopover'
 import {
   useEffect,
   useId,
@@ -189,63 +191,66 @@ export function MultiSelect({
           <Icon name="down" />
         </span>
       </button>
-      {open && !unavailable ? (
-        <div
-          aria-label={ariaLabel}
-          className="ui-multi-select__menu"
-          id={contentId}
-          role="dialog"
-          onMouseDown={(event) => {
-            // Label text must activate its checkbox before focus can leave the picker.
-            if (!(event.target as Element).closest('input, button'))
-              event.preventDefault()
-          }}
-        >
-          {menuLabel === undefined ? null : (
-            <strong className="ui-multi-select__title">{menuLabel}</strong>
-          )}
-          {options.map((option) => {
-            const selected = value.includes(option.value)
-            return (
-              <label
-                className="ui-multi-select__option"
-                data-selected={selected}
-                key={option.value}
+      <AnimatePresence>
+        {open && !unavailable ? (
+          <MotionPopover
+            key="options"
+            aria-label={ariaLabel}
+            className="ui-multi-select__menu"
+            id={contentId}
+            role="dialog"
+            onMouseDown={(event) => {
+              // Label text must activate its checkbox before focus can leave the picker.
+              if (!(event.target as Element).closest('input, button'))
+                event.preventDefault()
+            }}
+          >
+            {menuLabel === undefined ? null : (
+              <strong className="ui-multi-select__title">{menuLabel}</strong>
+            )}
+            {options.map((option) => {
+              const selected = value.includes(option.value)
+              return (
+                <label
+                  className="ui-multi-select__option"
+                  data-selected={selected}
+                  key={option.value}
+                >
+                  <input
+                    checked={selected}
+                    onChange={() =>
+                      onChange(
+                        selected
+                          ? value.filter((item) => item !== option.value)
+                          : [...value, option.value],
+                      )
+                    }
+                    type="checkbox"
+                  />
+                  <span>{option.label}</span>
+                </label>
+              )
+            })}
+            {selectAllLabel === undefined ? null : (
+              <Button
+                className="ui-multi-select__select-all"
+                disabled={allSelected}
+                onClick={() => {
+                  onChange(options.map((option) => option.value))
+                  reference.current
+                    ?.querySelector<HTMLInputElement>('input')
+                    ?.focus()
+                }}
+                size="small"
+                type="button"
+                variant="secondary"
               >
-                <input
-                  checked={selected}
-                  onChange={() =>
-                    onChange(
-                      selected
-                        ? value.filter((item) => item !== option.value)
-                        : [...value, option.value],
-                    )
-                  }
-                  type="checkbox"
-                />
-                <span>{option.label}</span>
-              </label>
-            )
-          })}
-          {selectAllLabel === undefined ? null : (
-            <Button
-              className="ui-multi-select__select-all"
-              disabled={allSelected}
-              onClick={() => {
-                onChange(options.map((option) => option.value))
-                reference.current
-                  ?.querySelector<HTMLInputElement>('input')
-                  ?.focus()
-              }}
-              size="small"
-              type="button"
-              variant="secondary"
-            >
-              {selectAllLabel}
-            </Button>
-          )}
-        </div>
-      ) : null}
+                {selectAllLabel}
+              </Button>
+            )}
+          </MotionPopover>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
