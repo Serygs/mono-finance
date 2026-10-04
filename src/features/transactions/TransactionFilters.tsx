@@ -119,6 +119,7 @@ export function TransactionFilters({
       />
       <AccountPicker
         accounts={accountsQuery.data ?? []}
+        loading={accountsQuery.isPending}
         className="transactions-toolbar__account"
         onChange={(selected) =>
           setAccountIds(

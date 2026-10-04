@@ -1,9 +1,13 @@
 import { useLocalization } from '../localization/localization'
+import { Popover } from '../../components/ui/Popover'
+import type { ReactNode } from 'react'
 
 export function AnalyticsPeriod({
   range,
+  children,
 }: {
   range: { dateFrom: number; dateTo: number } | null
+  children?: ReactNode
 }) {
   const { locale, t } = useLocalization()
   if (range === null) return null
@@ -17,14 +21,22 @@ export function AnalyticsPeriod({
   })
   const short = new Intl.DateTimeFormat(locale, { dateStyle: 'short' })
   return (
-    <p className="analytics-period" title={exact}>
-      <span aria-hidden="true">
-        {t('Period: {from} – {to}', {
-          from: short.format(range.dateFrom * 1000),
-          to: short.format(range.dateTo * 1000),
-        })}
+    <Popover
+      className="analytics-period"
+      label={t('Period')}
+      description={exact}
+      mobileSheet
+      content={
+        <div className="analytics-period-details">
+          <p>{exact}</p>
+          {children}
+        </div>
+      }
+    >
+      <span>
+        {short.format(range.dateFrom * 1000)} –{' '}
+        {short.format(range.dateTo * 1000)}
       </span>
-      <span className="sr-only">{exact}</span>
-    </p>
+    </Popover>
   )
 }

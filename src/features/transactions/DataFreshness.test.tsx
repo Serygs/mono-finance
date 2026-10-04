@@ -95,11 +95,38 @@ describe('freshness messages', () => {
         )
         expect(markup.includes('role="status"')).toBe(warning)
         if (status === 'failed') expect(markup).toContain('Sync needs retry')
-        else if (warning)
+        else if (warning) {
           expect(markup).toContain('Elapsed portion has unverified gaps')
+          expect(markup).toContain('Import gaps')
+          expect(markup).toContain('data-freshness--warning')
+        }
       } finally {
         client.clear()
       }
     },
   )
+
+  it('keeps unknown coverage distinct from a verified import gap and ignores unselected failures', () => {
+    const client = new QueryClient()
+    client.setQueryData(accountQueryKeys.all, [account])
+    client.setQueryData(transactionQueryKeys.syncStatus, [
+      { ...state, coverageIntervals: undefined },
+      { ...state, accountId: 'unselected', status: 'failed' },
+    ])
+    try {
+      const markup = renderToStaticMarkup(
+        <QueryClientProvider client={client}>
+          <DataFreshness
+            accountIds={[account.id]}
+            range={{ dateFrom: 100, dateTo: 399 }}
+          />
+        </QueryClientProvider>,
+      )
+      expect(markup).not.toContain('Import gaps')
+      expect(markup).not.toContain('Sync needs retry')
+      expect(markup).not.toContain('role="status"')
+    } finally {
+      client.clear()
+    }
+  })
 })

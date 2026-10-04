@@ -131,6 +131,7 @@ export function CategoryAnalysis({
         </FormField>
         <AccountPicker
           accounts={accounts.data ?? []}
+          loading={accounts.isPending}
           menuLabel={t('Accounts')}
           selectAllLabel={t('Select all')}
           value={ids}
@@ -225,12 +226,13 @@ export function CategoryAnalysis({
         </Popover>
       </div>
       <FilterChips criteria={criteria} label={t('Additional filters')} />
-      <p className="analytics-context">
-        {t('Original currencies · effective amounts')} ·{' '}
-        {t('Without excluded transactions')}
-      </p>
       <div className="analytics-meta">
-        <AnalyticsPeriod range={filters.range} />
+        <AnalyticsPeriod range={filters.range}>
+          <p>
+            {t('Original currencies · effective amounts')} ·{' '}
+            {t('Without excluded transactions')}
+          </p>
+        </AnalyticsPeriod>
         <DataFreshness accountIds={filters.accountIds} range={filters.range} />
       </div>
       {request === null ? (

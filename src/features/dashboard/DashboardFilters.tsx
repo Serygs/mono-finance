@@ -33,6 +33,7 @@ const DATE_PRESETS: Array<{
 ]
 export function DashboardFilters({
   accounts,
+  loadingAccounts,
   analytics,
   baseCurrency,
   currency,
@@ -49,6 +50,7 @@ export function DashboardFilters({
   to,
 }: {
   accounts: AccountSummary[]
+  loadingAccounts: boolean
   analytics: DashboardAnalytics | undefined
   baseCurrency: string
   currency: string | null
@@ -107,6 +109,7 @@ export function DashboardFilters({
       </FormField>
       <AccountPicker
         accounts={accounts}
+        loading={loadingAccounts}
         menuLabel={t('Accounts')}
         onChange={(selected) => {
           onFilter(
@@ -199,14 +202,6 @@ export function DashboardFilters({
         ) : null}
       </Popover>
       <FilterChips criteria={criteria} label={t('Additional filters')} />
-      <p className="analytics-context">
-        {t(
-          mode === 'base'
-            ? 'Converted report · effective amounts'
-            : 'Original currencies · effective amounts',
-        )}{' '}
-        · {t('Without excluded transactions')}
-      </p>
     </section>
   )
 }

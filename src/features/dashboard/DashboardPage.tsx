@@ -41,6 +41,7 @@ export function DashboardPage() {
   const { preferences, setPreferences } = useDashboardPreferences()
   const {
     accounts,
+    loadingAccounts,
     syncingAccounts,
     syncingTransactions,
     syncStates,
@@ -92,6 +93,7 @@ export function DashboardPage() {
       <section className="dashboard-command-bar">
         <DashboardFilters
           accounts={accounts ?? []}
+          loadingAccounts={loadingAccounts}
 
           analytics={analytics.data}
           baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
@@ -109,7 +111,16 @@ export function DashboardPage() {
           to={to}
         />
         <div className="analytics-meta">
-          <AnalyticsPeriod range={range} />
+          <AnalyticsPeriod range={range}>
+            <p>
+              {t(
+                mode === 'base'
+                  ? 'Converted report · effective amounts'
+                  : 'Original currencies · effective amounts',
+              )}{' '}
+              · {t('Without excluded transactions')}
+            </p>
+          </AnalyticsPeriod>
           <DataFreshness accountIds={filters.accountIds} range={range} />
         </div>
       </section>

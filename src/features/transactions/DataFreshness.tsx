@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
 import { Popover } from '../../components/ui/Popover'
 import { Icon } from '../../components/ui/Icon'
+import { Button } from '../../components/ui/Controls'
 import { useOnlineState } from '../../lib/use-online-state'
 import { useLocalization } from '../localization/localization'
 import { useAccountsQuery } from '../accounts/account-queries'
@@ -163,10 +164,29 @@ export function DataFreshness({
         (accountIds.length === 0 || accountIds.includes(state.accountId)) &&
         state.status === 'failed',
     ) ?? false
+  const unavailable = status.isError || accounts.isError
+  const warning = failed || partial || unavailable
+  const summary = unavailable
+    ? t('Status unavailable')
+    : failed
+      ? t('Sync needs retry')
+      : partial
+        ? t('Import gaps')
+        : t(online ? 'Data freshness' : 'Offline')
+  const warningDescription = unavailable
+    ? t('Transaction sync status could not be loaded.')
+    : failed
+      ? t('Sync needs retry')
+      : partial
+        ? t('Elapsed portion has unverified gaps')
+        : undefined
   return (
-    <div className="data-freshness">
+    <div
+      className={`data-freshness${warning ? ' data-freshness--warning' : ''}`}
+    >
       <Popover
         label={t('Data freshness')}
+        description={warningDescription ?? t(online ? 'Online' : 'Offline')}
         mobileSheet
         content={
           <>
@@ -178,7 +198,26 @@ export function DataFreshness({
             ) : null}
             {status.isError || accounts.isError ? (
               <Alert tone="warning">
-                {t('Transaction sync status could not be loaded.')}
+                <p>{t('Transaction sync status could not be loaded.')}</p>
+                <Button
+                  variant="secondary"
+                  loading={status.isFetching || accounts.isFetching}
+                  onClick={() => {
+                    if (status.isError) void status.refetch()
+                    if (accounts.isError) void accounts.refetch()
+                  }}
+                >
+                  {t('Retry')}
+                </Button>
+              </Alert>
+            ) : null}
+            {failed || partial ? (
+              <Alert tone="warning">
+                {t(
+                  failed
+                    ? 'Sync needs retry'
+                    : 'Elapsed portion has unverified gaps',
+                )}
               </Alert>
             ) : null}
             {accounts.data === undefined ? null : (
@@ -191,15 +230,13 @@ export function DataFreshness({
           </>
         }
       >
-        <Icon name="sync" />
-        <span>{t(online ? 'Data freshness' : 'Offline')}</span>
+        <Icon name={warning ? 'info' : 'sync'} />
+        <span>{summary}</span>
       </Popover>
-      {partial || failed ? (
-        <p role="status">
-          {t(
-            failed ? 'Sync needs retry' : 'Elapsed portion has unverified gaps',
-          )}
-        </p>
+      {warningDescription !== undefined ? (
+        <span className="sr-only" role="status">
+          {warningDescription}
+        </span>
       ) : null}
     </div>
   )

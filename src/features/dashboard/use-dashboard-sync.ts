@@ -67,6 +67,7 @@ export function useDashboardSync() {
       : null)
   return {
     accounts: accountsQuery.data,
+    loadingAccounts: accountsQuery.isPending,
     syncingAccounts,
     syncingTransactions,
     syncStates,

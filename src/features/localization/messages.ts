@@ -58,6 +58,8 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Coverage records successful statement windows, not the first or last transaction. Unverified gaps remain unknown.',
   'Transaction import time does not describe balance freshness.',
   'Data freshness',
+  'Import gaps',
+  'Status unavailable',
   'Exact period: {from} – {to}',
   'Converted report · effective amounts',
   'Original currencies · effective amounts',
@@ -656,6 +658,8 @@ export const UKRAINIAN_MESSAGES = {
   'Transaction import time does not describe balance freshness.':
     'Час імпорту транзакцій не визначає актуальність балансу.',
   'Data freshness': 'Актуальність даних',
+  'Import gaps': 'Прогалини імпорту',
+  'Status unavailable': 'Статус недоступний',
   'Exact period: {from} – {to}': 'Точний період: {from} – {to}',
   'Converted report · effective amounts': 'Конвертований звіт · ефективні суми',
   'Original currencies · effective amounts':

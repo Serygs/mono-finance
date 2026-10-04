@@ -56,7 +56,9 @@ export function DashboardLayout({
 }) {
   const { locale, t } = useLocalization()
   const { data: customCategories = [] } = useCategoriesQuery()
-  const { containerRef, mounted, width } = useContainerWidth()
+  const { containerRef, mounted, width } = useContainerWidth({
+    measureBeforeMount: true,
+  })
   const [expanded, setExpanded] = useState(false)
   const selection = useTransactionSelection()
   const displayed = filterDashboardAnalytics(analytics, currency)
