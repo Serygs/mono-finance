@@ -1,5 +1,9 @@
 /* offline feature presentation. See docs/FRONTEND_STRUCTURE.md. */
 
+.service-worker-update {
+  margin-bottom: var(--space-4);
+}
+
 .offline-status {
   z-index: 40;
   right: max(1rem, env(safe-area-inset-right));

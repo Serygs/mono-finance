@@ -11,6 +11,7 @@ import { Icon } from '../../components/ui/Icon'
 import { Popover } from '../../components/ui/Popover'
 import { useOnlineState } from '../../lib/use-online-state'
 import { useLocalization } from '../localization/localization'
+import { UpdateProtectedEditor } from '../offline/UpdateProtectedEditor'
 import {
   getCurrencyPreferences,
   saveCurrencyPreferences,
@@ -61,7 +62,7 @@ export function CurrencyPreferences() {
       label={t('Base currency')}
       mobileSheet
       content={
-        <div className="settings-popover-form">
+        <UpdateProtectedEditor className="settings-popover-form">
           <p>
             {t(
               'Analytics currency only. Account and original transaction currencies stay unchanged.',
@@ -152,7 +153,7 @@ export function CurrencyPreferences() {
               ) : null}
             </form>
           )}
-        </div>
+        </UpdateProtectedEditor>
       }
     >
       <SettingsRowContent

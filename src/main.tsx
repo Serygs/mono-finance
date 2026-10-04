@@ -16,6 +16,7 @@ import './features/dashboard/dashboard.css'
 import './features/localization/language-switcher.css'
 import './features/offline/offline.css'
 import { registerServiceWorker } from './features/offline/service-worker-registration'
+import { serviceWorkerUpdates } from './features/offline/service-worker-updates'
 import './features/settings/settings.css'
 import './features/system/system-status.css'
 import './features/transactions/transactions.css'
@@ -23,6 +24,16 @@ import './features/transactions/transactions.css'
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15_000 } },
 })
+
+queryClient.getMutationCache().subscribe(() => {
+  serviceWorkerUpdates.setPendingMutations(queryClient.isMutating() > 0)
+})
+
+const updateConnectivity = () =>
+  serviceWorkerUpdates.setOnline(navigator.onLine)
+updateConnectivity()
+window.addEventListener('online', updateConnectivity)
+window.addEventListener('offline', updateConnectivity)
 
 createRoot(document.getElementById('root')!, {
   onCaughtError: () => console.error('Application render failed.'),

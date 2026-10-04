@@ -5,7 +5,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_URLS)),
   )
-  self.skipWaiting()
+})
+
+// Existing clients decide when their drafts and pending mutations allow a reload.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', (event) => {

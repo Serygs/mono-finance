@@ -1,4 +1,12 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'App update available',
+  'Connect to the internet before updating the app.',
+  'Finish or cancel editing before updating.',
+  'Waiting for pending changes to finish before updating.',
+  'Updating the app…',
+  'The update could not be activated. Try again.',
+  'A new version is ready. Update when you are ready to reload.',
+  'Update and reload',
   '{percent}% of period expenses',
   'Repeated purchases',
   'Repeated purchases help',
@@ -558,6 +566,19 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
 }
 
 export const UKRAINIAN_MESSAGES = {
+  'App update available': 'Доступне оновлення застосунку',
+  'Connect to the internet before updating the app.':
+    'Підключіться до інтернету перед оновленням застосунку.',
+  'Finish or cancel editing before updating.':
+    'Завершіть або скасуйте редагування перед оновленням.',
+  'Waiting for pending changes to finish before updating.':
+    'Очікуємо завершення збереження змін перед оновленням.',
+  'Updating the app…': 'Оновлення застосунку…',
+  'The update could not be activated. Try again.':
+    'Не вдалося активувати оновлення. Спробуйте ще раз.',
+  'A new version is ready. Update when you are ready to reload.':
+    'Нова версія готова. Оновіть застосунок, коли будете готові до перезавантаження.',
+  'Update and reload': 'Оновити й перезавантажити',
   '{percent}% of period expenses': '{percent}% витрат періоду',
   'Repeated purchases': 'Повторні покупки',
   'Repeated purchases help':
