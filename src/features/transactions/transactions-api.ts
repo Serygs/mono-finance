@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import { transactionFilterParameters } from './transaction-drill-down'
 import type { ApiResponse } from '../../types/api'
 import { getOfflineApiData } from '../offline/offline-api'
@@ -20,7 +21,7 @@ export async function getTransactions(
   const search = parameters.toString()
   const path = `/api/transactions${search ? `?${search}` : ''}`
   return getOfflineApiData(path, async () => {
-    const response = await fetch(path, {
+    const response = await fetchPrivateResponse(path, {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
     })
@@ -39,7 +40,7 @@ export async function getTransactions(
 export async function getCompensationDetails(
   transactionId: string,
 ): Promise<CompensationDetails> {
-  const response = await fetch(
+  const response = await fetchPrivateResponse(
     `/api/transactions/${transactionId}/compensations`,
     { credentials: 'same-origin', headers: { Accept: 'application/json' } },
   )
@@ -49,7 +50,7 @@ export async function linkCompensation(
   transactionId: string,
   input: { compensationTransactionId: string; compensatedAmountMinor: number },
 ): Promise<CompensationDetails> {
-  const response = await fetch(
+  const response = await fetchPrivateResponse(
     `/api/transactions/${transactionId}/compensations`,
     {
       body: JSON.stringify(input),
@@ -67,7 +68,7 @@ export async function unlinkCompensation(
   transactionId: string,
   linkId: string,
 ): Promise<CompensationDetails> {
-  const response = await fetch(
+  const response = await fetchPrivateResponse(
     `/api/transactions/${transactionId}/compensations/${linkId}`,
     {
       credentials: 'same-origin',
@@ -114,7 +115,7 @@ function appendParameter(
   }
 }
 async function compensationPayload(
-  response: Response,
+  response: Awaited<ReturnType<typeof fetchPrivateResponse>>,
 ): Promise<CompensationDetails> {
   const payload = (await response.json()) as ApiResponse<CompensationDetails>
   if (!response.ok || !('data' in payload))
@@ -132,7 +133,7 @@ async function mutateCorrection(
   method: 'DELETE' | 'PUT',
   body?: object,
 ): Promise<TransactionCorrection> {
-  const response = await fetch(
+  const response = await fetchPrivateResponse(
     `/api/transactions/${transactionId}/${resource}`,
     {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),

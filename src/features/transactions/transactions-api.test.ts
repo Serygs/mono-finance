@@ -1,6 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  activatePrivateSession,
+  endPrivateSession,
+} from '../auth/private-session'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getTransactions, saveTransactionAdjustment } from './transactions-api'
+
+beforeEach(() => activatePrivateSession(4_102_444_800))
+afterEach(() => endPrivateSession('logout'))
 
 describe('getTransactions', () => {
   afterEach(() => {

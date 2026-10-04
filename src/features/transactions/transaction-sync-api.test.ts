@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  activatePrivateSession,
+  endPrivateSession,
+} from '../auth/private-session'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   getTransactionSyncStatus,
@@ -8,6 +12,9 @@ import {
 afterEach(() => {
   vi.unstubAllGlobals()
 })
+
+beforeEach(() => activatePrivateSession(4_102_444_800))
+afterEach(() => endPrivateSession('logout'))
 
 describe('transaction sync API', () => {
   it('loads persisted sync state through the same-origin API', async () => {
@@ -34,6 +41,7 @@ describe('transaction sync API', () => {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
       method: 'GET',
+      signal: expect.any(AbortSignal),
     })
   })
 
@@ -61,6 +69,7 @@ describe('transaction sync API', () => {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
       method: 'POST',
+      signal: expect.any(AbortSignal),
     })
   })
 })

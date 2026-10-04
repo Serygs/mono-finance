@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import type { ApiResponse } from '../../types/api'
 
 export interface CurrencyPreferences {
@@ -23,7 +24,7 @@ async function request<T>(
   method: 'GET' | 'POST' | 'PUT' = 'GET',
   body?: object,
 ): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetchPrivateResponse(path, {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     credentials: 'same-origin',
     headers: {

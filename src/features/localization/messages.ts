@@ -1,4 +1,16 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'Local data could not be removed. Check browser storage permissions and retry.',
+  'Mono Finance',
+  'Unable to display the application.',
+  'Reload the application to try again. Your saved financial data is unchanged.',
+  'Reload application',
+  'Too many authentication attempts. Wait before trying again.',
+  'Unable to connect. Check your connection and try again.',
+  'Authentication is temporarily unavailable. Try again later.',
+  'Retry session verification',
+  'Local data cleanup failed. Close other Mono Finance tabs and retry.',
+  'Retry local cleanup',
+
   '1 account',
   'Period: {from} – {to}',
   'Verified transaction import time unknown',
@@ -526,6 +538,24 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
 }
 
 export const UKRAINIAN_MESSAGES = {
+  'Local data could not be removed. Check browser storage permissions and retry.':
+    'Не вдалося видалити локальні дані. Перевірте дозволи браузера на сховище та повторіть спробу.',
+  'Mono Finance': 'Mono Finance',
+  'Unable to display the application.': 'Не вдалося відобразити застосунок.',
+  'Reload the application to try again. Your saved financial data is unchanged.':
+    'Перезавантажте застосунок, щоб повторити спробу. Збережені фінансові дані не змінено.',
+  'Reload application': 'Перезавантажити застосунок',
+  'Too many authentication attempts. Wait before trying again.':
+    'Забагато спроб автентифікації. Зачекайте перед наступною спробою.',
+  'Unable to connect. Check your connection and try again.':
+    'Не вдалося підключитися. Перевірте з’єднання та повторіть спробу.',
+  'Authentication is temporarily unavailable. Try again later.':
+    'Автентифікація тимчасово недоступна. Спробуйте пізніше.',
+  'Retry session verification': 'Повторити перевірку сесії',
+  'Local data cleanup failed. Close other Mono Finance tabs and retry.':
+    'Не вдалося очистити локальні дані. Закрийте інші вкладки Mono Finance та повторіть спробу.',
+  'Retry local cleanup': 'Повторити очищення локальних даних',
+
   '1 account': '1 рахунок',
   'Period: {from} – {to}': 'Період: {from} – {to}',
   'Verified transaction import time unknown':

@@ -225,6 +225,12 @@ The service worker caches only the public application shell and static assets; `
 
 Offline snapshots are readable only within a browser session already verified through `/api/auth/session`. A refresh or new launch requires connectivity to validate the server session before decrypting cached data. HTTP authentication failures never fall back to cached responses. Reconnection reloads authoritative D1 data, and logout deletes the IndexedDB database and encryption key.
 
+Confirmed logout, session expiration, and private API `401` responses cancel private requests, clear Query caches, and lock private screens across tabs through BroadcastChannel with a storage-event fallback. Late responses and offline cache operations from an ended session are rejected. A stored session-end notification prevents automatic reopening until an explicit successful sign-in. If cache deletion is blocked or fails, the application shows a localized cleanup action and prevents sign-in until cleanup succeeds; close stale tabs or windows before retrying.
+
+A logout network or server failure leaves revocation unconfirmed: the existing verified session remains active, local cleanup is attempted, and the logout action reports an error so it can be retried.
+
+Temporary session-verification failures (`429`, server errors, or network failures) keep private screens locked and offer retry without deleting offline snapshots. Login distinguishes rejected credentials from rate limiting, connectivity, and server failures. Language preferences remain usable in memory when browser storage is unavailable; render failures show localized reload recovery without internal error details.
+
 Known limitation: a browser restarted while offline cannot reopen financial data until it reconnects and verifies the session.
 
 ## UI conventions

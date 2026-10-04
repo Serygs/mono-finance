@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router'
 
 import { useLogout } from '../features/auth/use-logout'
+import { SessionCleanupNotice } from '../features/auth/SessionCleanupNotice'
 import { Alert } from '../components/ui/Feedback'
 import { OfflineStatus } from '../features/offline/OfflineStatus'
 import { Button } from '../components/ui/Controls'
@@ -122,6 +123,7 @@ export function AppShell() {
       </header>
       <OfflineStatus />
       <main className="page-content" id="main-content" tabIndex={-1}>
+        <SessionCleanupNotice />
         <Outlet />
       </main>
       <nav aria-label={t('Primary navigation')} className="mobile-navigation">

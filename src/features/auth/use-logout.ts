@@ -8,7 +8,7 @@ import { useAuth } from './auth-context'
 
 const mutationKey = ['logout']
 
-// Both session actions use the provider's existing API and encrypted-cache cleanup.
+// The provider owns teardown in every tab; this hook only drives the action UI.
 export function useLogout() {
   const { logout } = useAuth()
   const navigate = useNavigate()

@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import type { ApiResponse } from '../../types/api'
 import { getOfflineApiData } from '../offline/offline-api'
 
@@ -146,7 +147,7 @@ async function requestAnalytics<T>(
   }
   const resource = `${path}?${parameters.toString()}`
   return getOfflineApiData(resource, async () => {
-    const response = await fetch(resource, {
+    const response = await fetchPrivateResponse(resource, {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
     })

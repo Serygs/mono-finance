@@ -7,6 +7,8 @@ import './styles/index.css'
 import './components/ui/ui.css'
 import './app/app-shell.css'
 import { AppRouter } from './app/AppRouter'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { LocalizationProvider } from './features/localization/localization'
 import './features/accounts/accounts.css'
 import './features/auth/auth.css'
 import './features/categories/categories.css'
@@ -22,13 +24,19 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 15_000 } },
 })
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!, {
+  onCaughtError: () => console.error('Application render failed.'),
+}).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppRouter />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <LocalizationProvider>
+      <AppErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AppRouter />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </AppErrorBoundary>
+    </LocalizationProvider>
   </StrictMode>,
 )
 

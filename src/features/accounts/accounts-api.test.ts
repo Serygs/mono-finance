@@ -1,6 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  activatePrivateSession,
+  endPrivateSession,
+} from '../auth/private-session'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getAccounts, synchronizeAccounts } from './accounts-api'
+
+beforeEach(() => activatePrivateSession(4_102_444_800))
+afterEach(() => endPrivateSession('logout'))
 
 describe('accounts API client', () => {
   afterEach(() => {
@@ -39,6 +46,7 @@ describe('accounts API client', () => {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
       method: 'GET',
+      signal: expect.any(AbortSignal),
     })
   })
 
@@ -54,6 +62,7 @@ describe('accounts API client', () => {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
       method: 'POST',
+      signal: expect.any(AbortSignal),
     })
   })
 
