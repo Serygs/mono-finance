@@ -7,6 +7,8 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { AnimatePresence } from 'motion/react'
+import { MotionPopover } from './MotionPopover'
 import { BottomSheet } from './Overlay'
 import { Icon } from './Icon'
 
@@ -132,7 +134,7 @@ export function Popover({
         close()
     }
 
-    if (!open) return
+    if (!open || (mobileSheet && mobile)) return
     document.addEventListener('pointerdown', closeOnPointerDown)
     document.addEventListener('keydown', closeOnEscape)
     document.addEventListener('focusin', closeOnFocusOutside)
@@ -141,7 +143,7 @@ export function Popover({
       document.removeEventListener('keydown', closeOnEscape)
       document.removeEventListener('focusin', closeOnFocusOutside)
     }
-  }, [open, close])
+  }, [open, close, mobileSheet, mobile])
 
   const positioned = position !== null
   useEffect(() => {
@@ -155,7 +157,7 @@ export function Popover({
   }, [open, positioned, openOnFocusHover, mobileSheet, mobile])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || (mobileSheet && mobile)) return
 
     function updatePosition() {
       const trigger = reference.current?.querySelector('button')
@@ -215,10 +217,11 @@ export function Popover({
       window.removeEventListener('scroll', updatePosition, true)
       resizeObserver.disconnect()
     }
-  }, [open])
+  }, [open, mobileSheet, mobile])
 
   const overlayContent = !open ? null : (
-    <div
+    <MotionPopover
+      key="popover"
       aria-label={label}
       className={[
         'ui-popover__content',
@@ -256,7 +259,7 @@ export function Popover({
       }
     >
       {content}
-    </div>
+    </MotionPopover>
   )
 
   return (
@@ -326,8 +329,11 @@ export function Popover({
             {content}
           </div>
         </BottomSheet>
-      ) : overlayContent === null || typeof document === 'undefined' ? null : (
-        createPortal(overlayContent, document.body)
+      ) : typeof document === 'undefined' ? null : (
+        createPortal(
+          <AnimatePresence>{overlayContent}</AnimatePresence>,
+          document.body,
+        )
       )}
     </span>
   )

@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import type { ApiResponse } from '../../types/api'
 import type { AccountSummary } from './account-types'
 
@@ -17,7 +18,7 @@ async function requestAccounts(
   path: string,
   method: 'GET' | 'POST',
 ): Promise<AccountSummary[]> {
-  const response = await fetch(path, {
+  const response = await fetchPrivateResponse(path, {
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
     method,

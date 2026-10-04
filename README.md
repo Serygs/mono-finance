@@ -163,7 +163,9 @@ Public endpoints are limited to health and the authentication lifecycle. All fin
 | `POST` | `/api/sync/transactions`        | Execute one bounded, resumable statement synchronization step.    |
 | `GET`  | `/api/sync/transactions/status` | Return safe per-account synchronization state.                    |
 
-`GET /api/transactions` accepts repeated `accountId`, inclusive UTC epoch-second `dateFrom` and `dateTo`, `direction=income|expense`, three-letter `currency`, exact effective `category`, `excluded=true|false`, literal case-insensitive `search`, an opaque `cursor`, and `limit` from 1 to 100.
+`GET /api/transactions` accepts repeated `accountId`, inclusive UTC epoch-second `dateFrom` and `dateTo`, `direction=income|expense`, three-letter `currency`, exact effective `category`, `excluded=true|false`, optional `hasAdjustment=true|false` and `hasCompensation=true|false`, literal case-insensitive `search`, an opaque `cursor`, and `limit` from 1 to 100. Record filters apply before pagination. Compensation matching includes either side of an owner’s link. Results retain original transaction date descending, then ID descending ordering.
+
+Overview requests five matching adjusted transactions and five matching compensated transactions independently of its recent transaction page. All three queries retain the selected transaction-period, account, currency, and exclusion filters. A failed evidence query shows an error and retry action rather than an empty result.
 
 ### Transaction metadata
 
@@ -199,6 +201,8 @@ Direct category deletion returns `409 category_referenced` while overrides or so
 | `GET`  | `/api/analytics/breakdowns` | Category, account, currency, merchant, and largest-transaction aggregates.               |
 | `GET`  | `/api/analytics/trends`     | Daily/monthly income, expense, net, and spending-trend series.                           |
 
+Repeat-purchase widgets show unconfirmed evidence from matching descriptions and report currencies in the trailing year ending at the selected period’s end. Observed average intervals do not establish periodicity or fixed obligations. The legacy `recurringExpenses` and `fixedVariableExpenses` response fields and saved widget IDs remain compatible; the UI labels them **Repeated purchases** and **Repeated vs other expenses** until a recurring-obligation classification is defined.
+
 Analytics accept repeated `accountId`, `dateFrom`, and `dateTo`; the required date range is capped at 366 days. Optional `baseCurrency` requests a reproducible converted view. Aggregate responses do not send the complete transaction ledger.
 
 ## Synchronization behavior
@@ -215,6 +219,8 @@ Provider failures map to safe error categories: unauthorized token, rate limit w
 
 The original-currency view keeps currencies separate. Base-currency analytics use only a stored rate whose timestamp is at or before the transaction timestamp and may compose a cross-rate through UAH. Missing historical rates cause affected transactions to be omitted from the converted aggregate and reported by original currency; the application never silently applies a newer rate.
 
+Effective amounts and linked compensation totals use the same historical rational rate. Each is rounded to the nearest integer minor unit, with ties away from zero, using integer arithmetic. Reported compensation is capped at the converted expense; personal expense is the converted expense minus that capped compensation. Imported amounts and timestamps remain unchanged.
+
 The Monobank public rate feed supplies current snapshots, not historical backfill. Consequently, older imported transactions remain available in original-currency analytics until an appropriate historical rate source is configured.
 
 ## PWA and offline behavior
@@ -223,7 +229,15 @@ The manifest, icons, Apple metadata, static headers, and service worker live in 
 
 The service worker caches only the public application shell and static assets; `/api/*` is always bypassed. Dashboard and transaction snapshots use network-first reads and AES-GCM-encrypted IndexedDB records with a non-extractable browser-generated key. Cache keys are SHA-256 hashes rather than readable URLs.
 
+Service Worker updates wait for an explicit **Update and reload** action. Transaction and category editors and the currency settings popover block updates until closed; failed saves keep this protection. An accepted update waits for pending Query mutations, including their completion callbacks, and rechecks activity before reloading. Updates also wait for connectivity because a reload requires online session verification. Activation in another tab displays the same prompt without forcing this tab to reload. Drafts remain in memory and are never copied to plaintext browser storage. If activation fails or times out, the prompt offers another attempt. Tabs running an earlier client bundle retain their original update behavior until that bundle is reloaded.
+
 Offline snapshots are readable only within a browser session already verified through `/api/auth/session`. A refresh or new launch requires connectivity to validate the server session before decrypting cached data. HTTP authentication failures never fall back to cached responses. Reconnection reloads authoritative D1 data, and logout deletes the IndexedDB database and encryption key.
+
+Confirmed logout, session expiration, and private API `401` responses cancel private requests, clear Query caches, and lock private screens across tabs through BroadcastChannel with a storage-event fallback. Late responses and offline cache operations from an ended session are rejected. A stored session-end notification prevents automatic reopening until an explicit successful sign-in. If cache deletion is blocked or fails, the application shows a localized cleanup action and prevents sign-in until cleanup succeeds; close stale tabs or windows before retrying.
+
+A logout network or server failure leaves revocation unconfirmed: the existing verified session remains active, local cleanup is attempted, and the logout action reports an error so it can be retried.
+
+Temporary session-verification failures (`429`, server errors, or network failures) keep private screens locked and offer retry without deleting offline snapshots. Login distinguishes rejected credentials from rate limiting, connectivity, and server failures. Language preferences remain usable in memory when browser storage is unavailable; render failures show localized reload recovery without internal error details.
 
 Known limitation: a browser restarted while offline cannot reopen financial data until it reconnects and verifies the session.
 
@@ -291,7 +305,7 @@ Local runs use half the available CPUs, capped at four workers with a minimum of
 
 Coverage floors are 65% statements, 60% branches, 62% functions, and 67% lines. Do not reduce them to accept a regression.
 
-Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Service workers are blocked in this suite so shell caching cannot interfere with navigation or Vite development assets. Layout matrices run as separate theme/locale cases to keep each test within its time budget. Offline cryptography is unit-tested, while full service-worker offline behavior is not yet exercised in a real offline browser context.
+Tests use synthetic financial fixtures and no real secrets. Repository tests currently use focused D1 fakes and migration assertions rather than a disposable Miniflare database. E2E tests mock same-origin APIs and do not contact Monobank or production Cloudflare resources. Service workers are blocked in the development suite so shell caching cannot interfere with navigation or Vite assets. Native IndexedDB/WebCrypto regressions run with `npx playwright test tests/e2e/encrypted-cache-races.spec.ts`. After `npm run build`, run `npx playwright test --config playwright.pwa.config.ts` for real Service Worker updates against locally hosted production assets, including editing, cross-tab activation, pending mutations, localization, and mobile layout. Layout matrices run as separate theme/locale cases. Full service-worker offline cold-start behavior and physical iOS verification remain manual.
 
 ## CI/CD and production deployment
 

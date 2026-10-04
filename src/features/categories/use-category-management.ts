@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState, type FormEvent } from 'react'
+import { useUpdateBlocker } from '../offline/use-update-blocker'
 import {
   createCategory,
   deleteCategory,
@@ -29,6 +30,7 @@ export function useCategoryManagement(
     id: string
     name: string
   } | null>(null)
+  useUpdateBlocker(isCreating || editing !== null || pendingMerge !== null)
   const [mergeTargetId, setMergeTargetId] = useState('')
   const [query, setQuery] = useState('')
   const [nameInvalid, setNameInvalid] = useState(false)

@@ -1,4 +1,7 @@
 import { Icon } from './Icon'
+import { Button } from './Controls'
+import { AnimatePresence } from 'motion/react'
+import { MotionPopover } from './MotionPopover'
 import {
   useEffect,
   useId,
@@ -83,6 +86,8 @@ interface MultiSelectOption {
 interface MultiSelectProps {
   ariaLabel: string
   className?: string
+  disabled?: boolean
+  loading?: boolean
   menuLabel?: string
   onChange(values: string[]): void
   options: readonly MultiSelectOption[]
@@ -95,6 +100,8 @@ interface MultiSelectProps {
 export function MultiSelect({
   ariaLabel,
   className,
+  disabled = false,
+  loading = false,
   menuLabel,
   onChange,
   options,
@@ -110,6 +117,8 @@ export function MultiSelect({
   const selectedLabels = options
     .filter((option) => value.includes(option.value))
     .map((option) => option.label)
+  const unavailable = disabled || loading || options.length === 0
+  const allSelected = options.every((option) => value.includes(option.value))
 
   useEffect(() => {
     function closeOnPointerDown(event: PointerEvent) {
@@ -128,7 +137,7 @@ export function MultiSelect({
       if (!reference.current?.contains(event.target as Node)) setOpen(false)
     }
 
-    if (!open) return
+    if (!open || unavailable) return
     document.addEventListener('pointerdown', closeOnPointerDown)
     document.addEventListener('keydown', closeOnEscape)
     document.addEventListener('focusin', closeOnFocusOutside)
@@ -137,7 +146,12 @@ export function MultiSelect({
       document.removeEventListener('keydown', closeOnEscape)
       document.removeEventListener('focusin', closeOnFocusOutside)
     }
-  }, [open])
+  }, [open, unavailable])
+
+  useEffect(() => {
+    if (open && !unavailable)
+      reference.current?.querySelector<HTMLInputElement>('input')?.focus()
+  }, [open, unavailable])
 
   return (
     <div
@@ -145,12 +159,14 @@ export function MultiSelect({
       ref={reference}
     >
       <button
-        aria-controls={open ? contentId : undefined}
-        aria-expanded={open}
+        aria-controls={open && !unavailable ? contentId : undefined}
+        aria-expanded={open && !unavailable}
+        aria-busy={loading || undefined}
         aria-haspopup="dialog"
         aria-label={ariaLabel}
         aria-description={triggerLabel}
         className="ui-multi-select__trigger"
+        disabled={unavailable}
         onClick={() => setOpen((current) => !current)}
         ref={trigger}
         type="button"
@@ -175,46 +191,66 @@ export function MultiSelect({
           <Icon name="down" />
         </span>
       </button>
-      {open ? (
-        <div
-          aria-label={ariaLabel}
-          className="ui-multi-select__menu"
-          id={contentId}
-          role="dialog"
-        >
-          {menuLabel === undefined ? null : (
-            <strong className="ui-multi-select__title">{menuLabel}</strong>
-          )}
-          {options.map((option) => {
-            const selected = value.includes(option.value)
-            return (
-              <label className="ui-multi-select__option" key={option.value}>
-                <input
-                  checked={selected}
-                  onChange={() =>
-                    onChange(
-                      selected
-                        ? value.filter((item) => item !== option.value)
-                        : [...value, option.value],
-                    )
-                  }
-                  type="checkbox"
-                />
-                <span>{option.label}</span>
-              </label>
-            )
-          })}
-          {selectAllLabel === undefined ? null : (
-            <button
-              className="ui-multi-select__select-all"
-              onClick={() => onChange(options.map((option) => option.value))}
-              type="button"
-            >
-              {selectAllLabel}
-            </button>
-          )}
-        </div>
-      ) : null}
+      <AnimatePresence>
+        {open && !unavailable ? (
+          <MotionPopover
+            key="options"
+            aria-label={ariaLabel}
+            className="ui-multi-select__menu"
+            id={contentId}
+            role="dialog"
+            onMouseDown={(event) => {
+              // Label text must activate its checkbox before focus can leave the picker.
+              if (!(event.target as Element).closest('input, button'))
+                event.preventDefault()
+            }}
+          >
+            {menuLabel === undefined ? null : (
+              <strong className="ui-multi-select__title">{menuLabel}</strong>
+            )}
+            {options.map((option) => {
+              const selected = value.includes(option.value)
+              return (
+                <label
+                  className="ui-multi-select__option"
+                  data-selected={selected}
+                  key={option.value}
+                >
+                  <input
+                    checked={selected}
+                    onChange={() =>
+                      onChange(
+                        selected
+                          ? value.filter((item) => item !== option.value)
+                          : [...value, option.value],
+                      )
+                    }
+                    type="checkbox"
+                  />
+                  <span>{option.label}</span>
+                </label>
+              )
+            })}
+            {selectAllLabel === undefined ? null : (
+              <Button
+                className="ui-multi-select__select-all"
+                disabled={allSelected}
+                onClick={() => {
+                  onChange(options.map((option) => option.value))
+                  reference.current
+                    ?.querySelector<HTMLInputElement>('input')
+                    ?.focus()
+                }}
+                size="small"
+                type="button"
+                variant="secondary"
+              >
+                {selectAllLabel}
+              </Button>
+            )}
+          </MotionPopover>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }

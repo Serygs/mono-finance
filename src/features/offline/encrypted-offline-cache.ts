@@ -1,3 +1,5 @@
+import { assertPrivateSession, privateSession } from '../auth/private-session'
+
 const DATABASE_NAME = 'mono-finance-offline-v1'
 const DATABASE_VERSION = 1
 const CACHE_STORE = 'encrypted-records'
@@ -17,54 +19,100 @@ export interface OfflineCacheEntry<T> {
 }
 
 let databasePromise: Promise<IDBDatabase> | null = null
+let openDatabase: IDBDatabase | null = null
+let cacheGeneration = 0
+let deletionPromise: Promise<void> | null = null
+
+export class OfflineCacheCleanupError extends Error {
+  readonly reason: 'blocked' | 'unavailable'
+  constructor(reason: 'blocked' | 'unavailable') {
+    super('Offline cache cleanup requires recovery.')
+    this.reason = reason
+  }
+}
 
 export async function cacheOfflineData<T>(
   resource: string,
   value: T,
 ): Promise<void> {
+  const session = privateSession()
   const database = await getDatabase()
   const key = await hashResource(resource)
   const encryptionKey = await getEncryptionKey(database)
   const encrypted = await encryptValue(value, encryptionKey)
+  assertPrivateSession(session.generation)
   const transaction = database.transaction(CACHE_STORE, 'readwrite')
+  const completed = transactionComplete(transaction, session.signal)
   transaction.objectStore(CACHE_STORE).put({
     cachedAt: Date.now(),
     ciphertext: encrypted.ciphertext,
     initializationVector: encrypted.initializationVector,
     key,
   } satisfies EncryptedRecord)
-  await transactionComplete(transaction)
+  await completed
+  assertPrivateSession(session.generation)
 }
 
 export async function readOfflineData<T>(
   resource: string,
 ): Promise<OfflineCacheEntry<T> | null> {
+  const session = privateSession()
   const database = await getDatabase()
   const key = await hashResource(resource)
+  assertPrivateSession(session.generation)
   const transaction = database.transaction(CACHE_STORE, 'readonly')
-  const record = await requestResult<EncryptedRecord | undefined>(
-    transaction.objectStore(CACHE_STORE).get(key),
-  )
-  await transactionComplete(transaction)
+  const completed = transactionComplete(transaction, session.signal)
+  const [record] = await Promise.all([
+    requestResult<EncryptedRecord | undefined>(
+      transaction.objectStore(CACHE_STORE).get(key),
+    ),
+    completed,
+  ])
+  assertPrivateSession(session.generation)
   if (record === undefined) return null
 
   const encryptionKey = await getEncryptionKey(database)
+  const value = await decryptValue<T>(record, encryptionKey)
+  assertPrivateSession(session.generation)
   return {
     cachedAt: record.cachedAt,
-    value: await decryptValue<T>(record, encryptionKey),
+    value,
   }
 }
 
 export async function clearOfflineCache(): Promise<void> {
-  const database = await databasePromise
-  database?.close()
+  if (deletionPromise !== null) return deletionPromise
+  cacheGeneration++
+  openDatabase?.close()
+  openDatabase = null
   databasePromise = null
-  await new Promise<void>((resolve, reject) => {
+  // No IndexedDB means no cache was available to this browsing context.
+  if (typeof indexedDB === 'undefined') return
+  let blocked = false
+  deletionPromise = new Promise<void>((resolve, reject) => {
     const request = indexedDB.deleteDatabase(DATABASE_NAME)
-    request.onerror = () => reject(request.error)
-    request.onblocked = () => reject(new Error('Offline cache is still open.'))
-    request.onsuccess = () => resolve()
+    request.onerror = () => {
+      deletionPromise = null
+      reject(new OfflineCacheCleanupError('unavailable'))
+    }
+    request.onblocked = () => {
+      blocked = true
+      // The deletion request remains queued. Do not reopen the database behind it.
+      reject(new OfflineCacheCleanupError('blocked'))
+    }
+    request.onsuccess = () => {
+      deletionPromise = null
+      resolve()
+    }
   })
+  try {
+    await deletionPromise
+  } catch (error) {
+    if (!blocked) deletionPromise = null
+    throw error instanceof OfflineCacheCleanupError
+      ? error
+      : new OfflineCacheCleanupError('unavailable')
+  }
 }
 
 export async function encryptValue<T>(
@@ -105,27 +153,58 @@ export async function decryptValue<T>(
 }
 
 async function getDatabase(): Promise<IDBDatabase> {
+  if (deletionPromise !== null) throw new OfflineCacheCleanupError('blocked')
+  const generation = cacheGeneration
   databasePromise ??= new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
-    request.onerror = () => reject(request.error)
+    request.onerror = () => {
+      databasePromise = null
+      reject(request.error)
+    }
     request.onupgradeneeded = () => {
       const database = request.result
       database.createObjectStore(CACHE_STORE, { keyPath: 'key' })
       database.createObjectStore(KEY_STORE)
     }
-    request.onsuccess = () => resolve(request.result)
+    request.onsuccess = () => {
+      const database = request.result
+      if (generation !== cacheGeneration) {
+        database.close()
+        reject(new OfflineCacheCleanupError('unavailable'))
+        return
+      }
+      openDatabase = database
+      database.onversionchange = () => {
+        database.close()
+        if (openDatabase === database) {
+          openDatabase = null
+          databasePromise = null
+          cacheGeneration++
+        }
+      }
+      resolve(database)
+    }
   })
-  return databasePromise
+  const pending = databasePromise
+  try {
+    return await pending
+  } catch (error) {
+    if (databasePromise === pending) databasePromise = null
+    throw error
+  }
 }
 
 async function getEncryptionKey(database: IDBDatabase): Promise<CryptoKey> {
-  const transaction = database.transaction(KEY_STORE, 'readwrite')
+  const session = privateSession()
+  const transaction = database.transaction(KEY_STORE, 'readonly')
+  const completed = transactionComplete(transaction, session.signal)
   const store = transaction.objectStore(KEY_STORE)
-  const existing = await requestResult<CryptoKey | undefined>(
-    store.get(ENCRYPTION_KEY_ID),
-  )
+  const [existing] = await Promise.all([
+    requestResult<CryptoKey | undefined>(store.get(ENCRYPTION_KEY_ID)),
+    completed,
+  ])
+  assertPrivateSession(session.generation)
   if (existing !== undefined) {
-    await transactionComplete(transaction)
     return existing
   }
   const generated = await crypto.subtle.generateKey(
@@ -133,9 +212,23 @@ async function getEncryptionKey(database: IDBDatabase): Promise<CryptoKey> {
     false,
     ['decrypt', 'encrypt'],
   )
-  store.put(generated, ENCRYPTION_KEY_ID)
-  await transactionComplete(transaction)
-  return generated
+  assertPrivateSession(session.generation)
+  // Generate outside a transaction: IndexedDB may auto-commit while Web Crypto runs.
+  const writeTransaction = database.transaction(KEY_STORE, 'readwrite')
+  const written = transactionComplete(writeTransaction, session.signal)
+  const writeStore = writeTransaction.objectStore(KEY_STORE)
+  const [key] = await Promise.all([
+    requestResult<CryptoKey | undefined>(
+      writeStore.get(ENCRYPTION_KEY_ID),
+    ).then((concurrentKey) => {
+      if (concurrentKey === undefined)
+        writeStore.put(generated, ENCRYPTION_KEY_ID)
+      return concurrentKey ?? generated
+    }),
+    written,
+  ])
+  assertPrivateSession(session.generation)
+  return key
 }
 
 async function hashResource(resource: string): Promise<string> {
@@ -155,10 +248,27 @@ function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   })
 }
 
-function transactionComplete(transaction: IDBTransaction): Promise<void> {
+function transactionComplete(
+  transaction: IDBTransaction,
+  signal: AbortSignal,
+): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    transaction.onabort = () => reject(transaction.error)
-    transaction.onerror = () => reject(transaction.error)
-    transaction.oncomplete = () => resolve()
+    const abort = () => {
+      try {
+        transaction.abort()
+      } catch {
+        /* A completed transaction cannot be aborted. */
+      }
+    }
+    const cleanup = () => signal.removeEventListener('abort', abort)
+    signal.addEventListener('abort', abort, { once: true })
+    transaction.onabort = transaction.onerror = () => {
+      cleanup()
+      reject(transaction.error ?? new Error('Offline cache transaction ended.'))
+    }
+    transaction.oncomplete = () => {
+      cleanup()
+      resolve()
+    }
   })
 }

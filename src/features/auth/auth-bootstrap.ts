@@ -10,11 +10,7 @@ const MAXIMUM_BROWSER_TIMEOUT_MILLISECONDS = 2_147_483_647
 export async function resolveInitialSession(
   loadCurrentSession: () => Promise<AuthenticatedSession | null>,
 ): Promise<AuthenticatedSession | null> {
-  try {
-    return await loadCurrentSession()
-  } catch {
-    return null
-  }
+  return loadCurrentSession()
 }
 
 export function sessionExpiryDelay(

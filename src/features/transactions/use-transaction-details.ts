@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useTransactionMutations } from './use-transaction-mutations'
 
 import { useLocalization } from '../localization/localization'
+import { useUpdateBlocker } from '../offline/use-update-blocker'
 import { parseAmountInputToMinor } from './transaction-formatting'
 import type { TransactionListItem } from './transaction-types'
 import { getCompensationDetails } from './transactions-api'
@@ -22,6 +23,7 @@ export function useTransactionDetails({
   const [editor, setEditor] = useState<
     'category' | 'adjustment' | 'compensation' | 'exclusion' | null
   >(null)
+  useUpdateBlocker(editor !== null)
   const [adjustmentAmount, setAdjustmentAmount] = useState(() =>
     toEditableAmount(
       transaction.effectiveAmountMinor,

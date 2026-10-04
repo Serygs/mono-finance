@@ -1,11 +1,17 @@
 import { createContext, use } from 'react'
 
 import type { SessionUser } from './auth-api'
+import type { TranslationKey } from '../localization/messages'
 
 export interface AuthContextValue {
   login(email: string, password: string): Promise<void>
   logout(): Promise<void>
-  status: 'authenticated' | 'loading' | 'unauthenticated'
+  retrySession(): Promise<void>
+  retryCleanup(): Promise<void>
+  cleanupFailed: boolean
+  cleanupError: TranslationKey | null
+  verificationError: TranslationKey | null
+  status: 'authenticated' | 'loading' | 'unauthenticated' | 'unavailable'
   user: SessionUser | null
 }
 

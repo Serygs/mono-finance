@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  activatePrivateSession,
+  endPrivateSession,
+} from '../auth/private-session'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./encrypted-offline-cache', () => ({
   cacheOfflineData: vi.fn(),
@@ -7,6 +11,9 @@ vi.mock('./encrypted-offline-cache', () => ({
 
 import { cacheOfflineData, readOfflineData } from './encrypted-offline-cache'
 import { getOfflineApiData } from './offline-api'
+
+beforeEach(() => activatePrivateSession(4_102_444_800))
+afterEach(() => endPrivateSession('logout'))
 
 describe('getOfflineApiData', () => {
   afterEach(() => {
@@ -47,6 +54,32 @@ describe('getOfflineApiData', () => {
       }),
     ).rejects.toThrow('Unauthorized')
 
+    expect(readOfflineData).not.toHaveBeenCalled()
+  })
+
+  it('does not write or publish a late response from the prior session', async () => {
+    let resolve!: (value: object) => void
+    const promise = new Promise<object>((complete) => {
+      resolve = complete
+    })
+    const result = getOfflineApiData('/api/transactions', () => promise)
+    const rejected = expect(result).rejects.toThrow(
+      'The private session has ended.',
+    )
+    endPrivateSession('logout')
+    activatePrivateSession(4_102_444_800)
+    resolve({ transactions: [] })
+    await rejected
+    expect(cacheOfflineData).not.toHaveBeenCalled()
+  })
+
+  it('does not read cached data after an offline cold start', async () => {
+    endPrivateSession('logout')
+    await expect(
+      getOfflineApiData('/api/transactions', async () => {
+        throw new TypeError('Offline')
+      }),
+    ).rejects.toThrow('The private session has ended.')
     expect(readOfflineData).not.toHaveBeenCalled()
   })
 })

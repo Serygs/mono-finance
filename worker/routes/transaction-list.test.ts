@@ -69,6 +69,8 @@ describe('transaction list route', () => {
   })
 
   it.each([
+    'hasAdjustment=maybe',
+    'hasCompensation=true&hasCompensation=false',
     'categoryId=5411&categoryId=5812',
     'categoryId=5411&uncategorized=true',
     'category=Food&categoryId=5411',
@@ -90,6 +92,35 @@ describe('transaction list route', () => {
       )
       expect(response.status).toBe(400)
       expect(service.received).toBeNull()
+    },
+  )
+
+  it.each([
+    { query: 'hasAdjustment=true', filters: { hasAdjustment: true } },
+    { query: 'hasCompensation=true', filters: { hasCompensation: true } },
+    { query: 'hasAdjustment=false', filters: { hasAdjustment: false } },
+    { query: 'hasCompensation=false', filters: { hasCompensation: false } },
+  ])(
+    'passes record filters to the owner query: $query',
+    async ({ query, filters }) => {
+      const service = new FakeTransactionQueryService()
+      const app = createApp(
+        () => authenticatedService,
+        () => ({}) as AccountService,
+        () => ({}) as TransactionSyncService,
+        () => service as unknown as TransactionQueryService,
+      )
+      const response = await app.request(
+        `/api/transactions?${query}&limit=5`,
+        { headers: { Cookie: 'mono_finance_session=test-session' } },
+        environment,
+      )
+      expect(response.status).toBe(200)
+      expect(service.received).toMatchObject({
+        ...filters,
+        limit: 5,
+        userId: 'owner-1',
+      })
     },
   )
 

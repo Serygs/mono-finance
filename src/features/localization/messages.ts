@@ -1,4 +1,32 @@
 export const ENGLISH_MESSAGE_KEYS = [
+  'App update available',
+  'Connect to the internet before updating the app.',
+  'Finish or cancel editing before updating.',
+  'Waiting for pending changes to finish before updating.',
+  'Updating the app…',
+  'The update could not be activated. Try again.',
+  'A new version is ready. Update when you are ready to reload.',
+  'Update and reload',
+  '{percent}% of period expenses',
+  'Repeated purchases',
+  'Repeated purchases help',
+  'Repeated vs other expenses',
+  'Repeated vs other expenses help',
+  'Other expenses',
+  'Average interval: {days} days · {count} purchases',
+  'Repeated purchases do not establish recurring or fixed expenses.',
+  'Local data could not be removed. Check browser storage permissions and retry.',
+  'Mono Finance',
+  'Unable to display the application.',
+  'Reload the application to try again. Your saved financial data is unchanged.',
+  'Reload application',
+  'Too many authentication attempts. Wait before trying again.',
+  'Unable to connect. Check your connection and try again.',
+  'Authentication is temporarily unavailable. Try again later.',
+  'Retry session verification',
+  'Local data cleanup failed. Close other Mono Finance tabs and retry.',
+  'Retry local cleanup',
+
   '1 account',
   'Period: {from} – {to}',
   'Verified transaction import time unknown',
@@ -20,12 +48,18 @@ export const ENGLISH_MESSAGE_KEYS = [
   'History coverage unknown',
   'Selected period has unverified gaps',
   'Selected period has verified import coverage',
+  'Elapsed portion has verified import coverage',
+  'Elapsed portion has unverified gaps',
+  'Selected period is in the future',
+  'Coverage is checked only through the current time. Future intervals are not gaps.',
   'Transaction import time unknown',
   'Balance updated {date}',
   'Balance update time unknown',
   'Coverage records successful statement windows, not the first or last transaction. Unverified gaps remain unknown.',
   'Transaction import time does not describe balance freshness.',
   'Data freshness',
+  'Import gaps',
+  'Status unavailable',
   'Exact period: {from} – {to}',
   'Converted report · effective amounts',
   'Original currencies · effective amounts',
@@ -509,6 +543,14 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
   ...(Object.fromEntries(
     ENGLISH_MESSAGE_KEYS.map((key) => [key, key]),
   ) as Record<TranslationKey, string>),
+  'Repeated purchases help':
+    'Purchases with the same description and report currency appearing at least twice in the year ending at the selected period’s end, with a purchase in the selected period. Average intervals describe observed history; they do not validate periodicity or confirm an obligation.',
+  'Repeated vs other expenses help':
+    'Selected-period expenses from merchants with repeated purchases in the year ending at the selected period’s end compared with other expenses. This is purchase evidence, not a classification of recurring or fixed obligations.',
+  'Recent corrections help':
+    'Matching adjusted transactions across the selected transaction period, with the newest transaction dates first.',
+  'Recent compensations help':
+    'Transactions with compensation links across the selected transaction period, with the newest transaction dates first.',
   'Total spent help':
     'Sum of expense transaction magnitudes for the selected period and accounts.',
   'Total income help':
@@ -526,6 +568,49 @@ export const ENGLISH_MESSAGES: Readonly<Record<TranslationKey, string>> = {
 }
 
 export const UKRAINIAN_MESSAGES = {
+  'App update available': 'Доступне оновлення застосунку',
+  'Connect to the internet before updating the app.':
+    'Підключіться до інтернету перед оновленням застосунку.',
+  'Finish or cancel editing before updating.':
+    'Завершіть або скасуйте редагування перед оновленням.',
+  'Waiting for pending changes to finish before updating.':
+    'Очікуємо завершення збереження змін перед оновленням.',
+  'Updating the app…': 'Оновлення застосунку…',
+  'The update could not be activated. Try again.':
+    'Не вдалося активувати оновлення. Спробуйте ще раз.',
+  'A new version is ready. Update when you are ready to reload.':
+    'Нова версія готова. Оновіть застосунок, коли будете готові до перезавантаження.',
+  'Update and reload': 'Оновити й перезавантажити',
+  '{percent}% of period expenses': '{percent}% витрат періоду',
+  'Repeated purchases': 'Повторні покупки',
+  'Repeated purchases help':
+    'Покупки з однаковим описом і валютою звіту, які трапилися щонайменше двічі за рік до кінця вибраного періоду, з покупкою у вибраному періоді. Середні інтервали описують спостережену історію, але не підтверджують періодичність або зобов’язання.',
+  'Repeated vs other expenses': 'Повторні покупки та інші витрати',
+  'Repeated vs other expenses help':
+    'Витрати вибраного періоду в продавців із повторними покупками за рік до кінця вибраного періоду порівняно з іншими витратами. Це дані про покупки, а не класифікація регулярних чи постійних зобов’язань.',
+  'Other expenses': 'Інші витрати',
+  'Average interval: {days} days · {count} purchases':
+    'Середній інтервал: {days} днів · {count} покупок',
+  'Repeated purchases do not establish recurring or fixed expenses.':
+    'Повторні покупки не підтверджують регулярні чи постійні витрати.',
+  'Local data could not be removed. Check browser storage permissions and retry.':
+    'Не вдалося видалити локальні дані. Перевірте дозволи браузера на сховище та повторіть спробу.',
+  'Mono Finance': 'Mono Finance',
+  'Unable to display the application.': 'Не вдалося відобразити застосунок.',
+  'Reload the application to try again. Your saved financial data is unchanged.':
+    'Перезавантажте застосунок, щоб повторити спробу. Збережені фінансові дані не змінено.',
+  'Reload application': 'Перезавантажити застосунок',
+  'Too many authentication attempts. Wait before trying again.':
+    'Забагато спроб автентифікації. Зачекайте перед наступною спробою.',
+  'Unable to connect. Check your connection and try again.':
+    'Не вдалося підключитися. Перевірте з’єднання та повторіть спробу.',
+  'Authentication is temporarily unavailable. Try again later.':
+    'Автентифікація тимчасово недоступна. Спробуйте пізніше.',
+  'Retry session verification': 'Повторити перевірку сесії',
+  'Local data cleanup failed. Close other Mono Finance tabs and retry.':
+    'Не вдалося очистити локальні дані. Закрийте інші вкладки Mono Finance та повторіть спробу.',
+  'Retry local cleanup': 'Повторити очищення локальних даних',
+
   '1 account': '1 рахунок',
   'Period: {from} – {to}': 'Період: {from} – {to}',
   'Verified transaction import time unknown':
@@ -558,6 +643,13 @@ export const UKRAINIAN_MESSAGES = {
     'У вибраному періоді є неперевірені проміжки',
   'Selected period has verified import coverage':
     'Імпорт вибраного періоду підтверджено',
+  'Elapsed portion has verified import coverage':
+    'Імпорт минулої частини періоду підтверджено',
+  'Elapsed portion has unverified gaps':
+    'У минулій частині періоду є неперевірені проміжки',
+  'Selected period is in the future': 'Вибраний період ще не настав',
+  'Coverage is checked only through the current time. Future intervals are not gaps.':
+    'Покриття перевіряється лише до поточного часу. Майбутні проміжки не є прогалинами.',
   'Transaction import time unknown': 'Час імпорту транзакцій невідомий',
   'Balance updated {date}': 'Баланс оновлено {date}',
   'Balance update time unknown': 'Час оновлення балансу невідомий',
@@ -566,6 +658,8 @@ export const UKRAINIAN_MESSAGES = {
   'Transaction import time does not describe balance freshness.':
     'Час імпорту транзакцій не визначає актуальність балансу.',
   'Data freshness': 'Актуальність даних',
+  'Import gaps': 'Прогалини імпорту',
+  'Status unavailable': 'Статус недоступний',
   'Exact period: {from} – {to}': 'Точний період: {from} – {to}',
   'Converted report · effective amounts': 'Конвертований звіт · ефективні суми',
   'Original currencies · effective amounts':
@@ -723,10 +817,10 @@ export const UKRAINIAN_MESSAGES = {
     'Надходження мінус витрати. Позитивний чистий грошовий потік не є показником заощаджень.',
   'No expenses in this period.': 'У цьому періоді немає витрат.',
   'Recent compensations help':
-    'Останні зв’язки компенсацій серед транзакцій вибраного періоду.',
+    'Транзакції зі зв’язками компенсацій за весь вибраний період транзакцій, від найновішої дати транзакції.',
   'Recent corrections': 'Останні коригування',
   'Recent corrections help':
-    'Останні скориговані транзакції у вибраному періоді.',
+    'Скориговані транзакції за весь вибраний період транзакцій, від найновішої дати транзакції.',
   'Recent transactions': 'Останні транзакції',
   'Recent transactions help':
     'Нещодавно імпортовані транзакції, що відповідають поточним фільтрам.',

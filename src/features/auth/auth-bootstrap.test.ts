@@ -6,7 +6,7 @@ describe('resolveInitialSession', () => {
   it('does not authenticate from an offline cached identity when the server session cannot be verified', async () => {
     await expect(
       resolveInitialSession(() => Promise.reject(new TypeError('Offline'))),
-    ).resolves.toBeNull()
+    ).rejects.toThrow('Offline')
   })
 
   it('caps a future session timeout to a browser-supported delay', () => {

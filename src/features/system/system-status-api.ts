@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import type { ApiResponse } from '../../types/api'
 
 export interface SystemStatus {
@@ -10,7 +11,7 @@ export interface SystemStatus {
 }
 
 export async function getSystemStatus(): Promise<SystemStatus> {
-  const response = await fetch('/api/system/status', {
+  const response = await fetchPrivateResponse('/api/system/status', {
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
   })

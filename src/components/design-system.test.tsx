@@ -106,6 +106,24 @@ describe('design system', () => {
     expect(markup).toContain('ui-compact-table')
   })
 
+  it.each([{ disabled: true }, { loading: true }, { options: [] }])(
+    'prevents opening an unavailable multiselect: %o',
+    (state) => {
+      const markup = renderToStaticMarkup(
+        <MultiSelect
+          ariaLabel="Accounts"
+          onChange={() => undefined}
+          options={[{ label: 'UAH account', value: 'uah' }]}
+          value={[]}
+          {...state}
+        />,
+      )
+      expect(markup).toContain('disabled=""')
+      expect(markup).toContain('aria-expanded="false"')
+      if ('loading' in state) expect(markup).toContain('aria-busy="true"')
+    },
+  )
+
   it('provides financial and chart surfaces with accessible summaries', () => {
     const markup = renderToStaticMarkup(
       <>

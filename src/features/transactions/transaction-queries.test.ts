@@ -12,6 +12,26 @@ it('invalidates ledger, recent rows and the analytics shared by Overview/categor
   const affected = [
     transactionQueryKeys.all,
     dashboardQueryKeys.recent,
+    dashboardQueryKeys.correctionsFor({
+      accountIds: [],
+      category: null,
+      currency: null,
+      dateFrom: 100,
+      dateTo: 200,
+      direction: null,
+      excluded: false,
+      search: null,
+    }),
+    dashboardQueryKeys.compensationsFor({
+      accountIds: [],
+      category: null,
+      currency: null,
+      dateFrom: 100,
+      dateTo: 200,
+      direction: null,
+      excluded: false,
+      search: null,
+    }),
     dashboardQueryKeys.analytics,
   ]
   for (const key of [

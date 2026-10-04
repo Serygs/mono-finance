@@ -1,3 +1,4 @@
+import { fetchPrivateResponse } from '../../lib/private-api-client'
 import type { ApiResponse } from '../../types/api'
 import type {
   TransactionSyncResult,
@@ -26,7 +27,7 @@ export function synchronizeTransactions(): Promise<TransactionSyncResult> {
 }
 
 async function request<T>(path: string, method: 'GET' | 'POST'): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetchPrivateResponse(path, {
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
     method,

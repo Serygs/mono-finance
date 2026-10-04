@@ -225,12 +225,15 @@ export function CategoryRankingChart({
   other,
   totals = values,
   customCategories = [],
+  percentageLabel = '{percent}% of category spending',
 }: {
   units: Map<string, number>
   values: Array<CurrencyAmount & { label: string; categoryId?: string | null }>
   other?: (CurrencyAmount & { label: string }) | undefined
   totals?: CurrencyAmount[]
   customCategories?: CustomCategory[]
+  percentageLabel?:
+    '{percent}% of category spending' | '{percent}% of period expenses'
 }) {
   const { locale, t } = useLocalization()
   if (values.length === 0 || values.every((item) => item.amountMinor === 0))
@@ -274,7 +277,7 @@ export function CategoryRankingChart({
             />
           </div>
         )}
-        <small>{t('{percent}% of category spending', { percent })}</small>
+        <small>{t(percentageLabel, { percent })}</small>
       </li>
     )
   }

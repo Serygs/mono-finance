@@ -45,6 +45,8 @@ export interface TransactionListInput {
   dateTo: number | null
   direction: TransactionDirection | null
   excluded: boolean | null
+  hasAdjustment?: boolean
+  hasCompensation?: boolean
   limit: number
   search: string | null
   userId: string

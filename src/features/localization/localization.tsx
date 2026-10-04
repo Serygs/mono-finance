@@ -13,6 +13,7 @@ import {
   type TranslationKey,
   UKRAINIAN_MESSAGES,
 } from './messages'
+import { persistLocale, readStoredLocale } from './locale-storage'
 
 export type { TranslationKey } from './messages'
 
@@ -27,7 +28,6 @@ interface LocalizationContextValue {
   t: Translate
 }
 
-const STORAGE_KEY = 'mono-finance-locale-v1'
 const LocalizationContext = createContext<LocalizationContextValue>({
   locale: 'en',
   setLocale: () => undefined,
@@ -39,7 +39,7 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale
-    window.localStorage.setItem(STORAGE_KEY, locale)
+    persistLocale(locale)
   }, [locale])
 
   const value = useMemo<LocalizationContextValue>(
@@ -48,8 +48,7 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
       setLocale,
       t: (key, parameters) =>
         interpolate(
-          (locale === 'uk' ? UKRAINIAN_MESSAGES : ENGLISH_MESSAGES)[key] ??
-            `[Missing translation: ${key}]`,
+          (locale === 'uk' ? UKRAINIAN_MESSAGES : ENGLISH_MESSAGES)[key],
           parameters,
         ),
     }),
@@ -94,10 +93,7 @@ export function interpolate(
 
 function readInitialLocale(): Locale {
   try {
-    return resolveLocale(
-      window.localStorage.getItem(STORAGE_KEY),
-      window.navigator.languages,
-    )
+    return resolveLocale(readStoredLocale(), window.navigator.languages)
   } catch {
     return 'en'
   }

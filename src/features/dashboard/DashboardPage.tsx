@@ -36,10 +36,12 @@ export function DashboardPage() {
     setCurrency,
     range,
   } = filters
-  const { currencies, analytics, recent } = useDashboardQueries(filters)
+  const { currencies, analytics, recent, corrections, compensations } =
+    useDashboardQueries(filters)
   const { preferences, setPreferences } = useDashboardPreferences()
   const {
     accounts,
+    loadingAccounts,
     syncingAccounts,
     syncingTransactions,
     syncStates,
@@ -91,6 +93,7 @@ export function DashboardPage() {
       <section className="dashboard-command-bar">
         <DashboardFilters
           accounts={accounts ?? []}
+          loadingAccounts={loadingAccounts}
 
           analytics={analytics.data}
           baseCurrency={currencies.data?.baseCurrencyCode ?? 'UAH'}
@@ -108,7 +111,16 @@ export function DashboardPage() {
           to={to}
         />
         <div className="analytics-meta">
-          <AnalyticsPeriod range={range} />
+          <AnalyticsPeriod range={range}>
+            <p>
+              {t(
+                mode === 'base'
+                  ? 'Converted report · effective amounts'
+                  : 'Original currencies · effective amounts',
+              )}{' '}
+              · {t('Without excluded transactions')}
+            </p>
+          </AnalyticsPeriod>
           <DataFreshness accountIds={filters.accountIds} range={range} />
         </div>
       </section>
@@ -154,6 +166,20 @@ export function DashboardPage() {
             excluded: false,
           }}
           analytics={analytics.data}
+          evidence={{
+            corrections: {
+              error: corrections.isError,
+              loading: corrections.isPending,
+              onRetry: () => void corrections.refetch(),
+              transactions: corrections.data?.transactions ?? [],
+            },
+            compensations: {
+              error: compensations.isError,
+              loading: compensations.isPending,
+              onRetry: () => void compensations.refetch(),
+              transactions: compensations.data?.transactions ?? [],
+            },
+          }}
           currency={mode === 'original' ? currency : null}
           onPreferences={setPreferences}
           preferences={preferences}
@@ -197,13 +223,12 @@ export function DashboardPage() {
         </div>
         <DashboardSyncSummary states={syncStates} />
       </BottomSheet>
-      {customizing ? (
-        <DashboardCustomization
-          onChange={setPreferences}
-          onClose={() => setCustomizing(false)}
-          preferences={preferences}
-        />
-      ) : null}
+      <DashboardCustomization
+        open={customizing}
+        onChange={setPreferences}
+        onClose={() => setCustomizing(false)}
+        preferences={preferences}
+      />
     </PageSurface>
   )
 }

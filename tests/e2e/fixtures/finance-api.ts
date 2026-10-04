@@ -52,9 +52,10 @@ export async function installFinanceApiMock(
     const path = url.pathname
     const method = request.method()
     if (path === '/api/auth/session') {
-      await route.fulfill(
-        json(state.signedIn ? { data: authenticatedSession } : unauthorized),
-      )
+      await route.fulfill({
+        ...json(state.signedIn ? { data: authenticatedSession } : unauthorized),
+        status: state.signedIn ? 200 : 401,
+      })
       return
     }
     if (path === '/api/auth/login' && method === 'POST') {
