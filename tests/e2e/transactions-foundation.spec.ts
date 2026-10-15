@@ -738,3 +738,75 @@ test('ledger and full-height details wrap long synthetic content at every breakp
     }
   }
 })
+
+test('desktop drag and drop links an incoming transaction to an expense and can be undone; mobile has no drag', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await installFinanceApiMock(page)
+  const ledger = [
+    syntheticTransaction(1, {
+      id: 'expense-1',
+      originalDescription: 'Restaurant',
+    }),
+    syntheticTransaction(2, {
+      category: { id: null, name: null, source: null },
+      effectiveAmountMinor: 25_500,
+      id: 'income-1',
+      originalAmountMinor: 25_500,
+      originalDescription: 'Ivan reimbursement',
+      originalMcc: 4829,
+    }),
+  ]
+  await page.route('**/api/transactions?*', (route) =>
+    route.fulfill({
+      json: { data: { nextCursor: null, transactions: ledger } },
+    }),
+  )
+  const linkBodies: unknown[] = []
+  page.on('request', (request) => {
+    if (
+      request.method() === 'POST' &&
+      request.url().endsWith('/api/transactions/expense-1/compensations')
+    )
+      linkBodies.push(request.postDataJSON())
+  })
+  await login(page)
+  await page.goto('/transactions')
+  await expect(
+    page.getByText(
+      'Drag an incoming transaction onto an expense to link a compensation.',
+    ),
+  ).toBeVisible()
+  const income = page.locator('li', { hasText: 'Ivan reimbursement' })
+  const expense = page.locator('li', { hasText: 'Restaurant' })
+  await expect(income).toHaveAttribute('draggable', 'true')
+  await expect(expense).toHaveAttribute('draggable', 'false')
+
+  await income.dragTo(expense)
+  const feedback = page.locator('.transactions-drop-feedback')
+  await expect(feedback).toContainText('Ivan reimbursement → Restaurant')
+  // The remaining 40.00 UAH expense caps the 255.00 UAH incoming transfer.
+  expect(linkBodies).toEqual([
+    { compensatedAmountMinor: 4_000, compensationTransactionId: 'income-1' },
+  ])
+
+  const unlink = page.waitForRequest(
+    (request) =>
+      request.method() === 'DELETE' &&
+      request
+        .url()
+        .endsWith('/api/transactions/expense-1/compensations/link-1'),
+  )
+  await feedback.getByRole('button', { name: 'Undo', exact: true }).click()
+  await unlink
+  await expect(feedback).toHaveCount(0)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('li[draggable]')).toHaveCount(0)
+  await expect(
+    page.getByText(
+      'Drag an incoming transaction onto an expense to link a compensation.',
+    ),
+  ).toHaveCount(0)
+})

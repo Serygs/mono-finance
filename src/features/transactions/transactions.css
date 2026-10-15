@@ -248,6 +248,42 @@
   gap: 0.75rem;
   justify-content: center;
 }
+/* Desktop compensation drag and drop: incoming rows drag onto expenses. */
+.transactions-drag-hint {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.transactions-drop-feedback {
+  margin-bottom: 0.75rem;
+}
+.transactions-drop-feedback__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+.transactions-ledger-item--draggable .transactions-ledger-row {
+  cursor: grab;
+}
+.transactions-ledger-item--drag-source {
+  opacity: 0.55;
+}
+.transactions-ledger--dragging
+  .transactions-date-group
+  li:not(.transactions-ledger-item--drop-candidate):not(
+    .transactions-ledger-item--drag-source
+  ) {
+  opacity: 0.6;
+}
+.transactions-ledger-item--drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+.transactions-ledger-item--drop-target .transactions-ledger-row {
+  background: transparent;
+}
 .transactions-refresh-status {
   color: var(--text-secondary);
   font-size: 0.8125rem;
