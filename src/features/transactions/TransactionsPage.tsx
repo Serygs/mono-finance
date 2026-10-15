@@ -9,6 +9,8 @@ import { TransactionFilters } from './TransactionFilters'
 import { TransactionLedger } from './TransactionLedger'
 import { useTransactionLedger } from './use-transaction-ledger'
 import { useTransactionSelection } from './use-transaction-selection'
+import { useCompensationDrop } from './use-compensation-drop'
+import { CompensationDropFeedback } from './CompensationDropFeedback'
 
 export function TransactionsPage() {
   const { t } = useLocalization()
@@ -16,6 +18,7 @@ export function TransactionsPage() {
   const { transactionsQuery, transactions } = ledger
   const selection = useTransactionSelection(ledger.selectionScope)
   const { selectedTransaction, setSelectedTransaction } = selection
+  const compensationDrop = useCompensationDrop()
   const requestError = (
     <Alert tone="danger" title={t('Transactions could not be loaded')}>
       <p>
@@ -109,7 +112,9 @@ export function TransactionsPage() {
               {t('Refreshing transactions…')}
             </p>
           ) : null}
+          <CompensationDropFeedback drop={compensationDrop} />
           <TransactionLedger
+            compensationDrop={compensationDrop}
             transactions={transactions}
             selectedTransaction={selectedTransaction}
             onSelect={setSelectedTransaction}

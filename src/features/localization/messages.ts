@@ -454,6 +454,11 @@ export const ENGLISH_MESSAGE_KEYS = [
   'Choose a suggestion',
   'Link compensation',
   'Linking…',
+  '{description} · {amount} · {date}',
+  'Linked {amount}: {income} → {expense}.',
+  'Undo',
+  'Drag an incoming transaction onto an expense to link a compensation.',
+  'This incoming transaction is already linked or the expense is fully compensated.',
   'Unlink',
   'Loading compensation details…',
   'Transaction type could not be updated.',
@@ -1129,6 +1134,14 @@ export const UKRAINIAN_MESSAGES = {
   'Choose a suggestion': 'Виберіть пропозицію',
   'Link compensation': 'Пов’язати компенсацію',
   'Linking…': 'Пов’язування…',
+  '{description} · {amount} · {date}': '{description} · {amount} · {date}',
+  'Linked {amount}: {income} → {expense}.':
+    'Пов’язано {amount}: {income} → {expense}.',
+  Undo: 'Відмінити',
+  'Drag an incoming transaction onto an expense to link a compensation.':
+    'Перетягніть вхідну транзакцію на витрату, щоб пов’язати компенсацію.',
+  'This incoming transaction is already linked or the expense is fully compensated.':
+    'Цю вхідну транзакцію вже пов’язано, або витрату повністю компенсовано.',
   Unlink: 'Відв’язати',
   'Loading compensation details…': 'Завантаження деталей компенсації…',
   'Transaction type could not be updated.':

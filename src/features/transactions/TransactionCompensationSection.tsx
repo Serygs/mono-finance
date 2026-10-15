@@ -1,4 +1,5 @@
 import { Button } from '../../components/ui/Controls'
+import { formatEpochDate } from '../../lib/date-presentation'
 import { TransactionEditActions } from './TransactionDetailSections'
 import { Alert, Skeleton } from '../../components/ui/Feedback'
 import { FormField, Select } from '../../components/ui/FormControls'
@@ -143,7 +144,19 @@ export function TransactionCompensationSection({
                       key={candidate.transactionId}
                       value={candidate.transactionId}
                     >
-                      {candidate.description} · {candidate.confidenceScore}%
+                      {t('{description} · {amount} · {date}', {
+                        amount: formatMinorAmount(
+                          candidate.availableAmountMinor,
+                          transaction,
+                          locale,
+                        ),
+                        date: formatEpochDate(
+                          candidate.originalTimestamp,
+                          { day: '2-digit', month: '2-digit', year: 'numeric' },
+                          locale,
+                        ),
+                        description: candidate.description,
+                      })}
                     </option>
                   ))}
                 </Select>
